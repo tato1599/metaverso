@@ -9,7 +9,8 @@
         "php": "^8.3",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
-        "laravel/tinker": "^2.10.1"
+        "laravel/tinker": "^2.10.1",
+        "packbackbooks/lti-1p3-tool": "^6.4"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
