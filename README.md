@@ -134,7 +134,7 @@ Content-Type: application/json
 { "id_usuario": 2, "id_evento": 1 }
 ```
 
-Respuesta `201`: `{ "url": "...", "deeplink": "...", "expira_en": "..." }`
+Respuesta `201`: `{ "url": "...", "deeplink": "...", "expira": "..." }`
 
 ---
 
