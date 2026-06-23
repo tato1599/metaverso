@@ -12,7 +12,7 @@ class LtiRegistrarPlataforma extends Command {
 
     public function handle(): int {
         foreach (['issuer','client-id','auth-login-url','auth-token-url','jwks-url'] as $req) {
-            if (! $this->option($req)) { $this->error("Falta --{$req}"); return self::FAILURE; }
+            if (blank($this->option($req))) { $this->error("Falta --{$req}"); return self::FAILURE; }
         }
         $p = LtiPlatform::updateOrCreate(
             ['issuer' => $this->option('issuer'), 'client_id' => $this->option('client-id')],
