@@ -1,0 +1,42 @@
+# Moodle local (desechable) para probar la integración LTI con el Metaverso.
+# Arranca:  cd moodle && docker compose up -d   (la primera vez tarda ~5-10 min)
+# Acceso:   http://localhost:8080   (admin / Admin12345!)
+# Detener:  docker compose down            (conserva datos en volúmenes)
+# Borrar:   docker compose down -v         (borra TODO, instancia limpia)
+services:
+  mariadb:
+    image: bitnamilegacy/mariadb:11.4
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MARIADB_USER=bn_moodle
+      - MARIADB_DATABASE=bitnami_moodle
+      - MARIADB_CHARACTER_SET=utf8mb4
+      - MARIADB_COLLATE=utf8mb4_unicode_ci
+    volumes:
+      - mariadb_data:/bitnami/mariadb
+
+  moodle:
+    image: bitnamilegacy/moodle:latest
+    ports:
+      - '8080:8080'
+      - '8443:8443'
+    environment:
+      - MOODLE_DATABASE_HOST=mariadb
+      - MOODLE_DATABASE_PORT_NUMBER=3306
+      - MOODLE_DATABASE_USER=bn_moodle
+      - MOODLE_DATABASE_NAME=bitnami_moodle
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MOODLE_USERNAME=admin
+      - MOODLE_PASSWORD=Admin12345!
+      - MOODLE_EMAIL=admin@example.com
+      - MOODLE_SITE_NAME=Metaverso TecNM (demo)
+    depends_on:
+      - mariadb
+    volumes:
+      - moodle_data:/bitnami/moodle
+      - moodledata_data:/bitnami/moodledata
+
+volumes:
+  mariadb_data:
+  moodle_data:
+  moodledata_data:
