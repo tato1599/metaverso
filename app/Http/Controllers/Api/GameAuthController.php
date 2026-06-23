@@ -9,6 +9,55 @@ use Illuminate\Http\Request;
 class GameAuthController extends Controller {
     public function __construct(private MagicLinkService $magicLink) {}
 
+    /**
+     * Canjear magic link (redeem)
+     *
+     * Canjea un magic link de un solo uso y devuelve un token de acceso Bearer de Sanctum
+     * junto con los datos del alumno, la práctica y el evento. El token queda marcado como
+     * usado de forma atómica, por lo que no puede reutilizarse.
+     *
+     * @group Flujo de juego (Unreal)
+     *
+     * @bodyParam token string required El token del magic link generado por `POST /api/links`. Example: abc123xyz456
+     *
+     * @response 200 scenario="Token canjeado exitosamente" {
+     *   "access_token": "1|abcdefghijklmnopqrstuvwxyz1234567890",
+     *   "token_type": "Bearer",
+     *   "alumno": {
+     *     "id_alumno": 15,
+     *     "numero_control": "21TI0001",
+     *     "nombre": "Juan Pérez López",
+     *     "semestre": 5,
+     *     "id_grupo": 3
+     *   },
+     *   "practica": {
+     *     "id_practica": 2,
+     *     "nombre": "Práctica 1 – Redes LAN virtuales",
+     *     "descripcion": "Configuración de switches y VLANs en entorno virtual"
+     *   },
+     *   "evento": {
+     *     "id_evento": 7,
+     *     "fecha_hora_inicio": "2026-06-23T10:00:00+00:00",
+     *     "fecha_hora_fin": "2026-06-23T12:00:00+00:00",
+     *     "estatus": "activo"
+     *   }
+     * }
+     *
+     * @response 401 scenario="Token inválido (no encontrado)" {
+     *   "message": "Token inválido"
+     * }
+     *
+     * @response 410 scenario="Token expirado o ya utilizado" {
+     *   "message": "Token expirado o ya utilizado"
+     * }
+     *
+     * @response 422 scenario="Falta el campo token" {
+     *   "message": "The token field is required.",
+     *   "errors": {
+     *     "token": ["The token field is required."]
+     *   }
+     * }
+     */
     public function redeem(Request $request) {
         $data = $request->validate(['token' => 'required|string']);
 

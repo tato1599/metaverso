@@ -1,0 +1,107 @@
+name: 'Generación de links (docente)'
+description: ''
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/links
+    metadata:
+      custom: []
+      groupName: 'Generación de links (docente)'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Generar magic link de sesión'
+      description: |-
+        Genera un magic link de un solo uso para que un alumno ingrese al metaverso.
+        El link incluye una URL web (`/jugar/{token}`) y un deeplink para Unreal Engine.
+        Requiere autenticación por clave de API en el header `X-Api-Key`.
+      authenticated: false
+      deprecated: false
+    headers:
+      X-Api-Key: 'string required'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      id_usuario:
+        custom: []
+        name: id_usuario
+        description: 'El ID del usuario (alumno) para quien se genera el link.'
+        required: true
+        example: 42
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      id_evento:
+        custom: []
+        name: id_evento
+        description: 'El ID del evento de agenda al que pertenece la sesión.'
+        required: true
+        example: 7
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      plataforma:
+        custom: []
+        name: plataforma
+        description: 'optional La plataforma destino. Por defecto: `unreal`.'
+        required: false
+        example: unreal
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      id_usuario: 42
+      id_evento: 7
+      plataforma: unreal
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: |-
+          {
+            "url": "http://localhost:8000/jugar/abc123xyz456",
+            "deeplink": "tecnm-metaverso://play?token=abc123xyz456",
+            "expira": "2026-06-23T18:00:00+00:00"
+          }
+        headers: []
+        description: 'Magic link generado exitosamente'
+      -
+        custom: []
+        status: 401
+        content: |-
+          {
+            "message": "No autorizado"
+          }
+        headers: []
+        description: 'Clave de API inválida o ausente'
+      -
+        custom: []
+        status: 422
+        content: |-
+          {
+            "message": "The id_usuario field is required.",
+            "errors": {
+              "id_usuario": ["The id_usuario field is required."],
+              "id_evento": ["The id_evento field is required."]
+            }
+          }
+        headers: []
+        description: 'Datos de entrada inválidos'
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

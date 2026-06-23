@@ -1,0 +1,399 @@
+name: 'Flujo de juego (Unreal)'
+description: ''
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/game/redeem
+    metadata:
+      custom: []
+      groupName: 'Flujo de juego (Unreal)'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Canjear magic link (redeem)'
+      description: |-
+        Canjea un magic link de un solo uso y devuelve un token de acceso Bearer de Sanctum
+        junto con los datos del alumno, la práctica y el evento. El token queda marcado como
+        usado de forma atómica, por lo que no puede reutilizarse.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      token:
+        custom: []
+        name: token
+        description: 'El token del magic link generado por `POST /api/links`.'
+        required: true
+        example: abc123xyz456
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      token: abc123xyz456
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "access_token": "1|abcdefghijklmnopqrstuvwxyz1234567890",
+            "token_type": "Bearer",
+            "alumno": {
+              "id_alumno": 15,
+              "numero_control": "21TI0001",
+              "nombre": "Juan Pérez López",
+              "semestre": 5,
+              "id_grupo": 3
+            },
+            "practica": {
+              "id_practica": 2,
+              "nombre": "Práctica 1 – Redes LAN virtuales",
+              "descripcion": "Configuración de switches y VLANs en entorno virtual"
+            },
+            "evento": {
+              "id_evento": 7,
+              "fecha_hora_inicio": "2026-06-23T10:00:00+00:00",
+              "fecha_hora_fin": "2026-06-23T12:00:00+00:00",
+              "estatus": "activo"
+            }
+          }
+        headers: []
+        description: 'Token canjeado exitosamente'
+      -
+        custom: []
+        status: 401
+        content: |-
+          {
+            "message": "Token inválido"
+          }
+        headers: []
+        description: 'Token inválido (no encontrado)'
+      -
+        custom: []
+        status: 410
+        content: |-
+          {
+            "message": "Token expirado o ya utilizado"
+          }
+        headers: []
+        description: 'Token expirado o ya utilizado'
+      -
+        custom: []
+        status: 422
+        content: |-
+          {
+            "message": "The token field is required.",
+            "errors": {
+              "token": ["The token field is required."]
+            }
+          }
+        headers: []
+        description: 'Falta el campo token'
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/game/me
+    metadata:
+      custom: []
+      groupName: 'Flujo de juego (Unreal)'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Obtener datos del alumno autenticado'
+      description: |-
+        Devuelve la información del usuario y del alumno asociado al token Bearer activo.
+        Útil para que Unreal Engine confirme la identidad del jugador al iniciar la sesión.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {TU_ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "usuario": {
+              "id_usuario": 42,
+              "name": "Juan Pérez López",
+              "email": "juan.perez@tecnm.mx"
+            },
+            "alumno": {
+              "id_alumno": 15,
+              "numero_control": "21TI0001",
+              "nombre": "Juan Pérez López",
+              "semestre": 5,
+              "id_grupo": 3
+            }
+          }
+        headers: []
+        description: 'Datos del alumno autenticado'
+      -
+        custom: []
+        status: 401
+        content: |-
+          {
+            "message": "Unauthenticated."
+          }
+        headers: []
+        description: 'Token inválido o expirado'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/game/sessions
+    metadata:
+      custom: []
+      groupName: 'Flujo de juego (Unreal)'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Iniciar sesión de práctica'
+      description: |-
+        Crea una nueva sesión de práctica en estado `en_progreso` para el alumno autenticado
+        en el evento especificado. Verifica que el alumno esté inscrito en el grupo del evento.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {TU_ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      id_evento:
+        custom: []
+        name: id_evento
+        description: 'El ID del evento de agenda en el que se inicia la sesión.'
+        required: true
+        example: 7
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      id_evento: 7
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: |-
+          {
+            "id_sesion": 88,
+            "estatus": "en_progreso"
+          }
+        headers: []
+        description: 'Sesión iniciada exitosamente'
+      -
+        custom: []
+        status: 401
+        content: |-
+          {
+            "message": "Unauthenticated."
+          }
+        headers: []
+        description: 'Token inválido o expirado'
+      -
+        custom: []
+        status: 403
+        content: |-
+          {
+            "message": "El alumno no está inscrito en el grupo de este evento"
+          }
+        headers: []
+        description: 'Alumno no inscrito en el grupo del evento'
+      -
+        custom: []
+        status: 422
+        content: |-
+          {
+            "message": "The id_evento field is required.",
+            "errors": {
+              "id_evento": ["The id_evento field is required."]
+            }
+          }
+        headers: []
+        description: 'Falta el campo id_evento'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/game/sessions/{id}/complete'
+    metadata:
+      custom: []
+      groupName: 'Flujo de juego (Unreal)'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Completar sesión de práctica'
+      description: |-
+        Marca una sesión de práctica como `completada` y guarda la calificación obtenida
+        (entre 0 y 100) y los datos de resultado opcionales. Solo el alumno dueño de la
+        sesión puede completarla, y únicamente si está en estado `en_progreso`.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {TU_ACCESS_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'El ID de la sesión de práctica a completar.'
+        required: true
+        example: 88
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 88
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      calificacion:
+        custom: []
+        name: calificacion
+        description: 'La calificación obtenida, entre 0 y 100.'
+        required: true
+        example: 85.5
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      datos_resultado:
+        custom: []
+        name: datos_resultado
+        description: 'optional Objeto JSON con datos adicionales del resultado (estadísticas, logs, etc.).'
+        required: false
+        example:
+          tiempo_segundos: 240
+          errores: 3
+        type: object
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      calificacion: 85.5
+      datos_resultado:
+        tiempo_segundos: 240
+        errores: 3
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "id_sesion": 88,
+            "estatus": "completada",
+            "calificacion": 85.5
+          }
+        headers: []
+        description: 'Sesión completada exitosamente'
+      -
+        custom: []
+        status: 401
+        content: |-
+          {
+            "message": "Unauthenticated."
+          }
+        headers: []
+        description: 'Token inválido o expirado'
+      -
+        custom: []
+        status: 403
+        content: |-
+          {
+            "message": "Sesión de otro alumno"
+          }
+        headers: []
+        description: 'Sesión pertenece a otro alumno'
+      -
+        custom: []
+        status: 404
+        content: |-
+          {
+            "message": "No query results for model [App\\Models\\SesionPractica] 88"
+          }
+        headers: []
+        description: 'Sesión no encontrada'
+      -
+        custom: []
+        status: 409
+        content: |-
+          {
+            "message": "La sesión no está en progreso"
+          }
+        headers: []
+        description: 'La sesión no está en progreso'
+      -
+        custom: []
+        status: 422
+        content: |-
+          {
+            "message": "The calificacion field must not be greater than 100.",
+            "errors": {
+              "calificacion": ["The calificacion field must not be greater than 100."]
+            }
+          }
+        headers: []
+        description: 'Calificación fuera de rango o faltante'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
