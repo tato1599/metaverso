@@ -160,6 +160,8 @@ Con el servidor corriendo (`php artisan serve`):
 | **Doc API interactiva** | `http://localhost:8000/docs` | Documentación generada con Scribe: todos los endpoints, ejemplos y "Try it out". También exporta Postman (`/docs.postman`) y OpenAPI (`/docs.openapi`). |
 | **Demo visual** | `http://localhost:8000/demo` | Página interactiva que muestra el diagrama de flujo y ejecuta el flujo completo (generar link → redeem → iniciar → completar) en vivo. |
 | **Diagrama de flujo** | `docs/api/flujo-del-juego.md` | Diagrama Mermaid del flujo (se renderiza en GitHub). |
+| **Cómo funciona (sin tecnicismos)** | `docs/COMO-FUNCIONA.md` | Explicación completa del flujo para maestros y coordinadores. |
+| **Integración con Moodle (LTI)** | `docs/INTEGRACION-MOODLE-LTI.md` | Cómo conectar con Moodle con el mínimo de trámites. |
 
 > Para usar `/demo` y `/api/links` localmente, define `LINKS_API_KEY` en tu `.env`.
 
