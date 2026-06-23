@@ -1,0 +1,404 @@
+% ============================================================================
+%  Documento de Diseño Técnico — Metaverso Escolar TecNM
+%  Para el equipo de desarrollo. Compilar con: tectonic diseno-tecnico.tex
+% ============================================================================
+\documentclass[11pt,letterpaper]{article}
+
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{geometry}
+\geometry{letterpaper,top=2.3cm,bottom=2.3cm,left=2.4cm,right=2.4cm}
+\usepackage{fontspec}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric,arrows.meta,positioning,fit,backgrounds}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{colorlinks=true,linkcolor=azultec,urlcolor=blue!60!black,
+  pdftitle={Diseno Tecnico - Metaverso Escolar TecNM},pdfauthor={Daniel Octavio Ramirez Neri}}
+
+\definecolor{azultec}{RGB}{31,59,110}
+\definecolor{griscodigo}{RGB}{246,247,251}
+\definecolor{verdecodigo}{RGB}{0,128,96}
+\definecolor{rojo}{RGB}{176,0,32}
+
+\setlength{\parskip}{0.5em}
+\setlength{\parindent}{0pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\itshape Diseño Técnico · Metaverso Escolar TecNM}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\titleformat{\section}{\normalfont\Large\bfseries\color{azultec}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries}{\thesubsection}{0.5em}{}
+
+\lstdefinestyle{codigo}{
+  backgroundcolor=\color{griscodigo}, basicstyle=\ttfamily\small, breaklines=true,
+  frame=single, rulecolor=\color{gray!40}, numbers=none,
+  keywordstyle=\color{azultec}\bfseries, commentstyle=\itshape\color{gray},
+  stringstyle=\color{verdecodigo}, showstringspaces=false, columns=fullflexible, tabsize=2, captionpos=b}
+\lstset{style=codigo}
+
+% Etiqueta de verbo HTTP
+\newcommand{\http}[1]{\colorbox{azultec}{\textcolor{white}{\ttfamily\small\,#1\,}}}
+
+\begin{document}
+
+% ---- Portada simple ----
+\begin{titlepage}
+\centering
+\vspace*{2.5cm}
+{\Huge\bfseries\color{azultec} Documento de Diseño Técnico\par}
+\vspace{0.6cm}
+{\LARGE Metaverso Escolar TecNM\par}
+\vspace{0.3cm}
+{\large Backend, Panel Docente e Integración con Moodle (LTI 1.3)\par}
+\vspace{2cm}
+\begin{tabular}{rl}
+\textbf{Versión:} & 1.0 \\[3pt]
+\textbf{Fecha:} & Junio 2026 \\[3pt]
+\textbf{Autor:} & Daniel Octavio Ramírez Neri \\[3pt]
+\textbf{Audiencia:} & Equipo de desarrollo \\[3pt]
+\textbf{Stack:} & Laravel 12 · PostgreSQL · Sanctum · LTI 1.3 · Unreal Engine \\
+\end{tabular}
+\vfill
+{\small Este documento describe \emph{qué} se construyó, \emph{cómo} encaja y
+\emph{por qué}, para que cualquier desarrollador pueda contribuir.\par}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+% ============================================================
+\section{Visión general}
+El \textbf{Metaverso Escolar} es un conjunto de \emph{prácticas} que el alumno
+realiza dentro de un juego de Unreal Engine. El corazón del sistema es un
+\textbf{backend} (Laravel + PostgreSQL) que administra la información académica y
+expone una \textbf{API} que el juego consume. El alumno puede entrar de dos
+formas: con un \textbf{magic link} (enlace de un solo uso) o desde una actividad
+de \textbf{Moodle vía LTI 1.3} (que además devuelve la calificación al LMS).
+
+\textbf{Tres consumidores, un cerebro:}
+\begin{itemize}[leftmargin=1.3em,nosep]
+  \item \textbf{Juego (Unreal)} $\rightarrow$ usa la API REST.
+  \item \textbf{Panel docente (web)} $\rightarrow$ usa sesión web.
+  \item \textbf{Moodle (LMS)} $\rightarrow$ se integra por LTI 1.3.
+\end{itemize}
+
+\subsection{Glosario rápido}
+\begin{longtable}{p{3.2cm} p{12cm}}
+\toprule \textbf{Término} & \textbf{Significado} \\ \midrule
+\endhead
+Magic link & Enlace con un token de un solo uso para lanzar el juego sin contraseña. \\
+Sesión de práctica & Registro de una partida: estatus, calificación y telemetría. \\
+LTI 1.3 & Estándar para conectar el LMS (Moodle) con una herramienta externa. \\
+AGS & Servicio LTI para devolver calificaciones al LMS. \\
+Deep Linking & Flujo LTI donde el docente elige \emph{qué} práctica enlazar. \\
+JWKS & Conjunto de llaves públicas en JSON para validar firmas (JWT). \\
+\bottomrule
+\end{longtable}
+
+% ============================================================
+\section{Arquitectura}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+  c/.style={rectangle,rounded corners,draw=azultec,thick,fill=azultec!8,
+    text width=3.2cm,align=center,minimum height=1.1cm,font=\small},
+  f/.style={-{Stealth[length=3mm]},thick,azultec}]
+  \node[c] (moodle) {Moodle\\(plataforma LTI)};
+  \node[c,right=2.2cm of moodle] (back) {Backend Laravel\\PostgreSQL · API};
+  \node[c,below=1.3cm of back] (juego) {Juego Unreal};
+  \node[c,below=1.3cm of moodle] (panel) {Panel docente};
+  \draw[f] (moodle) -- node[above,font=\scriptsize]{LTI 1.3 / OIDC} (back);
+  \draw[f] (back) -- node[right,font=\scriptsize]{API REST (Bearer)} (juego);
+  \draw[f] (panel) -- node[left,font=\scriptsize]{sesión web} (back);
+  \draw[f,dashed] (back) to[bend right=20] node[below,font=\scriptsize]{AGS: calificación} (moodle);
+\end{tikzpicture}
+\caption{Componentes y flujos principales.}
+\end{figure}
+
+\subsection{Stack tecnológico}
+\begin{longtable}{p{4cm} p{11cm}}
+\toprule \textbf{Componente} & \textbf{Tecnología / nota} \\ \midrule
+\endhead
+Backend & Laravel 12, PHP 8.3+ \\
+Base de datos & PostgreSQL (usa \texttt{jsonb} para telemetría) \\
+Auth de API & Laravel Sanctum (tokens Bearer con \emph{ability} \texttt{game}) \\
+LTI & \texttt{packbackbooks/lti-1p3-tool} v6 \\
+LMS & Moodle 5.0 (en Docker para desarrollo) \\
+Cliente juego & Unreal Engine (C++), módulo HTTP nativo \\
+Pruebas & Pest / PHPUnit (59 pruebas) \\
+\bottomrule
+\end{longtable}
+
+\subsection{Estructura del repositorio (lo relevante)}
+\begin{lstlisting}
+app/
+  Http/Controllers/Api/        # API del juego (redeem, sessions, complete, links, lti-redeem)
+  Http/Controllers/Panel/      # Panel docente (login, dashboard, grupos, links, resultados)
+  Http/Controllers/Lti/        # LTI (jwks, login, launch, deeplink)
+  Http/Middleware/             # EnsurePanelAccess (middleware 'panel')
+  Lti/                         # Adaptadores e implementaciones LTI (interfaces + Libreria*)
+  Models/                      # Eloquent: Usuario, Alumno, Grupo, SesionPractica, LtiPlatform...
+  Services/MagicLinkService.php
+  Console/Commands/            # comandos artisan del proyecto
+database/migrations/           # esquema completo (catalogo + operacion + LTI)
+database/seeders/DemoSeeder.php
+resources/views/{panel,lti}/   # vistas Blade
+routes/{api.php,web.php}
+tests/Feature/{Panel,Lti,...}/ # suite de pruebas
+docs/                          # specs, planes, guias, este documento, ejemplo Unreal
+moodle/docker-compose.yml      # Moodle local para pruebas LTI
+\end{lstlisting}
+
+% ============================================================
+\section{Modelo de datos}
+Esquema relacional normalizado, nombres en español, llaves primarias propias
+(\texttt{id\_usuario}, \texttt{id\_grupo}, \ldots). Tablas clave:
+
+\begin{longtable}{p{3.6cm} p{11cm}}
+\toprule \textbf{Tabla} & \textbf{Notas importantes} \\ \midrule
+\endhead
+\texttt{usuarios} & \texttt{correo} único; \texttt{contrasena\_hash} oculto en serialización; \texttt{lti\_user\_id} para LTI. \\
+\texttt{alumnos}/\texttt{maestros} & 1--1 con \texttt{usuarios}. \\
+\texttt{grupos} & FK a materia, maestro y ciclo; clave \texttt{getRouteKeyName} = \texttt{id\_grupo}. \\
+\texttt{practicas} & La actividad jugable; \texttt{escena\_referencia} (id de nivel en Unreal). \\
+\texttt{eventos\_agenda} & Programa una práctica para un grupo. \\
+\texttt{sesiones\_practica} & \texttt{estatus}, \texttt{calificacion} (float 0--100), \texttt{datos\_resultado} (\texttt{jsonb}); \texttt{id\_evento} \textbf{nullable} (las sesiones LTI se anclan a \texttt{id\_practica}); campos AGS. \\
+\texttt{tokens\_juego} & \texttt{token\_hash} (SHA-256), \texttt{fecha\_expiracion}, \texttt{usado}, \texttt{ip\_origen}. \\
+\texttt{lti\_platforms} & Moodle registrado (issuer, client\_id, deployment\_id, URLs). \\
+\texttt{lti\_keys} & Par RSA de la herramienta (privada firma; pública en JWKS). \\
+\texttt{lti\_nonces} & Soporte anti-replay (los nonces se manejan vía cache). \\
+\bottomrule
+\end{longtable}
+
+\textbf{Decisiones de seguridad del esquema:} el token del magic link se guarda
+\emph{hasheado} (nunca en claro); \texttt{id\_evento} se hizo nullable para no
+forzar un evento de agenda en los lanzamientos por LTI.
+
+% ============================================================
+\section{Autenticación y seguridad}
+
+\begin{longtable}{p{4.4cm} p{10.6cm}}
+\toprule \textbf{Mecanismo} & \textbf{Detalle} \\ \midrule
+\endhead
+Magic link (juego) & Token aleatorio (64), se guarda solo su SHA-256; un solo uso (canje \textbf{atómico}); expiración configurable (\texttt{MAGIC\_LINK\_TTL\_MINUTES}, 120 por omisión). \\
+Bearer del juego & Sanctum, \emph{ability} \texttt{game}; expira (\texttt{SANCTUM\_TOKEN\_TTL\_MINUTES}); requerido por \texttt{abilities:game} en las rutas de sesión. \\
+Panel docente & Login por \textbf{URL firmada temporal} (\texttt{temporarySignedRoute}); middleware \texttt{panel} exige rol staff; rol Alumno bloqueado. \\
+LTI & JWT firmado validado con el JWKS de Moodle; nonce de un solo uso; \texttt{/lti/*} excluido de CSRF (POST cross-site). \\
+Datos sensibles & \texttt{contrasena\_hash} en \texttt{\$hidden}; nunca se serializa. \\
+\bottomrule
+\end{longtable}
+
+% ============================================================
+\section{Referencia de la API (juego)}
+Prefijo \texttt{/api/game}. Respuestas JSON. Códigos de error consistentes:
+\texttt{401} token inválido · \texttt{410} expirado/usado · \texttt{422} validación
+· \texttt{403} recurso ajeno · \texttt{409} estado incorrecto.
+
+\subsection{\http{POST} /api/game/redeem}
+Canjea el magic link y entrega el Bearer.
+\begin{lstlisting}
+// request
+{ "token": "<token-del-deeplink>" }
+// 200
+{ "access_token": "1|abc...", "token_type": "Bearer",
+  "alumno": { "id_alumno": 1, "matricula": "20250001", ... },
+  "practica": { "id_practica": 1, "titulo": "..." },
+  "evento": { "id_evento": 1, "fecha_hora_inicio": "..." } }
+\end{lstlisting}
+
+\subsection{\http{POST} /api/game/lti-redeem}
+Canje para sesiones creadas por LTI (devuelve la sesión ya existente).
+\begin{lstlisting}
+// request
+{ "lti_session_token": "<token>" }
+// 200
+{ "access_token": "...", "token_type": "Bearer",
+  "alumno": {...}, "practica": {...}, "id_sesion": 7 }
+\end{lstlisting}
+
+\subsection{Resto de endpoints (con Bearer + ability \texttt{game})}
+\begin{longtable}{p{1.1cm} p{6cm} p{7cm}}
+\toprule \textbf{Verbo} & \textbf{Ruta} & \textbf{Cuerpo / respuesta} \\ \midrule
+\endhead
+GET & \texttt{/api/game/me} & $\rightarrow$ \texttt{\{ usuario, alumno \}} \\
+POST & \texttt{/api/game/sessions} & \texttt{\{ id\_evento \}} $\rightarrow$ \texttt{\{ id\_sesion, estatus \}} \\
+POST & \texttt{/api/game/sessions/\{id\}/complete} & \texttt{\{ calificacion, datos\_resultado \}} $\rightarrow$ \texttt{200} \\
+\bottomrule
+\end{longtable}
+
+Nota: \texttt{complete} valida propiedad (403 si la sesión es de otro alumno),
+estado (409 si no está \texttt{en\_progreso}) y rango de \texttt{calificacion}
+(0--100). Si la sesión es LTI, dispara el envío de la nota a Moodle (AGS).
+
+% ============================================================
+\section{Panel docente}
+Páginas Blade bajo el middleware \texttt{panel}. Autorización por dueño del grupo
+(Maestro ve lo suyo; Coordinador/Admin ven todo).
+
+\begin{longtable}{p{1.1cm} p{6.6cm} p{6.4cm}}
+\toprule \textbf{Verbo} & \textbf{Ruta} & \textbf{Función} \\ \midrule
+\endhead
+GET & \texttt{/panel/acceso/\{usuario\}} (firmada) & Inicia sesión del panel. \\
+GET & \texttt{/panel} & Tablero de grupos. \\
+GET & \texttt{/panel/grupos/\{grupo\}} & Alumnos y eventos del grupo. \\
+POST & \texttt{/panel/grupos/\{g\}/eventos/\{e\}/links} & Genera magic links del grupo (+ CSV en cliente). \\
+GET & \texttt{/panel/grupos/\{grupo\}/resultados} & Sesiones y calificaciones. \\
+GET & \texttt{/panel/sesiones/\{sesion\}} & Detalle con telemetría. \\
+\bottomrule
+\end{longtable}
+
+El inicio de sesión está encapsulado en un \textbf{único método}
+(\texttt{PanelLoginController::establecerSesion}) para que LTI lo reutilice.
+
+% ============================================================
+\section{Integración LTI 1.3 (lo más importante para integrar)}
+
+\subsection{Endpoints}
+\begin{longtable}{p{1.1cm} p{4.6cm} p{8.4cm}}
+\toprule \textbf{Verbo} & \textbf{Ruta} & \textbf{Función} \\ \midrule
+\endhead
+GET & \texttt{/lti/jwks} & Publica la llave pública de la herramienta. \\
+GET/POST & \texttt{/lti/login} & Inicio OIDC; redirige a la plataforma. \\
+POST & \texttt{/lti/launch} & Valida el lanzamiento; crea sesión o muestra el selector. \\
+GET/POST & \texttt{/lti/deeplink} & Selector de práctica y respuesta firmada. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Desacople por interfaces (clave para pruebas)}
+La lógica que toca la librería LTI está detrás de \textbf{interfaces} para que las
+pruebas no dependan de criptografía real:
+\begin{itemize}[leftmargin=1.3em,nosep]
+  \item \texttt{LaunchValidador} $\rightarrow$ \texttt{LibreriaLaunchValidador}
+  \item \texttt{DeepLinkRespondedor} $\rightarrow$ \texttt{LibreriaDeepLinkRespondedor}
+  \item \texttt{AgsCliente} $\rightarrow$ \texttt{EnviarCalificacionAgs}
+\end{itemize}
+En pruebas se inyectan dobles; las implementaciones \texttt{Libreria*} se validan
+en la prueba de extremo a extremo contra el Moodle real.
+
+\subsection{Aprovisionamiento automático}
+\texttt{AprovisionarAlumno::desdeLaunch()} busca el \texttt{Usuario} por
+\texttt{lti\_user\_id}; si no existe lo crea (rol Alumno, correo determinístico si
+falta) junto con su \texttt{Alumno}. Es \textbf{idempotente}.
+
+\subsection{AGS — retorno de calificación}
+Al completar una sesión LTI, \texttt{EnviarCalificacionAgs} mapea
+\texttt{calificacion} a \texttt{scoreGiven} (con \texttt{scoreMaximum}=100) y la
+envía al \emph{line item} de Moodle. El envío es resiliente: si Moodle no
+responde, se registra el error sin romper el flujo del alumno.
+
+\subsection{Configurar Moodle (resumen)}
+1) Registrar la herramienta LTI 1.3 una vez (URLs de \texttt{/lti/login},
+\texttt{/lti/launch}, \texttt{/lti/jwks}); 2) habilitar AGS y Deep Linking; 3)
+correr \texttt{php artisan metaverso:lti-registrar-plataforma} con los datos que
+Moodle genera. Detalle paso a paso en \texttt{docs/LTI-CONFIGURAR-MOODLE.md}.
+
+\subsection{Notas de entorno local (¡leer antes de depurar!)}
+Estos puntos resuelven los errores típicos de LTI sobre HTTP en Docker:
+\begin{longtable}{p{5.2cm} p{9.4cm}}
+\toprule \textbf{Síntoma} & \textbf{Causa / solución} \\ \midrule
+\endhead
+\textit{``cookies enabled''} en launch & Cookie \texttt{state} cross-site. Usar el navegador contra \texttt{localhost} (mismo dominio que Moodle). \\
+\texttt{fix\_jwks\_alg(null)} & Moodle no leyó nuestra JWKS. Permitir el puerto del backend en \texttt{curlsecurityallowedport} y vaciar \texttt{curlsecurityblockedhosts} (bloquea IPs privadas como las de Docker). \\
+\texttt{BeforeValidException} (iat) & Desfase de reloj del contenedor. Se aplica \texttt{JWT::\$leeway = 300} en \texttt{AppServiceProvider}. \\
+``Invalid permissions'' (Moodle) & \texttt{moodledata} con dueño incorrecto. \texttt{chown -R daemon:daemon}. \\
+\bottomrule
+\end{longtable}
+
+% ============================================================
+\section{Cliente del juego (Unreal)}
+El juego implementa este flujo mínimo:
+\begin{enumerate}[leftmargin=1.5em,nosep]
+  \item Recibe el token (del \emph{deep link} o por \texttt{-LtiToken=}).
+  \item \texttt{POST /api/game/lti-redeem} $\rightarrow$ guarda \texttt{access\_token} y \texttt{id\_sesion}.
+  \item Juega; al terminar: \texttt{POST /api/game/sessions/\{id\}/complete} con el Bearer y la calificación.
+\end{enumerate}
+Se entregó un \texttt{GameInstanceSubsystem} (C++) con
+\texttt{IniciarSesion}, \texttt{SumarAcierto} y \texttt{Terminar}, invocables
+desde Blueprint (ver \texttt{docs/unreal-ejemplo/}).
+
+% ============================================================
+\section{Cómo correr el proyecto localmente}
+\begin{lstlisting}[language=bash]
+# 1. Dependencias y entorno
+composer install
+cp .env.example .env && php artisan key:generate
+
+# 2. Base de datos (PostgreSQL) + datos demo
+createdb metaverso && createdb metaverso_test
+php artisan migrate --seed
+
+# 3. Servidor
+php artisan serve --host=0.0.0.0 --port=8000
+
+# 4. Pruebas
+php artisan test            # 59 en verde
+
+# 5. (Opcional) Moodle local para LTI
+cd moodle && docker compose up -d   # http://localhost:8080 (admin / Admin12345!)
+\end{lstlisting}
+
+\subsection{Variables de entorno}
+\begin{longtable}{p{5.6cm} p{3cm} p{6cm}}
+\toprule \textbf{Variable} & \textbf{Default} & \textbf{Uso} \\ \midrule
+\endhead
+\texttt{MAGIC\_LINK\_TTL\_MINUTES} & 120 & Vigencia del magic link. \\
+\texttt{GAME\_DEEPLINK\_SCHEME} & tecnm-metaverso & Esquema del deep link. \\
+\texttt{SANCTUM\_TOKEN\_TTL\_MINUTES} & 480 & Vigencia del Bearer. \\
+\texttt{LINKS\_API\_KEY} & (vacío) & Clave para \texttt{/api/links} (fail-closed). \\
+\texttt{PANEL\_LOGIN\_TTL\_MINUTES} & 30 & Vigencia del enlace del panel. \\
+\bottomrule
+\end{longtable}
+
+% ============================================================
+\section{Pruebas}
+La suite (Pest) cubre: flujo de magic link y canje (incluyendo 401/410 y
+single-use), sesiones (start/complete con 403/409/422), panel (acceso firmado,
+rol, autorización por grupo), y LTI (JWKS, aprovisionamiento, launch, deep
+linking y AGS, con los dobles de interfaz). Total: \textbf{59 pruebas}. Ejecutar
+con \texttt{php artisan test}. Las implementaciones reales de LTI se verifican en
+la prueba de extremo a extremo contra Moodle.
+
+% ============================================================
+\section{Decisiones de diseño y trade-offs}
+\begin{longtable}{p{5cm} p{9.6cm}}
+\toprule \textbf{Decisión} & \textbf{Razón} \\ \midrule
+\endhead
+Token hasheado + un solo uso & Si se filtra la BD, no se regalan accesos; evita replay. \\
+\texttt{id\_evento} nullable & Las sesiones LTI se anclan a una práctica, no a un evento de agenda. \\
+Login del panel firmado & Sin contraseñas ni SMTP; un solo método reutilizable por LTI. \\
+LTI tras interfaces & Pruebas deterministas sin criptografía; la librería se valida en e2e. \\
+Auto-aprovisionar alumnos & Cero altas manuales: menos fricción para el docente. \\
+AGS resiliente (no lanza) & Un fallo de Moodle no debe romper la partida del alumno. \\
+\bottomrule
+\end{longtable}
+
+% ============================================================
+\section{Trabajo futuro}
+\begin{itemize}[leftmargin=1.3em,nosep]
+  \item Producción: HTTPS, secretos gestionados, proteger \texttt{/api/links} con auth de docente.
+  \item Panel: crear prácticas/eventos y mostrar sesiones LTI en resultados.
+  \item LTI: NRPS (sincronización de listas) y multi-plataforma.
+  \item Juego: contenido jugable y registro del esquema de deep link en el SO.
+\end{itemize}
+
+\vfill
+\begin{center}\small\itshape
+Documentos complementarios: \texttt{docs/COMO-FUNCIONA.md} (explicación sin
+tecnicismos), \texttt{docs/INTEGRACION-MOODLE-LTI.md} (estrategia LTI),
+\texttt{docs/LTI-CONFIGURAR-MOODLE.md} (configuración paso a paso),
+\texttt{docs/superpowers/specs} y \texttt{plans} (specs y planes por sub-proyecto).
+\end{center}
+
+\end{document}
