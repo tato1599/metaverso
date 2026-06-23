@@ -21,6 +21,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Tolerancia de reloj para validar los JWT de LTI: el launch de Moodle
+        // dura ~60s y el reloj del contenedor Docker suele desfasarse de la Mac.
+        // 300s de leeway evita los errores "iat prior to"/"token expired" por skew.
+        \Firebase\JWT\JWT::$leeway = 300;
     }
 }
