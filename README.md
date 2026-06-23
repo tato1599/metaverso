@@ -1,59 +1,194 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Metaverso Escolar TecNM — Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Backend Laravel + PostgreSQL con magic link y API para el juego de Unreal Engine.
 
-## About Laravel
+> **Stack real:** Laravel 12.x (objetivo futuro: Laravel 13) · PHP ^8.3 · PostgreSQL 14+
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Requisitos
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Herramienta | Versión mínima |
+|-------------|----------------|
+| PHP         | 8.3            |
+| Composer    | 2.x            |
+| PostgreSQL  | 14             |
+| Node.js     | 20 (solo assets) |
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Arranque rápido
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```bash
+# 1. Clonar y entrar al proyecto
+git clone <repo-url> metaverso && cd metaverso
 
-## Laravel Sponsors
+# 2. Instalar dependencias
+composer install
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# 3. Variables de entorno
+cp .env.example .env
+php artisan key:generate
 
-### Premium Partners
+# 4. Crear las bases de datos
+createdb metaverso        # base principal
+createdb metaverso_test   # base para tests
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+# 5. Migrar y sembrar datos demo
+php artisan migrate --seed
 
-## Contributing
+# 6. Levantar servidor local
+php artisan serve
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Las credenciales por defecto del `.env.example` son `postgres`/`postgres` en `127.0.0.1:5432`.
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Probar el flujo completo
 
-## Security Vulnerabilities
+```bash
+# Genera un magic link para el usuario 1 y el evento 1
+php artisan metaverso:magic-link 1 1
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Salida esperada:
+```
+URL:      http://localhost/jugar/<token>
+Deeplink: tecnm-metaverso://play?token=<token>
+Expira:   2026-06-23 09:09:36
+```
 
-## License
+1. Abre la **URL** en el navegador → muestra la página `/jugar/{token}`.
+2. El botón "Abrir juego" dispara el deeplink `tecnm-metaverso://play?token=...` que Unreal Engine debe registrar como URL scheme.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+> **Datos demo (DemoSeeder):** usuario `id=1` es la maestra Laura; usuarios `id=2,3,4` son alumnos Ana, Beto y Caro. El evento `id=1` es el único evento de agenda sembrado.
+
+---
+
+## Flujo de la API (lo que consume Unreal Engine)
+
+### 1. Canjear magic link → Bearer token
+
+```
+POST /api/game/redeem
+Content-Type: application/json
+
+{ "token": "<token-del-deeplink>" }
+```
+
+Respuesta `200`:
+```json
+{
+  "access_token": "...",
+  "alumno": { "id_usuario": 2, "nombre": "Ana" },
+  "practica": { "id_practica": 1, "nombre": "..." },
+  "evento": { "id_evento": 1, "fecha_hora_inicio": "..." }
+}
+```
+
+Errores: `401` token inválido · `410` token expirado o ya usado · `422` falta el campo.
+
+### 2. Obtener perfil del alumno autenticado
+
+```
+GET /api/game/me
+Authorization: Bearer <access_token>
+```
+
+### 3. Abrir sesión de práctica
+
+```
+POST /api/game/sessions
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{ "id_evento": 1 }
+```
+
+Respuesta `201`: `{ "id_sesion": 7 }`
+
+### 4. Cerrar sesión con calificación y telemetría
+
+```
+POST /api/game/sessions/{id_sesion}/complete
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "calificacion": 85,
+  "datos_resultado": { "tiempo_s": 320, "errores": 2 }
+}
+```
+
+Respuesta `200`: confirmación del cierre.
+
+Errores: `403` sesión de otro alumno · `409` sesión ya cerrada · `422` calificación fuera de [0,100].
+
+### 5. Crear magic link desde el sistema docente (sin auth — MVP)
+
+```
+POST /api/links
+Content-Type: application/json
+
+{ "id_usuario": 2, "id_evento": 1 }
+```
+
+Respuesta `201`: `{ "url": "...", "deeplink": "...", "expira_en": "..." }`
+
+---
+
+## Configuración
+
+Las siguientes variables se añaden en `.env` (ya incluidas en `.env.example`):
+
+| Variable                 | Default           | Descripción                              |
+|--------------------------|-------------------|------------------------------------------|
+| `MAGIC_LINK_TTL_MINUTES` | `120`             | Vigencia del magic link en minutos       |
+| `GAME_DEEPLINK_SCHEME`   | `tecnm-metaverso` | URL scheme que Unreal Engine registra    |
+
+---
+
+## Tests
+
+```bash
+php artisan test
+# o
+composer test
+```
+
+Suite actual: **17 tests, 68 assertions** — todos en verde.
+
+La base de datos de tests se configura con `DB_DATABASE=metaverso_test` en `phpunit.xml`.
+
+---
+
+## Estructura relevante
+
+```
+app/
+  Http/Controllers/Api/
+    GameAuthController.php     # POST /api/game/redeem
+    GameSessionController.php  # GET /api/game/me, POST sessions, POST complete
+    LinkController.php         # POST /api/links
+  Services/
+    MagicLinkService.php       # Generación de tokens con hash y TTL
+  Console/Commands/
+    GenerarMagicLink.php       # php artisan metaverso:magic-link
+  Models/                      # Eloquent: Usuario, Alumno, Maestro, Grupo, …
+database/
+  migrations/                  # 19 migraciones (catálogo + operación)
+  seeders/DemoSeeder.php       # Datos demo: roles, carrera, maestro, 3 alumnos, evento
+resources/views/
+  jugar.blade.php              # Página de apertura del juego con deeplink
+```
+
+---
+
+## Fuera de alcance — Fase 2
+
+- Paneles CRUD para maestros (grupos, prácticas, agenda)
+- Agenda visual tipo calendario
+- Integración Moodle / LTI
+- Calificación agregada y reportes
+- Proteger `POST /api/links` con autenticación de maestro (actualmente sin auth en el MVP)
