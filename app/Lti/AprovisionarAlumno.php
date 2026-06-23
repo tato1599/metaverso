@@ -23,8 +23,8 @@ class AprovisionarAlumno {
 
             if (! $usuario) {
                 $correoFinal = $correo ?: "lti+{$ltiUserId}@metaverso.local";
-                if (Usuario::where('correo', $correoFinal)->exists()) {
-                    $correoFinal = "lti+{$ltiUserId}@metaverso.local";
+                while (Usuario::where('correo', $correoFinal)->exists()) {
+                    $correoFinal = 'lti+'.$ltiUserId.'-'.\Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(4)).'@metaverso.local';
                 }
                 $usuario = Usuario::create([
                     'id_rol' => $rolAlumno->id_rol,
