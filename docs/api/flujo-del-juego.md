@@ -6,20 +6,22 @@ Este documento describe el flujo completo de autenticación y sesión entre el s
 
 ```mermaid
 sequenceDiagram
-    participant D as Docente/Sistema
-    participant W as Web (/jugar)
+    participant D as Docente
+    participant W as Web jugar
     participant U as Unreal
     participant API as Backend API
-    D->>API: POST /api/links (X-Api-Key)
-    API-->>D: { url, deeplink, expira }
+    D->>API: POST /api/links con X-Api-Key
+    API-->>D: url, deeplink y expira
     D->>W: comparte el link al alumno
-    W->>U: deeplink tecnm-metaverso://play?token=...
-    U->>API: POST /api/game/redeem { token }
-    API-->>U: { access_token (Bearer), alumno, practica, evento }
-    U->>API: POST /api/game/sessions { id_evento } (Bearer)
-    API-->>U: { id_sesion, estatus: en_progreso }
-    U->>API: POST /api/game/sessions/{id}/complete { calificacion, datos_resultado }
-    API-->>U: { estatus: completada, calificacion }
+    W->>U: abre el deeplink con el token
+    U->>API: POST /api/game/redeem
+    API-->>U: access_token, alumno, practica, evento
+    U->>API: GET /api/game/me
+    API-->>U: usuario y alumno
+    U->>API: POST /api/game/sessions
+    API-->>U: id_sesion en_progreso
+    U->>API: POST sessions complete
+    API-->>U: estatus completada y calificacion
 ```
 
 ## Descripción del flujo

@@ -252,22 +252,22 @@
             <div id="mermaid-container">
                 <div class="mermaid">
 sequenceDiagram
-    participant D as Docente/Sistema
-    participant W as Web (/jugar)
-    participant U as Unreal Engine
+    participant D as Docente
+    participant W as Web jugar
+    participant U as Unreal
     participant API as Backend API
-    D->>API: POST /api/links (X-Api-Key)
-    API-->>D: { url, deeplink, expira }
+    D->>API: POST /api/links con X-Api-Key
+    API-->>D: url, deeplink y expira
     D->>W: comparte el link al alumno
-    W->>U: deeplink tecnm-metaverso://play?token=...
-    U->>API: POST /api/game/redeem { token }
-    API-->>U: { access_token (Bearer), alumno, practica, evento }
-    U->>API: GET /api/game/me (Bearer)
-    API-->>U: { usuario, alumno }
-    U->>API: POST /api/game/sessions { id_evento } (Bearer)
-    API-->>U: { id_sesion, estatus: en_progreso }
-    U->>API: POST /api/game/sessions/{id}/complete { calificacion, datos_resultado }
-    API-->>U: { estatus: completada, calificacion }
+    W->>U: abre el deeplink con el token
+    U->>API: POST /api/game/redeem
+    API-->>U: access_token, alumno, practica, evento
+    U->>API: GET /api/game/me
+    API-->>U: usuario y alumno
+    U->>API: POST /api/game/sessions
+    API-->>U: id_sesion en_progreso
+    U->>API: POST sessions complete
+    API-->>U: estatus completada y calificacion
                 </div>
             </div>
         </div>
@@ -396,6 +396,11 @@ sequenceDiagram
         primaryBorderColor: '#4338ca', lineColor: '#6b7280',
         secondaryColor: '#eff6ff', tertiaryColor: '#f5f6fa',
         fontSize: '14px',
+        actorTextColor: '#1f2937',
+        signalColor: '#6b7280',
+        signalTextColor: '#1f2937',
+        noteTextColor: '#1f2937',
+        noteBkgColor: '#eff6ff',
     }});
 
     // ── Helpers ──
