@@ -83,8 +83,42 @@
             justify-content: center;
             overflow-x: auto;
             padding: .5rem 0;
+            max-width: 900px;
+            margin: 0 auto;
         }
-        #mermaid-container svg { max-width: 100%; height: auto; }
+        #mermaid-container .mermaid { width: 100%; }
+        #mermaid-container svg { width: 100%; height: auto; }
+
+        /* ── Botón ampliar ── */
+        .diagram-actions { display: flex; justify-content: center; margin-top: .9rem; }
+
+        /* ── Lightbox overlay ── */
+        .lightbox {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(15, 18, 32, .82);
+            z-index: 1000;
+            align-items: center; justify-content: center;
+            padding: 2rem;
+        }
+        .lightbox.open { display: flex; }
+        .lightbox-content {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            max-width: 95vw; max-height: 90vh;
+            overflow: auto;
+            position: relative;
+        }
+        .lightbox-content svg { max-width: 95vw; max-height: 85vh; width: auto; height: auto; }
+        .lightbox-close {
+            position: absolute; top: .5rem; right: .75rem;
+            background: none; border: none;
+            font-size: 1.8rem; line-height: 1;
+            color: var(--muted); cursor: pointer;
+            font-weight: 700;
+        }
+        .lightbox-close:hover { color: var(--text); }
 
         /* ── Stepper ── */
         .step {
@@ -270,6 +304,17 @@ sequenceDiagram
     API-->>U: estatus completada y calificacion
                 </div>
             </div>
+            <div class="diagram-actions">
+                <button class="btn btn-primary btn-sm" onclick="abrirLightbox()">⤢ Ampliar diagrama</button>
+            </div>
+        </div>
+    </div>
+
+    {{-- ── Lightbox para el diagrama ── --}}
+    <div class="lightbox" id="lightbox" onclick="cerrarLightboxBackdrop(event)">
+        <div class="lightbox-content">
+            <button class="lightbox-close" onclick="cerrarLightbox()" aria-label="Cerrar">&times;</button>
+            <div id="lightbox-svg"></div>
         </div>
     </div>
 
@@ -391,17 +436,48 @@ sequenceDiagram
     };
 
     // ── Mermaid init ──
-    mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
-        primaryColor: '#4f46e5', primaryTextColor: '#fff',
-        primaryBorderColor: '#4338ca', lineColor: '#6b7280',
-        secondaryColor: '#eff6ff', tertiaryColor: '#f5f6fa',
-        fontSize: '14px',
-        actorTextColor: '#1f2937',
-        signalColor: '#6b7280',
-        signalTextColor: '#1f2937',
-        noteTextColor: '#1f2937',
-        noteBkgColor: '#eff6ff',
-    }});
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'base',
+        sequence: { useMaxWidth: true },
+        themeVariables: {
+            primaryColor: '#4f46e5', primaryTextColor: '#fff',
+            primaryBorderColor: '#4338ca', lineColor: '#6b7280',
+            secondaryColor: '#eff6ff', tertiaryColor: '#f5f6fa',
+            fontSize: '16px',
+            // Texto DENTRO de las cajas de participante (fondo indigo) -> blanco
+            actorTextColor: '#ffffff',
+            // Etiquetas de mensajes (sobre fondo blanco de la pagina) -> oscuro
+            signalColor: '#6b7280',
+            signalTextColor: '#1f2937',
+            noteTextColor: '#1f2937',
+            noteBkgColor: '#eff6ff',
+        },
+    });
+
+    // ── Lightbox del diagrama ──
+    function abrirLightbox() {
+        const svg = document.querySelector('#mermaid-container svg');
+        if (!svg) return;
+        const clone = svg.cloneNode(true);
+        clone.removeAttribute('style');
+        clone.removeAttribute('width');
+        clone.removeAttribute('height');
+        const target = document.getElementById('lightbox-svg');
+        target.innerHTML = '';
+        target.appendChild(clone);
+        document.getElementById('lightbox').classList.add('open');
+    }
+    function cerrarLightbox() {
+        document.getElementById('lightbox').classList.remove('open');
+    }
+    function cerrarLightboxBackdrop(event) {
+        // Cierra solo si se hace clic en el backdrop, no en el contenido
+        if (event.target.id === 'lightbox') cerrarLightbox();
+    }
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') cerrarLightbox();
+    });
 
     // ── Helpers ──
     function setStepState(n, state) {
