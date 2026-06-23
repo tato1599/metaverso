@@ -12,6 +12,7 @@ it('genera un link via API', function () {
     $r = $this->postJson('/api/links', ['id_usuario' => $usuario->id_usuario, 'id_evento' => $evento->id_evento]);
     $r->assertCreated()->assertJsonStructure(['url','deeplink','expira']);
     expect($r->json('deeplink'))->toContain('tecnm-metaverso://play?token=');
+    expect($r->json('expira'))->toMatch('/^\d{4}-\d{2}-\d{2}T/');
 });
 
 it('la pagina /jugar muestra el boton de abrir juego', function () {
