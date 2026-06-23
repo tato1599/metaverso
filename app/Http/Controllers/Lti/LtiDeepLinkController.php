@@ -14,7 +14,7 @@ class LtiDeepLinkController extends Controller {
 
     public function responder(Request $request, DeepLinkRespondedor $respondedor) {
         $data = $request->validate(['id_practica' => 'required|integer']);
-        $res = $respondedor->construir($data['id_practica']);
+        $res = $respondedor->construir((int) $data['id_practica']);
         return view('lti.auto-post', ['jwt' => $res['jwt'], 'returnUrl' => $res['returnUrl']]);
     }
 }
