@@ -68,6 +68,8 @@ sesiones_practica, tokens_juego`
 2. Campos del token: `token_hash` (UK), `id_usuario` (FK), `id_evento` (FK),
    `plataforma`, `fecha_expiracion`, `usado` (bool), `fecha_uso` (nullable),
    `ip_origen` (nullable, se registra al canjear).
+   - **Expiración configurable** (env `MAGIC_LINK_TTL_MINUTES`), **default 120
+     minutos (2 horas)**.
 3. `sesiones_practica.datos_resultado` es `jsonb`.
 4. `sesiones_practica.estatus`: `en_progreso | completada | abandonada`.
 5. `eventos_agenda.estatus`: `programado | en_curso | finalizado | cancelado`.
@@ -124,6 +126,7 @@ excepto `redeem`, que se autentica con el propio magic token.
 - `sessions/{id}/complete`: la sesión pertenece al alumno autenticado y está
   `en_progreso`. `calificacion` numérica en rango válido (0–100).
 - El Bearer token de Sanctum se emite con expiración corta (configurable).
+- Magic link: TTL configurable vía `MAGIC_LINK_TTL_MINUTES` (default 120 min).
 
 ## 8. Manejo de errores
 
