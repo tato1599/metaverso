@@ -191,8 +191,53 @@ Caduca y entra a `/panel`. Los alumnos no pueden entrar.
 
 ### Compatibilidad con LTI
 
-El inicio de sesión del panel es un único método (`PanelLoginController::establecerSesion`).
-Cuando se agregue LTI, el launch de Moodle reutilizará ese mismo método.
+El inicio de sesión del panel comparte el método `PanelLoginController::establecerSesion`.
+El launch de Moodle (LTI 1.3) reutiliza ese mismo método para establecer la sesión del alumno.
+
+---
+
+## Integración LTI (Moodle)
+
+El backend expone una herramienta LTI 1.3 que conecta cualquier actividad de Moodle con el metaverso:
+
+1. Moodle lanza al alumno mediante el flujo OIDC/LTI 1.3.
+2. El backend auto-aprovisiona al alumno por su `lti_user_id` (crea `Usuario` + `Alumno` si no existen o reutiliza el existente).
+3. El alumno entra al juego con su identidad ya resuelta — sin pasos extra.
+4. Al terminar la práctica, la calificación regresa a Moodle automáticamente mediante **AGS** (Assignment and Grade Services).
+
+### Endpoints LTI
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/lti/jwks` | JWKS público — Moodle lo usa para verificar los JWTs del tool |
+| `GET \| POST` | `/lti/login` | Inicio del flujo OIDC (tercer paso de la negociación LTI 1.3) |
+| `POST` | `/lti/launch` | Recepción del JWT de lanzamiento; inicia sesión de alumno |
+| `GET \| POST` | `/lti/deeplink` | Flujo Deep Linking: selector de práctica + respuesta JWT a la plataforma |
+
+### Comandos Artisan
+
+```bash
+# 1. Generar el par de llaves RSA del tool (ejecutar una sola vez o para rotar llaves)
+php artisan metaverso:lti-generar-llaves
+
+# 2. Registrar (o actualizar) una plataforma LTI (por ejemplo, Moodle)
+php artisan metaverso:lti-registrar-plataforma \
+  --issuer=https://moodle.example.com \
+  --client-id=<CLIENT_ID> \
+  --deployment-id=<DEPLOYMENT_ID> \
+  --auth-login-url=https://moodle.example.com/mod/lti/auth.php \
+  --auth-token-url=https://moodle.example.com/mod/lti/token.php \
+  --jwks-url=https://moodle.example.com/mod/lti/certs.php
+```
+
+### Documentación adicional
+
+| Documento | Descripción |
+|-----------|-------------|
+| [`docs/LTI-CONFIGURAR-MOODLE.md`](docs/LTI-CONFIGURAR-MOODLE.md) | Guía paso a paso para configurar el tool en la UI de Moodle |
+| [`docs/INTEGRACION-MOODLE-LTI.md`](docs/INTEGRACION-MOODLE-LTI.md) | Estrategia y decisiones de diseño de la integración |
+
+> **Nota:** La capa de integración con la librería LTI (`app/Lti/Libreria*` — validadores reales, cliente AGS) está desacoplada detrás de interfaces propias (`LaunchValidador`, `DeepLinkRespondedor`, `AgsCliente`). Esto mantiene la suite unitaria determinista; la integración real con la librería y con Moodle se verifica end-to-end contra el Moodle local de Docker (ver `docs/LTI-CONFIGURAR-MOODLE.md`).
 
 ---
 
@@ -204,7 +249,7 @@ php artisan test
 composer test
 ```
 
-Suite actual: **36 tests** — todos en verde.
+Suite actual: **55 tests** (1 skipped) — todos en verde.
 
 La base de datos de tests se configura con `DB_DATABASE=metaverso_test` en `phpunit.xml`.
 
@@ -236,6 +281,6 @@ resources/views/
 
 - CRUD de grupos, prácticas y agenda desde el panel
 - Agenda visual tipo calendario
-- Integración Moodle / LTI (el método de login `establecerSesion` ya está preparado)
+- Integración Moodle / LTI — **implementada en `feat/lti-moodle`** (ver sección anterior)
 - Calificación agregada y reportes avanzados
 - Proteger `POST /api/links` con autenticación de maestro (actualmente sin auth en el MVP)
