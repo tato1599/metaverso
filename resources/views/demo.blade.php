@@ -106,11 +106,16 @@
             background: #fff;
             border-radius: var(--radius);
             padding: 1.5rem;
-            max-width: 95vw; max-height: 90vh;
+            width: min(95vw, 1200px);
+            max-height: 90vh;
             overflow: auto;
             position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .lightbox-content svg { max-width: 95vw; max-height: 85vh; width: auto; height: auto; }
+        #lightbox-svg { width: 100%; display: flex; justify-content: center; }
+        .lightbox-content svg { max-width: 100%; max-height: 85vh; height: auto; }
         .lightbox-close {
             position: absolute; top: .5rem; right: .75rem;
             background: none; border: none;
@@ -460,9 +465,15 @@ sequenceDiagram
         const svg = document.querySelector('#mermaid-container svg');
         if (!svg) return;
         const clone = svg.cloneNode(true);
+        // El SVG original usa width:100% relativo a su contenedor. Al clonarlo
+        // hay que darle un tamaño explícito o colapsa a ~0. Lo forzamos a llenar
+        // el contenido del modal (que sí tiene ancho real) y limitamos al viewport.
         clone.removeAttribute('style');
-        clone.removeAttribute('width');
+        clone.setAttribute('width', '100%');
         clone.removeAttribute('height');
+        clone.style.maxWidth = '100%';
+        clone.style.maxHeight = '85vh';
+        clone.style.height = 'auto';
         const target = document.getElementById('lightbox-svg');
         target.innerHTML = '';
         target.appendChild(clone);
