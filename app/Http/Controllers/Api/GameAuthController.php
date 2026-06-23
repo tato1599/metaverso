@@ -26,8 +26,12 @@ class GameAuthController extends Controller {
             'ip_origen' => $request->ip(),
         ]);
 
-        $usuario = $tokenJuego->usuario()->with('alumno')->first();
-        $evento = $tokenJuego->evento()->with('practica')->first();
+        $tokenJuego->load(['usuario.alumno', 'evento.practica']);
+        $usuario = $tokenJuego->usuario;
+        $evento = $tokenJuego->evento;
+        if (! $usuario || ! $evento) {
+            return response()->json(['message' => 'Token inválido'], 410);
+        }
 
         $accessToken = $usuario->createToken('unreal-session', ['game'])->plainTextToken;
 
