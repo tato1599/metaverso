@@ -36,7 +36,10 @@ class EnviarCalificacionAgs implements AgsCliente
                 return;
             }
 
-            $connector = new LtiServiceConnector(new LtiCache(), new Client());
+            $connector = new LtiServiceConnector(new LtiCache(), new Client([
+                'timeout'         => 10.0,
+                'connect_timeout' => 5.0,
+            ]));
 
             $ags = new LtiAssignmentsGradesService($connector, $registration, [
                 'lineitem'  => $sesion->ags_lineitem_url,
