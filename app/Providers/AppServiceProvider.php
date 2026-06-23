@@ -13,6 +13,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(\App\Lti\LaunchValidador::class, \App\Lti\LibreriaLaunchValidador::class);
         $this->app->bind(\App\Lti\DeepLinkRespondedor::class, \App\Lti\LibreriaDeepLinkRespondedor::class);
+        $this->app->bind(\App\Lti\AgsCliente::class, \App\Lti\EnviarCalificacionAgs::class);
     }
 
     /**

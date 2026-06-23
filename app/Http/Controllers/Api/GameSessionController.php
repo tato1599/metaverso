@@ -162,6 +162,10 @@ class GameSessionController extends Controller {
             'estatus' => 'completada',
         ]);
 
+        if ($sesion->ags_lineitem_url) {
+            app(\App\Lti\AgsCliente::class)->enviar($sesion->fresh());
+        }
+
         return response()->json(['id_sesion' => $sesion->id_sesion, 'estatus' => $sesion->estatus, 'calificacion' => $sesion->calificacion]);
     }
 }
