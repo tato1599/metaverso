@@ -25,5 +25,9 @@ Route::view('/panel/acceso-invalido', 'panel.acceso-invalido')->name('panel.acce
 
 Route::middleware('panel')->group(function () {
     Route::get('/panel', [PanelController::class, 'dashboard'])->name('panel.dashboard');
-    Route::get('/panel/grupos/{grupo}', fn () => 'ok')->name('panel.grupos.show');
+    Route::get('/panel/grupos/{grupo}', [PanelController::class, 'show'])->name('panel.grupos.show');
+
+    // placeholders (Task 5 y 6)
+    Route::post('/panel/grupos/{grupo}/eventos/{evento}/links', fn () => 'ok')->name('panel.grupos.eventos.links');
+    Route::get('/panel/grupos/{grupo}/resultados', fn () => 'ok')->name('panel.grupos.resultados');
 });

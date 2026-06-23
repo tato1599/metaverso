@@ -19,4 +19,17 @@ class PanelController extends Controller {
         $grupos = $this->gruposVisibles($request->user())->get();
         return view('panel.dashboard', ['grupos' => $grupos]);
     }
+
+    public function autorizarGrupo(Usuario $u, Grupo $grupo): void {
+        if ($u->esCoordinadorOAdmin()) return;
+        abort_unless($grupo->id_maestro === optional($u->maestro)->id_maestro, 403, 'No puedes ver este grupo.');
+    }
+
+    public function show(Request $request, Grupo $grupo) {
+        $this->autorizarGrupo($request->user(), $grupo);
+        $grupo->load(['materia', 'ciclo']);
+        $alumnos = $grupo->inscripciones()->with('alumno.usuario')->get();
+        $eventos = $grupo->eventos()->with('practica')->get();
+        return view('panel.grupo', ['grupo' => $grupo, 'alumnos' => $alumnos, 'eventos' => $eventos]);
+    }
 }
