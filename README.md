@@ -167,6 +167,35 @@ Con el servidor corriendo (`php artisan serve`):
 
 ---
 
+## Panel de Maestros
+
+Panel web para maestros/coordinadores: ver grupos y alumnos, generar magic links
+de todo un grupo y consultar calificaciones.
+
+### Acceso (sin contraseña, magic link firmado)
+
+```bash
+# Genera un enlace de acceso para un usuario con rol Maestro/Coordinador/Admin
+php artisan metaverso:panel-acceso <id_usuario>
+```
+
+Abre la URL impresa (válida 30 min, configurable con `PANEL_LOGIN_TTL_MINUTES`).
+Caduca y entra a `/panel`. Los alumnos no pueden entrar.
+
+### Rutas
+
+- `/panel` — mis grupos (Maestro) o todos (Coordinador/Admin)
+- `/panel/grupos/{grupo}` — alumnos + eventos del grupo
+- `/panel/grupos/{grupo}/eventos/{evento}/links` — genera links del grupo (descarga de CSV realizada en el cliente, sin petición adicional al servidor)
+- `/panel/grupos/{grupo}/resultados` — calificaciones y sesiones
+
+### Compatibilidad con LTI
+
+El inicio de sesión del panel es un único método (`PanelLoginController::establecerSesion`).
+Cuando se agregue LTI, el launch de Moodle reutilizará ese mismo método.
+
+---
+
 ## Tests
 
 ```bash
@@ -175,7 +204,7 @@ php artisan test
 composer test
 ```
 
-Suite actual: **22 tests** — todos en verde.
+Suite actual: **36 tests** — todos en verde.
 
 La base de datos de tests se configura con `DB_DATABASE=metaverso_test` en `phpunit.xml`.
 
@@ -205,8 +234,8 @@ resources/views/
 
 ## Fuera de alcance — Fase 2
 
-- Paneles CRUD para maestros (grupos, prácticas, agenda)
+- CRUD de grupos, prácticas y agenda desde el panel
 - Agenda visual tipo calendario
-- Integración Moodle / LTI
-- Calificación agregada y reportes
+- Integración Moodle / LTI (el método de login `establecerSesion` ya está preparado)
+- Calificación agregada y reportes avanzados
 - Proteger `POST /api/links` con autenticación de maestro (actualmente sin auth en el MVP)

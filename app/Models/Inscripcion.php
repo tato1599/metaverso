@@ -7,4 +7,5 @@ class Inscripcion extends Model {
     protected $primaryKey = 'id_inscripcion';
     protected $guarded = [];
     protected $casts = ['fecha_inscripcion' => 'date'];
+    public function alumno() { return $this->belongsTo(Alumno::class, 'id_alumno'); }
 }
