@@ -36,3 +36,11 @@ it('rechaza token ya usado con 410', function () {
     $res['modelo']->update(['usado' => true, 'fecha_uso' => now()]);
     $this->postJson('/api/game/redeem', ['token' => $res['token']])->assertStatus(410);
 });
+
+it('rechaza el segundo canje del mismo token con 410', function () {
+    $res = app(MagicLinkService::class)->generar($this->usuario->id_usuario, $this->evento->id_evento);
+    // Primera llamada: éxito
+    $this->postJson('/api/game/redeem', ['token' => $res['token']])->assertOk();
+    // Segunda llamada: debe rechazar con 410
+    $this->postJson('/api/game/redeem', ['token' => $res['token']])->assertStatus(410);
+});

@@ -16,15 +16,15 @@ class GameAuthController extends Controller {
         if (! $tokenJuego) {
             return response()->json(['message' => 'Token inválido'], 401);
         }
-        if ($tokenJuego->usado || $tokenJuego->fecha_expiracion->isPast()) {
+
+        $claimed = TokenJuego::where('id_token', $tokenJuego->id_token)
+            ->where('usado', false)
+            ->where('fecha_expiracion', '>', now())
+            ->update(['usado' => true, 'fecha_uso' => now(), 'ip_origen' => $request->ip()]);
+        if (! $claimed) {
             return response()->json(['message' => 'Token expirado o ya utilizado'], 410);
         }
-
-        $tokenJuego->update([
-            'usado' => true,
-            'fecha_uso' => now(),
-            'ip_origen' => $request->ip(),
-        ]);
+        $tokenJuego->refresh();
 
         $tokenJuego->load(['usuario.alumno', 'evento.practica']);
         $usuario = $tokenJuego->usuario;

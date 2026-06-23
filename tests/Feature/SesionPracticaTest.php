@@ -61,3 +61,8 @@ it('rechaza completar dos veces la misma sesion con 409', function () {
     $this->postJson("/api/game/sessions/{$idSesion}/complete", ['calificacion' => 80, 'datos_resultado' => []])->assertOk();
     $this->postJson("/api/game/sessions/{$idSesion}/complete", ['calificacion' => 90, 'datos_resultado' => []])->assertStatus(409);
 });
+
+it('rechaza token sin ability game con 403', function () {
+    Sanctum::actingAs($this->usuario, []);   // sin abilities
+    $this->getJson('/api/game/me')->assertStatus(403);
+});
