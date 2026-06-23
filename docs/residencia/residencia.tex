@@ -1,0 +1,711 @@
+% ============================================================================
+%  Reporte de Residencia Profesional
+%  Proyecto: Metaverso Escolar TecNM — Backend, Panel Docente e Integración LTI
+%  Autor: Daniel Octavio Ramírez Neri
+%  Compilar con: tectonic residencia.tex   (motor XeTeX)
+% ============================================================================
+\documentclass[12pt,letterpaper,oneside]{report}
+
+% ---- Datos editables de la portada (rellena los que falten) ----
+\newcommand{\Institucion}{Tecnológico Nacional de México}
+\newcommand{\Instituto}{Instituto Tecnológico de \rule{4.2cm}{0.4pt}}
+\newcommand{\Carrera}{Ingeniería en Sistemas Computacionales}
+\newcommand{\TituloProyecto}{Metaverso Escolar TecNM: backend de prácticas, panel docente e integración con Moodle vía LTI 1.3}
+\newcommand{\Alumno}{Daniel Octavio Ramírez Neri}
+\newcommand{\NumControl}{\rule{3.5cm}{0.4pt}}
+\newcommand{\AsesorInterno}{\rule{5cm}{0.4pt}}
+\newcommand{\AsesorExterno}{\rule{5cm}{0.4pt}}
+\newcommand{\Periodo}{Enero -- Junio 2026}
+\newcommand{\Lugar}{México}
+
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{geometry}
+\geometry{letterpaper,top=2.5cm,bottom=2.5cm,left=3cm,right=2.5cm}
+\usepackage{fontspec}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{setspace}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric,arrows.meta,positioning}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+  colorlinks=true, linkcolor=black, citecolor=black,
+  urlcolor=blue!60!black, pdftitle={Reporte de Residencia Profesional},
+  pdfauthor={Daniel Octavio Ramirez Neri}
+}
+
+\definecolor{azultec}{RGB}{31,59,110}
+\definecolor{griscodigo}{RGB}{245,246,250}
+\definecolor{verdecodigo}{RGB}{0,128,96}
+
+\onehalfspacing
+
+% ---- Encabezado / pie ----
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\itshape Metaverso Escolar TecNM}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ---- Estilo de capítulos ----
+\titleformat{\chapter}[hang]
+  {\normalfont\Large\bfseries\color{azultec}}
+  {\thechapter.}{0.6em}{}
+\titlespacing*{\chapter}{0pt}{6pt}{16pt}
+
+% ---- Estilo de código ----
+\lstdefinestyle{codigo}{
+  backgroundcolor=\color{griscodigo},
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{gray!40},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{azultec}\bfseries,
+  commentstyle=\itshape\color{gray},
+  stringstyle=\color{verdecodigo},
+  showstringspaces=false,
+  columns=fullflexible,
+  tabsize=2,
+  captionpos=b,
+}
+\lstset{style=codigo}
+
+\begin{document}
+
+% =========================== PORTADA ===========================
+\begin{titlepage}
+\centering
+\vspace*{0.5cm}
+{\scshape\large \Institucion\par}
+\vspace{0.2cm}
+{\scshape \Instituto\par}
+\vspace{1.2cm}
+
+\rule{\linewidth}{0.5pt}\par
+\vspace{0.4cm}
+{\Huge\bfseries\color{azultec} Reporte de Residencia Profesional\par}
+\vspace{0.4cm}
+\rule{\linewidth}{0.5pt}\par
+\vspace{1.4cm}
+
+{\large\bfseries \TituloProyecto\par}
+\vspace{2.2cm}
+
+{\large Presenta:\par}
+\vspace{0.2cm}
+{\Large\bfseries \Alumno\par}
+\vspace{0.2cm}
+{\normalsize Número de control: \NumControl\par}
+\vspace{1.6cm}
+
+\begin{tabular}{ll}
+Carrera: & \Carrera \\[4pt]
+Asesor interno: & \AsesorInterno \\[4pt]
+Asesor externo: & \AsesorExterno \\[4pt]
+Periodo: & \Periodo \\
+\end{tabular}
+
+\vfill
+{\large \Lugar, \Periodo\par}
+\end{titlepage}
+
+% =========================== PRELIMINARES ===========================
+\pagenumbering{roman}
+
+\chapter*{Agradecimientos}
+\addcontentsline{toc}{chapter}{Agradecimientos}
+A mi institución, a mis asesores y a mi familia, por el apoyo brindado durante el
+desarrollo de esta residencia profesional. Este proyecto representa la
+integración de los conocimientos adquiridos a lo largo de la carrera en un
+sistema real, útil y extensible para la comunidad educativa.
+
+\chapter*{Resumen}
+\addcontentsline{toc}{chapter}{Resumen}
+El presente reporte documenta el diseño y desarrollo de un \textbf{metaverso
+escolar} para el Tecnológico Nacional de México, entendido como un conjunto de
+\emph{prácticas} que el estudiante realiza dentro de un videojuego desarrollado
+en Unreal Engine. El núcleo del proyecto es un \textbf{servidor web} construido
+con Laravel y PostgreSQL que administra usuarios, materias, grupos, prácticas,
+agenda y calificaciones, y expone una \textbf{API} que el juego consume.
+
+Se implementaron tres grandes componentes: (1) el \textbf{backend y la API} con
+autenticación mediante \emph{magic link} de un solo uso; (2) un \textbf{panel
+para docentes} que permite consultar grupos, generar accesos y revisar
+calificaciones; y (3) la \textbf{integración con Moodle mediante el estándar LTI
+1.3}, que permite que el alumno ingrese desde una actividad de Moodle (con
+identidad automática) y que la calificación obtenida en el juego regrese de
+forma automática al libro de calificaciones (servicio AGS).
+
+El sistema se construyó siguiendo prácticas de ingeniería de software modernas:
+desarrollo guiado por pruebas (TDD), revisión por pares de cada incremento y una
+suite automatizada de \textbf{59 pruebas}. Como resultado, se obtuvo una
+plataforma funcional, segura y verificada de extremo a extremo contra una
+instancia real de Moodle.
+
+\medskip
+\noindent\textbf{Palabras clave:} LTI 1.3, Moodle, Laravel, PostgreSQL, Unreal
+Engine, API REST, magic link, AGS, calificaciones, metaverso educativo.
+
+\tableofcontents
+\listoffigures
+\lstlistoflistings
+
+\clearpage
+\pagenumbering{arabic}
+
+% =========================== CAP 1: INTRODUCCIÓN ===========================
+\chapter{Introducción}
+
+La transformación digital de la educación ha impulsado el uso de entornos
+inmersivos y gamificados como apoyo al aprendizaje. Un \emph{metaverso escolar}
+plantea que el estudiante no solo lea o vea contenidos, sino que \textbf{realice
+actividades} dentro de un espacio virtual interactivo. Sin embargo, para que una
+herramienta así sea adoptable en una institución pública como el Tecnológico
+Nacional de México, debe \textbf{integrarse con los sistemas existentes} —
+particularmente con la plataforma Moodle que ya utilizan docentes y alumnos— y
+hacerlo con la menor fricción administrativa posible.
+
+Este proyecto aborda precisamente ese reto: construir la \textbf{infraestructura
+de software} (servidor, base de datos, API y mecanismos de autenticación) que
+permita conectar un juego desarrollado en Unreal Engine con la gestión académica
+real, incluyendo el \textbf{retorno automático de calificaciones} a Moodle.
+
+\section{Contexto}
+El proyecto se desarrolla para el TecNM, institución que emplea Moodle como
+sistema de gestión del aprendizaje (LMS). Los docentes administran sus cursos en
+Moodle y registran calificaciones en él. Cualquier herramienta nueva que
+pretenda ser usada de forma cotidiana debe respetar ese flujo de trabajo.
+
+\section{Descripción del problema}
+No existía un mecanismo que permitiera: (a) que un alumno ingresara a un juego
+educativo identificándose automáticamente con su identidad institucional; (b)
+que el resultado obtenido en el juego se registrara como calificación; ni (c)
+que el docente pudiera operar todo esto sin depender de tareas manuales o de
+intervención constante del administrador del sistema.
+
+\section{Estructura del documento}
+El capítulo 2 presenta la justificación; el 3, los objetivos; el 4 describe el
+entorno del proyecto; el 5 establece alcances y limitaciones; el 6 desarrolla el
+marco teórico; el 7 detalla el desarrollo técnico (la mayor parte del trabajo);
+el 8 expone los resultados; el 9, las conclusiones; y el 10, las competencias
+desarrolladas. Al final se incluyen referencias y anexos con código.
+
+% =========================== CAP 2: JUSTIFICACIÓN ===========================
+\chapter{Justificación}
+
+La incorporación de un metaverso educativo aporta motivación y aprendizaje
+activo, pero su valor real depende de que se integre con la operación académica.
+Las razones que justifican este proyecto son:
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Reducción de carga administrativa:} al devolver las
+  calificaciones automáticamente a Moodle, el docente evita capturar notas a
+  mano, disminuyendo errores y tiempo invertido.
+  \item \textbf{Mínima burocracia de adopción:} el uso del estándar LTI 1.3
+  permite que el administrador de Moodle registre la herramienta \emph{una sola
+  vez}; después, cualquier docente la usa como una actividad más.
+  \item \textbf{Identidad sin contraseñas adicionales:} el alumno no crea una
+  cuenta nueva; ingresa desde Moodle o mediante un enlace seguro de un solo uso.
+  \item \textbf{Reutilización y escalabilidad:} la API es agnóstica del motor de
+  juego; hoy la consume Unreal Engine, pero podría consumirla cualquier cliente.
+  \item \textbf{Seguridad:} los tokens se almacenan cifrados (hash), son de un
+  solo uso y con expiración, y la comunicación con Moodle se firma
+  criptográficamente.
+\end{itemize}
+
+% =========================== CAP 3: OBJETIVOS ===========================
+\chapter{Objetivos}
+
+\section{Objetivo general}
+Diseñar y desarrollar la infraestructura de software (backend, API, panel
+docente e integración con Moodle vía LTI 1.3) que permita a los estudiantes del
+TecNM realizar prácticas dentro de un videojuego y que sus calificaciones se
+registren automáticamente en la plataforma institucional.
+
+\section{Objetivos específicos}
+\begin{enumerate}[leftmargin=1.6em]
+  \item Modelar e implementar la base de datos académica (usuarios, roles,
+  carreras, materias, grupos, prácticas, agenda y sesiones) en PostgreSQL.
+  \item Implementar un esquema de autenticación por \emph{magic link} de un solo
+  uso para lanzar el juego.
+  \item Desarrollar la API REST que el juego consume para canjear el acceso,
+  iniciar la sesión de práctica y registrar la calificación.
+  \item Construir un panel web para docentes con control de acceso por rol.
+  \item Integrar el sistema con Moodle mediante LTI 1.3 (OIDC, Deep Linking y
+  AGS), con aprovisionamiento automático del alumno.
+  \item Verificar el sistema mediante una suite de pruebas automatizadas y una
+  prueba de extremo a extremo contra una instancia real de Moodle.
+\end{enumerate}
+
+% =========================== CAP 4: ENTORNO ===========================
+\chapter{Caracterización del proyecto}
+
+\section{Área de aplicación}
+El proyecto se ubica en el área de \emph{tecnologías educativas} y desarrollo de
+software para instituciones de educación superior. Involucra desarrollo backend,
+diseño de bases de datos, seguridad, integración de sistemas (LMS) y
+comunicación con un motor de videojuegos.
+
+\section{Herramientas y tecnologías}
+\begin{longtable}{p{4.2cm} p{9.5cm}}
+\toprule
+\textbf{Tecnología} & \textbf{Uso en el proyecto} \\
+\midrule
+\endhead
+Laravel 12 (PHP 8.3+) & Framework del backend y la API REST. \\
+PostgreSQL & Base de datos relacional (incluye columnas \texttt{jsonb}). \\
+Laravel Sanctum & Emisión de tokens \emph{Bearer} para la sesión del juego. \\
+\texttt{packbackbooks/lti-1p3-tool} & Librería de integración LTI 1.3 (OIDC, JWT, Deep Linking, AGS). \\
+Moodle 5.0 & LMS institucional con el que se integra (vía LTI 1.3). \\
+Docker & Ejecución de una instancia local de Moodle para pruebas. \\
+Unreal Engine (C++) & Cliente del juego que consume la API. \\
+Pest / PHPUnit & Pruebas automatizadas. \\
+\bottomrule
+\end{longtable}
+
+% =========================== CAP 5: ALCANCES ===========================
+\chapter{Alcances y limitaciones}
+
+\section{Alcances}
+\begin{itemize}[leftmargin=1.4em]
+  \item Base de datos académica completa y migraciones versionadas.
+  \item Autenticación por magic link (hash, un solo uso, expiración configurable).
+  \item API del juego: canje de acceso, inicio y cierre de sesión con calificación
+  y telemetría.
+  \item Panel docente: vista de grupos y alumnos, generación de enlaces por grupo
+  y consulta de resultados.
+  \item Integración LTI 1.3 completa: \emph{login} OIDC, \emph{launch}, Deep
+  Linking (selección de práctica) y AGS (retorno de calificación).
+  \item Aprovisionamiento automático del alumno a partir del lanzamiento de Moodle.
+  \item Cliente de ejemplo en Unreal Engine (C++) y suite de 59 pruebas.
+\end{itemize}
+
+\section{Limitaciones}
+\begin{itemize}[leftmargin=1.4em]
+  \item El proyecto de videojuego en Unreal Engine se entrega como cliente de
+  ejemplo; el desarrollo artístico/jugable completo queda fuera del alcance.
+  \item La integración se validó contra una instancia local de Moodle en Docker;
+  el endurecimiento para producción (HTTPS, secretos gestionados, alta
+  disponibilidad) se documenta como trabajo futuro.
+  \item Servicios LTI opcionales como NRPS (sincronización de listas) y el manejo
+  multi-plataforma (varios Moodle simultáneos) se dejan para una fase posterior.
+\end{itemize}
+
+% =========================== CAP 6: MARCO TEÓRICO ===========================
+\chapter{Marco teórico}
+
+\section{Sistemas de gestión del aprendizaje y Moodle}
+Un \emph{Learning Management System} (LMS) es una plataforma para administrar
+cursos, materiales, actividades y calificaciones. Moodle es un LMS de código
+abierto ampliamente adoptado en el ámbito educativo, incluido el TecNM. Permite
+extender su funcionalidad mediante \emph{actividades externas} que se comunican
+con herramientas de terceros a través de estándares de interoperabilidad.
+
+\section{El estándar LTI 1.3}
+\emph{Learning Tools Interoperability} (LTI) es el estándar de 1EdTech (antes IMS
+Global) para conectar un LMS (\emph{plataforma}) con una herramienta externa
+(\emph{tool}). La versión 1.3 se apoya en estándares de seguridad modernos:
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{OpenID Connect (OIDC):} flujo de inicio que previene ataques de
+  inyección de \emph{login}. El navegador es redirigido entre plataforma y
+  herramienta con un parámetro \texttt{state} y un \texttt{nonce}.
+  \item \textbf{JWT firmado (JWS):} el mensaje de lanzamiento (\emph{launch}) es
+  un \emph{JSON Web Token} firmado por la plataforma con su llave privada; la
+  herramienta lo valida con la llave pública de la plataforma (JWKS).
+  \item \textbf{Deep Linking:} permite que el docente, al crear la actividad,
+  seleccione \emph{qué} contenido (en este caso, qué práctica) se enlazará.
+  \item \textbf{AGS (Assignment and Grade Services):} servicios que permiten a la
+  herramienta \textbf{enviar calificaciones} de regreso al libro de
+  calificaciones del LMS.
+\end{itemize}
+
+La confianza mutua se establece con un \textbf{registro único}: la plataforma y
+la herramienta intercambian sus URLs y un \texttt{client\_id}, y cada una publica
+sus llaves públicas en un \emph{JSON Web Key Set} (JWKS).
+
+\section{JSON Web Tokens y JWKS}
+Un JWT es una cadena con tres partes (cabecera, cuerpo y firma) codificadas en
+Base64URL. La firma garantiza integridad y autenticidad. Para validarla se
+requiere la llave pública correspondiente, que se publica en un JWKS: un JSON con
+las llaves (módulo \texttt{n}, exponente \texttt{e}, identificador \texttt{kid} y
+algoritmo \texttt{alg}). En este proyecto la herramienta genera su propio par de
+llaves RSA y expone su JWKS para que Moodle valide los mensajes firmados por la
+herramienta (respuesta de Deep Linking y peticiones de AGS).
+
+\section{Laravel, PostgreSQL y Sanctum}
+Laravel es un framework PHP que favorece el desarrollo expresivo y seguro
+(migraciones, ORM Eloquent, validación, middleware). PostgreSQL es un gestor de
+base de datos relacional robusto, con soporte de tipos avanzados como
+\texttt{jsonb}, usado aquí para almacenar la telemetría cruda del juego. Laravel
+Sanctum provee la emisión de tokens \emph{Bearer} para autenticar las llamadas
+de la API que realiza el juego.
+
+\section{Autenticación por \emph{magic link}}
+Un \emph{magic link} es un enlace que contiene un token y permite el acceso sin
+contraseña. Para que sea seguro: el token viaja solo en el enlace, en la base de
+datos se almacena únicamente su \textbf{hash} (SHA-256), es de \textbf{un solo
+uso} y tiene \textbf{expiración}. Este patrón reduce el soporte por contraseñas
+olvidadas y es ideal para lanzar una aplicación de escritorio (el juego) desde un
+enlace.
+
+\section{Unreal Engine y \emph{deep links}}
+Unreal Engine es un motor de videojuegos. Para que un enlace en el navegador
+abra el juego de escritorio se utiliza un \emph{deep link} con un esquema propio
+(por ejemplo \texttt{tecnm-metaverso://}). El backend permanece agnóstico del
+transporte: solo entrega y valida tokens; el juego, mediante el módulo HTTP de
+Unreal, consume la API.
+
+% =========================== CAP 7: DESARROLLO ===========================
+\chapter{Desarrollo}
+
+Este capítulo describe la solución construida. Se organiza en: arquitectura
+general, modelo de datos, autenticación por magic link, API del juego, panel
+docente, integración LTI 1.3, cliente Unreal y metodología de trabajo.
+
+\section{Arquitectura general}
+La solución se compone de tres actores principales y un LMS:
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+  node distance=0.9cm and 1.6cm,
+  caja/.style={rectangle,rounded corners,draw=azultec,thick,fill=azultec!8,
+    text width=3.1cm,align=center,minimum height=1.1cm,font=\small},
+  flecha/.style={-{Stealth[length=3mm]},thick,azultec}]
+  \node[caja] (moodle) {Moodle\\(LMS / plataforma LTI)};
+  \node[caja,right=of moodle] (backend) {Backend Laravel\\+ PostgreSQL\\(API)};
+  \node[caja,below=of backend] (juego) {Juego Unreal\\(cliente)};
+  \node[caja,below=of moodle] (docente) {Panel docente\\(web)};
+  \draw[flecha] (moodle) -- node[above,font=\scriptsize]{LTI 1.3} (backend);
+  \draw[flecha] (backend) -- node[right,font=\scriptsize]{API REST} (juego);
+  \draw[flecha] (docente) -- node[left,font=\scriptsize]{sesión web} (backend);
+  \draw[flecha,dashed] (backend) to[bend right=18] node[below,font=\scriptsize]{AGS (calificación)} (moodle);
+\end{tikzpicture}
+\caption{Arquitectura general del sistema.}
+\label{fig:arq}
+\end{figure}
+
+El backend es el \emph{cerebro}: ninguna persona lo usa directamente; lo
+consultan el juego (vía API) y el panel (vía web), y se comunica con Moodle por
+LTI. Esta separación de responsabilidades permite evolucionar cada parte de forma
+independiente.
+
+\section{Modelo de datos}
+El esquema se diseñó normalizado, con nombres de tabla en español y llaves
+primarias propias (por ejemplo \texttt{id\_usuario}). La
+Tabla~\ref{tab:tablas} resume las entidades principales.
+
+\begin{longtable}{p{3.6cm} p{10cm}}
+\caption{Entidades principales del modelo de datos.}\label{tab:tablas}\\
+\toprule
+\textbf{Tabla} & \textbf{Propósito} \\
+\midrule
+\endfirsthead
+\toprule \textbf{Tabla} & \textbf{Propósito} \\ \midrule
+\endhead
+\texttt{roles}, \texttt{usuarios} & Identidad y rol (Alumno, Maestro, Coordinador, Admin). \\
+\texttt{alumnos}, \texttt{maestros} & Datos específicos de cada tipo de usuario. \\
+\texttt{carreras}, \texttt{materias}, \texttt{materia\_carrera} & Catálogo académico y su relación. \\
+\texttt{ciclos\_escolares}, \texttt{grupos}, \texttt{inscripciones} & Organización por ciclo y grupo. \\
+\texttt{practicas} & Actividad a realizar en el juego (incluye escena de referencia). \\
+\texttt{eventos\_agenda} & Programación de una práctica para un grupo. \\
+\texttt{sesiones\_practica} & Sesión jugada: estatus, calificación y telemetría (\texttt{jsonb}). \\
+\texttt{tokens\_juego} & Magic link: \emph{hash} del token, expiración, uso. \\
+\bottomrule
+\end{longtable}
+
+Se aplicaron correcciones de seguridad respecto al diseño inicial: el token del
+magic link se guarda \textbf{hasheado} (no en texto plano), y la sesión de
+práctica admite que la columna \texttt{id\_evento} sea nula para los lanzamientos
+por LTI (que se anclan directamente a una práctica).
+
+\section{Autenticación por magic link}
+El servicio de magic link genera un token aleatorio robusto, almacena su hash
+SHA-256 y construye tanto la URL web como el \emph{deep link} para el juego. La
+vigencia es configurable (120 minutos por omisión). El
+Listado~\ref{lst:magic} muestra el núcleo del servicio.
+
+\begin{lstlisting}[language=PHP,caption={Generación del magic link (extracto).},label=lst:magic]
+public function generar(int $idUsuario, int $idEvento, string $plataforma = 'unreal'): array {
+    $token = Str::random(64);
+    $ttl   = (int) config('metaverso.magic_link_ttl_minutes', 120);
+
+    $modelo = TokenJuego::create([
+        'id_usuario'       => $idUsuario,
+        'id_evento'        => $idEvento,
+        'token_hash'       => $this->hash($token),   // solo se guarda el hash
+        'plataforma'       => $plataforma,
+        'fecha_expiracion' => now()->addMinutes($ttl),
+        'usado'            => false,
+    ]);
+
+    $scheme = config('metaverso.deeplink_scheme', 'tecnm-metaverso');
+    return [
+        'token'    => $token,
+        'modelo'   => $modelo,
+        'url'      => URL::to('/jugar/'.$token),
+        'deeplink' => "{$scheme}://play?token={$token}",
+    ];
+}
+\end{lstlisting}
+
+\section{API del juego}
+El juego consume una API bajo el prefijo \texttt{/api/game}. El canje del token
+se valida de forma \textbf{atómica} para impedir su reutilización en condiciones
+de concurrencia. La Tabla~\ref{tab:api} resume los puntos de acceso.
+
+\begin{longtable}{p{1.3cm} p{5.4cm} p{6.4cm}}
+\caption{Puntos de acceso de la API del juego.}\label{tab:api}\\
+\toprule
+\textbf{Verbo} & \textbf{Ruta} & \textbf{Propósito} \\ \midrule
+\endhead
+POST & \texttt{/api/game/redeem} & Canjea el magic link y entrega un Bearer. \\
+GET & \texttt{/api/game/me} & Datos del alumno autenticado. \\
+POST & \texttt{/api/game/sessions} & Inicia una sesión de práctica. \\
+POST & \texttt{/api/game/sessions/\{id\}/complete} & Registra calificación (0--100) y telemetría. \\
+POST & \texttt{/api/game/lti-redeem} & Canje específico para sesiones creadas por LTI. \\
+\bottomrule
+\end{longtable}
+
+Las respuestas de error son consistentes (401 token inválido, 410 expirado o
+usado, 422 validación, 403 sesión ajena, 409 estado incorrecto). Al completar una
+sesión se almacena la calificación y la telemetría en \texttt{jsonb}; si la
+sesión proviene de LTI, además se dispara el envío de la nota a Moodle.
+
+\section{Panel docente}
+El panel permite al docente operar sin consola ni base de datos. El acceso se
+realiza mediante una \textbf{URL firmada temporal} de Laravel (sin contraseña ni
+servidor de correo), generada con un comando de consola. El inicio de sesión del
+panel se encapsuló en un \textbf{único método} reutilizable, de modo que la futura
+entrada vía LTI lo aproveche sin cambios. Las funciones principales son:
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Tablero:} grupos del docente (o todos, si es Coordinador/Admin).
+  \item \textbf{Detalle de grupo:} alumnos inscritos y eventos/prácticas.
+  \item \textbf{Generación de enlaces:} un magic link por alumno del grupo, con
+  exportación a CSV (generada en el cliente para no regenerar tokens).
+  \item \textbf{Resultados:} sesiones por práctica con calificación y telemetría.
+\end{itemize}
+
+La autorización es estricta: un docente solo accede a sus propios grupos, y el
+rol Alumno no puede ingresar al panel.
+
+\section{Integración LTI 1.3 con Moodle}
+Es el componente más extenso. Permite que el alumno entre desde Moodle y que la
+calificación regrese automáticamente. El flujo completo se ilustra en la
+Figura~\ref{fig:lti}.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+  paso/.style={rectangle,rounded corners,draw=azultec,thick,fill=azultec!6,
+    text width=11.5cm,align=left,font=\small,inner sep=6pt},
+  node distance=0.45cm]
+  \node[paso] (p1) {\textbf{1.} El docente agrega la actividad y, vía \emph{Deep Linking}, elige la práctica.};
+  \node[paso,below=of p1] (p2) {\textbf{2.} El alumno hace clic en la actividad; Moodle inicia el \emph{login} OIDC.};
+  \node[paso,below=of p2] (p3) {\textbf{3.} Moodle envía el \emph{launch} (JWT firmado) al backend, que lo valida.};
+  \node[paso,below=of p3] (p4) {\textbf{4.} El backend aprovisiona al alumno y crea la sesión de práctica.};
+  \node[paso,below=of p4] (p5) {\textbf{5.} Se muestra ``Abrir juego''; Unreal canjea el token y obtiene un Bearer.};
+  \node[paso,below=of p5] (p6) {\textbf{6.} Al terminar, el juego envía la calificación; el backend la reenvía a Moodle (AGS).};
+  \draw[-{Stealth},azultec,thick] (p1)--(p2);
+  \draw[-{Stealth},azultec,thick] (p2)--(p3);
+  \draw[-{Stealth},azultec,thick] (p3)--(p4);
+  \draw[-{Stealth},azultec,thick] (p4)--(p5);
+  \draw[-{Stealth},azultec,thick] (p5)--(p6);
+\end{tikzpicture}
+\caption{Flujo de integración LTI 1.3 (Moodle $\rightarrow$ juego $\rightarrow$ calificación).}
+\label{fig:lti}
+\end{figure}
+
+\subsection{Puntos de acceso LTI}
+\begin{itemize}[leftmargin=1.4em]
+  \item \texttt{GET /lti/jwks}: publica la llave pública de la herramienta.
+  \item \texttt{GET|POST /lti/login}: inicio OIDC; redirige a la plataforma.
+  \item \texttt{POST /lti/launch}: valida el lanzamiento, aprovisiona al alumno y
+  crea la sesión, o (si es Deep Linking) muestra el selector de práctica.
+  \item \texttt{GET|POST /lti/deeplink}: selector de práctica y respuesta firmada.
+\end{itemize}
+
+\subsection{Aprovisionamiento automático}
+Cuando un alumno entra por primera vez, el backend lo identifica por su
+\texttt{lti\_user\_id} (proporcionado por Moodle) y, si no existe, crea su usuario
+y registro de alumno de forma \textbf{idempotente}. Así se elimina el alta manual
+de estudiantes.
+
+\subsection{Retorno de calificación (AGS)}
+Al completar la sesión, si esta proviene de LTI, el backend envía la calificación
+al \emph{line item} de Moodle mediante AGS, firmando la petición con su llave
+privada. El envío se realiza de forma resiliente: si Moodle no responde, el error
+se registra sin interrumpir el flujo del alumno.
+
+\subsection{Consideraciones de despliegue local}
+Para las pruebas se levantó Moodle 5.0 en Docker. Se resolvieron los aspectos
+clásicos de un entorno LTI local sobre HTTP: el uso de \emph{cookies same-site}
+para el parámetro \texttt{state}, la habilitación del puerto del backend en la
+seguridad de cURL de Moodle, y una \textbf{tolerancia de reloj} (\emph{leeway})
+en la validación de los JWT para absorber el desfase de reloj del contenedor.
+
+\section{Cliente en Unreal Engine}
+Se desarrolló un cliente de ejemplo en C++ que, usando el módulo HTTP nativo de
+Unreal, canjea el token y envía la calificación. Para integrarlo a la jugabilidad
+se proveyó además un \emph{GameInstanceSubsystem} con funciones invocables desde
+Blueprint: \texttt{IniciarSesion}, \texttt{SumarAcierto} y \texttt{Terminar}. El
+Listado~\ref{lst:unreal} muestra el envío de la calificación.
+
+\begin{lstlisting}[language=C++,caption={Envío de la calificación desde Unreal (extracto).},label=lst:unreal]
+void UMetaversoSubsystem::EnviarCalificacion(float Calificacion) {
+    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Req = FHttpModule::Get().CreateRequest();
+    Req->SetURL(FString::Printf(TEXT("%s/api/game/sessions/%d/complete"), *BaseUrl, IdSesion));
+    Req->SetVerb(TEXT("POST"));
+    Req->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+    Req->SetHeader(TEXT("Authorization"), TEXT("Bearer ") + AccessToken);
+    Req->SetContentAsString(FString::Printf(
+        TEXT("{\"calificacion\":%.1f,\"datos_resultado\":{\"fuente\":\"unreal\"}}"), Calificacion));
+    Req->ProcessRequest();
+}
+\end{lstlisting}
+
+\section{Metodología de desarrollo}
+El desarrollo siguió un proceso disciplinado: para cada incremento se escribió
+primero la prueba (TDD), luego la implementación mínima, y finalmente una
+\textbf{revisión} de cumplimiento y calidad antes de integrarse. El trabajo se
+dividió en sub-proyectos (backend, panel, LTI), cada uno con su especificación,
+plan de implementación y suite de pruebas, integrándose mediante control de
+versiones (Git) con revisiones por incremento.
+
+% =========================== CAP 8: RESULTADOS ===========================
+\chapter{Resultados}
+
+Se obtuvo una plataforma funcional y verificada. Los principales resultados son:
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Backend y API} operativos, con autenticación por magic link
+  segura (hash, un solo uso, expiración) y registro de calificación y telemetría.
+  \item \textbf{Panel docente} con acceso por enlace firmado, control por rol,
+  generación de enlaces por grupo (con CSV) y consulta de resultados.
+  \item \textbf{Integración LTI 1.3} completa, probada de extremo a extremo contra
+  Moodle 5.0: el alumno entra desde la actividad, juega y la \textbf{calificación
+  regresa automáticamente} al libro de calificaciones.
+  \item \textbf{Suite de pruebas} con 59 casos automatizados en verde, que cubren
+  el flujo de tokens, sesiones, autorización del panel y la lógica de LTI.
+  \item \textbf{Documentación} técnica y operativa: guías de configuración de
+  Moodle, de uso del panel y de integración del cliente Unreal.
+\end{itemize}
+
+La Tabla~\ref{tab:result} resume el estado de los objetivos específicos.
+
+\begin{longtable}{p{10.5cm} p{2.8cm}}
+\caption{Cumplimiento de objetivos específicos.}\label{tab:result}\\
+\toprule
+\textbf{Objetivo} & \textbf{Estado} \\ \midrule
+\endhead
+Modelo de datos académico en PostgreSQL & Cumplido \\
+Autenticación por magic link de un solo uso & Cumplido \\
+API del juego (canje, sesión, calificación) & Cumplido \\
+Panel docente con control por rol & Cumplido \\
+Integración LTI 1.3 (OIDC, Deep Linking, AGS) & Cumplido \\
+Pruebas automatizadas y prueba de extremo a extremo & Cumplido \\
+\bottomrule
+\end{longtable}
+
+% =========================== CAP 9: CONCLUSIONES ===========================
+\chapter{Conclusiones y recomendaciones}
+
+\section{Conclusiones}
+El proyecto demuestra que es posible integrar un metaverso educativo con la
+operación académica real de una institución pública, con baja fricción de
+adopción y respetando el flujo de trabajo de los docentes en Moodle. El uso del
+estándar LTI 1.3 fue determinante: con un único registro de la herramienta, el
+sistema queda disponible para todos los docentes, y la calificación regresa
+automáticamente, eliminando captura manual.
+
+Desde el punto de vista de ingeniería, el desarrollo guiado por pruebas y la
+revisión por incrementos resultaron en un sistema confiable (59 pruebas) y
+mantenible, con responsabilidades bien separadas.
+
+\section{Recomendaciones y trabajo futuro}
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Producción:} servir el backend sobre HTTPS con certificados
+  válidos, gestionar secretos de forma segura y proteger el endpoint interno de
+  generación de enlaces con autenticación de docente.
+  \item \textbf{Panel ampliado:} permitir crear prácticas y agendar eventos desde
+  el panel, y mostrar las sesiones LTI en la vista de resultados.
+  \item \textbf{LTI avanzado:} incorporar NRPS (sincronización de listas) y
+  soporte multi-plataforma.
+  \item \textbf{Juego:} desarrollar el contenido jugable en Unreal y registrar el
+  esquema de \emph{deep link} para abrir el juego automáticamente desde el enlace.
+\end{itemize}
+
+% =========================== CAP 10: COMPETENCIAS ===========================
+\chapter{Competencias desarrolladas}
+\begin{itemize}[leftmargin=1.4em]
+  \item Diseño e implementación de bases de datos relacionales normalizadas.
+  \item Desarrollo de APIs REST seguras y su autenticación por tokens.
+  \item Integración de sistemas mediante estándares (LTI 1.3, OIDC, JWT, OAuth2).
+  \item Aplicación de criptografía práctica (hashing, firma de JWT, JWKS).
+  \item Desarrollo guiado por pruebas y aseguramiento de la calidad.
+  \item Uso de contenedores (Docker) y diagnóstico de problemas de integración.
+  \item Comunicación con un motor de videojuegos (Unreal Engine, C++ y HTTP).
+  \item Documentación técnica profesional.
+\end{itemize}
+
+% =========================== REFERENCIAS ===========================
+\chapter*{Referencias}
+\addcontentsline{toc}{chapter}{Referencias}
+\begin{enumerate}[leftmargin=1.6em]
+  \item 1EdTech Consortium. \emph{Learning Tools Interoperability (LTI) Core
+  Specification v1.3}. Disponible en: \url{https://www.imsglobal.org/spec/lti/v1p3}
+  \item 1EdTech Consortium. \emph{LTI Assignment and Grade Services (AGS) v2.0}.
+  Disponible en: \url{https://www.imsglobal.org/spec/lti-ags/v2p0}
+  \item Moodle. \emph{Documentación oficial}. Disponible en:
+  \url{https://docs.moodle.org/}
+  \item Laravel. \emph{Documentation}. Disponible en: \url{https://laravel.com/docs}
+  \item Laravel Sanctum. Disponible en: \url{https://laravel.com/docs/sanctum}
+  \item PostgreSQL Global Development Group. \emph{PostgreSQL Documentation}.
+  Disponible en: \url{https://www.postgresql.org/docs/}
+  \item Epic Games. \emph{Unreal Engine Documentation}. Disponible en:
+  \url{https://dev.epicgames.com/documentation/}
+  \item Packback. \emph{lti-1p3-tool (PHP LTI 1.3 library)}. Disponible en:
+  \url{https://github.com/packbackbooks/lti-1-3-php-library}
+\end{enumerate}
+
+% =========================== ANEXOS ===========================
+\appendix
+\chapter{Anexos}
+
+\section{Comandos de consola del sistema}
+\begin{lstlisting}[language=bash,caption={Comandos artisan del proyecto.}]
+# Generar un magic link de prueba (juego):
+php artisan metaverso:magic-link <id_usuario> <id_evento>
+
+# Generar un enlace de acceso al panel docente:
+php artisan metaverso:panel-acceso <id_usuario>
+
+# Generar el par de llaves RSA de la herramienta LTI:
+php artisan metaverso:lti-generar-llaves
+
+# Registrar la plataforma Moodle (LTI):
+php artisan metaverso:lti-registrar-plataforma \
+  --issuer=... --client-id=... --deployment-id=... \
+  --auth-login-url=... --auth-token-url=... --jwks-url=...
+\end{lstlisting}
+
+\section{Flujo de la API consumida por el juego}
+\begin{lstlisting}[language=bash,caption={Secuencia de llamadas (resumen).}]
+1) POST /api/game/redeem        { token }            -> { access_token, alumno, practica }
+2) POST /api/game/sessions      { id_evento }         (Bearer)  -> { id_sesion }
+3) POST /api/game/sessions/{id}/complete
+        { calificacion, datos_resultado }            (Bearer)  -> 200
+\end{lstlisting}
+
+\end{document}
