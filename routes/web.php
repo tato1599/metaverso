@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Panel\PanelLoginController;
+use App\Http\Controllers\Panel\PanelController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -22,5 +23,7 @@ Route::get('/panel/acceso/{usuario}', [PanelLoginController::class, 'acceso'])
 Route::post('/panel/salir', [PanelLoginController::class, 'salir'])->name('panel.salir');
 Route::view('/panel/acceso-invalido', 'panel.acceso-invalido')->name('panel.acceso.invalido');
 
-// Ruta temporal del dashboard (se reemplaza en Task 3)
-Route::get('/panel', fn () => 'ok')->name('panel.dashboard')->middleware('panel');
+Route::middleware('panel')->group(function () {
+    Route::get('/panel', [PanelController::class, 'dashboard'])->name('panel.dashboard');
+    Route::get('/panel/grupos/{grupo}', fn () => 'ok')->name('panel.grupos.show');
+});
