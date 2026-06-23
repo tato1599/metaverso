@@ -8,6 +8,7 @@ use App\Http\Controllers\Panel\PanelResultadoController;
 use App\Http\Controllers\Lti\JwksController;
 use App\Http\Controllers\Lti\LtiLoginController;
 use App\Http\Controllers\Lti\LtiLaunchController;
+use App\Http\Controllers\Lti\LtiDeepLinkController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -16,7 +17,8 @@ Route::get('/', function () {
 Route::get('/lti/jwks', [JwksController::class, 'index'])->name('lti.jwks');
 Route::match(['get', 'post'], '/lti/login', [LtiLoginController::class, 'login'])->name('lti.login');
 Route::post('/lti/launch', [LtiLaunchController::class, 'launch'])->name('lti.launch');
-Route::get('/lti/deeplink', fn () => 'ok')->name('lti.deeplink'); // placeholder — implemented in Task 7
+Route::get('/lti/deeplink', [LtiDeepLinkController::class, 'seleccionar'])->name('lti.deeplink');
+Route::post('/lti/deeplink', [LtiDeepLinkController::class, 'responder'])->name('lti.deeplink.responder');
 
 Route::get('/jugar/{token}', function (string $token) {
     $scheme = config('metaverso.deeplink_scheme', 'tecnm-metaverso');
