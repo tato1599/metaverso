@@ -34,6 +34,7 @@ class LibreriaLaunchValidador implements LaunchValidador {
             agsLineitemUrl: $ags['lineitem'] ?? null,
             agsEndpoint: $ags['lineitems'] ?? ($ags['lineitem'] ?? null),
             ltiPlatformId: $platform?->id,
+            launchId: $launch->getLaunchId(),
         );
     }
 }

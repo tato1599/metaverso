@@ -67,3 +67,31 @@ it('un maestro no ve el detalle de una sesion de un grupo ajeno', function () {
     $this->actingAs($uOtro);
     $this->get(route('panel.sesiones.show', $sesion->id_sesion))->assertForbidden();
 });
+
+it('sesion LTI sin evento retorna 404 en el panel (no 500)', function () {
+    $rolM = Rol::firstOrCreate(['nombre' => 'Maestro']);
+    $rolA = Rol::firstOrCreate(['nombre' => 'Alumno']);
+    $mat = Materia::create(['clave' => 'LTI2', 'nombre' => 'LTI Mat', 'creditos' => 5]);
+    $carrera = Carrera::create(['clave' => 'ISC2', 'nombre' => 'Sis2', 'duracion_semestres' => 9]);
+
+    // Staff user (maestro)
+    $uStaff = Usuario::create(['id_rol' => $rolM->id_rol, 'correo' => 'staff@b.com', 'nombre' => 'Staff', 'apellidos' => 'U']);
+    Maestro::create(['id_usuario' => $uStaff->id_usuario, 'numero_empleado' => 'ES1']);
+
+    // LTI alumno
+    $uAlumno = Usuario::create(['id_rol' => $rolA->id_rol, 'correo' => 'ltialumno@b.com', 'nombre' => 'Ana', 'apellidos' => 'LTI']);
+    $alumno = Alumno::create(['id_usuario' => $uAlumno->id_usuario, 'id_carrera' => $carrera->id_carrera, 'matricula' => '20250088', 'semestre_actual' => 2, 'generacion' => '2025']);
+    $practica = Practica::create(['id_materia' => $mat->id_materia, 'titulo' => 'Lab LTI Panel']);
+
+    // LTI session: id_evento is null (no grupo)
+    $sesion = SesionPractica::create([
+        'id_practica' => $practica->id_practica,
+        'id_evento' => null,
+        'id_alumno' => $alumno->id_alumno,
+        'fecha_inicio' => now(),
+        'estatus' => 'en_progreso',
+    ]);
+
+    $this->actingAs($uStaff);
+    $this->get(route('panel.sesiones.show', $sesion->id_sesion))->assertNotFound();
+});

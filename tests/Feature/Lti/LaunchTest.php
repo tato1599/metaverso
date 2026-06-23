@@ -52,12 +52,19 @@ it('un resource launch crea sesion LTI y muestra Abrir juego', function () {
     expect(\Illuminate\Support\Facades\Cache::get('lti_play_'.hash('sha256', $m[1])))->toBe($sesion->id_sesion);
 });
 
-it('un deep-link launch redirige al selector', function () {
+it('un deep-link launch redirige al selector y guarda lti_launch_id en sesion', function () {
     plataformaDemo();
-    $datos = new DatosLaunch(true, 'http://localhost:8080', 'mu-1', 'M', 'X', null, null, null, null, null);
+    $datos = new DatosLaunch(
+        esDeepLink: true, issuer: 'http://localhost:8080', ltiUserId: 'mu-1',
+        nombre: 'M', apellidos: 'X', correo: null,
+        idPractica: null, agsLineitemUrl: null, agsEndpoint: null, ltiPlatformId: null,
+        launchId: 'launch-abc',
+    );
     $this->app->bind(LaunchValidador::class, fn () => new class($datos) implements LaunchValidador {
         public function __construct(private $d) {}
         public function validar($request): DatosLaunch { return $this->d; }
     });
-    $this->post('/lti/launch')->assertRedirect(route('lti.deeplink'));
+    $r = $this->post('/lti/launch');
+    $r->assertRedirect(route('lti.deeplink'));
+    expect(session('lti_launch_id'))->toBe('launch-abc');
 });

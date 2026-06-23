@@ -2,9 +2,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\SesionPractica;
 use App\Models\TokenJuego;
 use App\Services\MagicLinkService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class GameAuthController extends Controller {
     public function __construct(private MagicLinkService $magicLink) {}
@@ -90,6 +92,53 @@ class GameAuthController extends Controller {
             'alumno' => $usuario->alumno,
             'practica' => $evento->practica,
             'evento' => $evento->only(['id_evento','fecha_hora_inicio','fecha_hora_fin','estatus']),
+        ]);
+    }
+
+    /**
+     * Canjear token de sesión LTI (ltiRedeem)
+     *
+     * Canjea el token de un solo uso generado en el launch LTI y devuelve un
+     * Bearer Sanctum para que Unreal Engine acceda al resto de la API de juego.
+     *
+     * @group Flujo de juego (Unreal)
+     *
+     * @bodyParam lti_session_token string required El token generado en el deep-link de la vista lti.abrir-juego. Example: abc123xyz456
+     *
+     * @response 200 scenario="Token canjeado exitosamente" {
+     *   "access_token": "1|abcdefghijklmnopqrstuvwxyz1234567890",
+     *   "token_type": "Bearer",
+     *   "alumno": {"id_alumno": 15},
+     *   "practica": {"id_practica": 2, "titulo": "Lab LTI"},
+     *   "id_sesion": 42
+     * }
+     *
+     * @response 410 scenario="Token inválido, expirado o ya usado" {
+     *   "message": "Token inválido o expirado"
+     * }
+     */
+    public function ltiRedeem(Request $request) {
+        $data = $request->validate(['lti_session_token' => 'required|string']);
+
+        $idSesion = Cache::pull('lti_play_'.hash('sha256', $data['lti_session_token']));
+        if (! $idSesion) {
+            return response()->json(['message' => 'Token inválido o expirado'], 410);
+        }
+
+        $sesion = SesionPractica::with(['alumno.usuario', 'practica'])->find($idSesion);
+        if (! $sesion || ! $sesion->alumno || ! $sesion->alumno->usuario) {
+            return response()->json(['message' => 'Sesión no encontrada'], 410);
+        }
+
+        $usuario = $sesion->alumno->usuario;
+        $accessToken = $usuario->createToken('unreal-session', ['game'])->plainTextToken;
+
+        return response()->json([
+            'access_token' => $accessToken,
+            'token_type' => 'Bearer',
+            'alumno' => $sesion->alumno,
+            'practica' => $sesion->practica,
+            'id_sesion' => $sesion->id_sesion,
         ]);
     }
 }

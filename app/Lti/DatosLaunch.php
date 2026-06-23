@@ -13,5 +13,6 @@ class DatosLaunch {
         public ?string $agsLineitemUrl,
         public ?string $agsEndpoint,
         public ?int $ltiPlatformId,
+        public ?string $launchId = null,
     ) {}
 }

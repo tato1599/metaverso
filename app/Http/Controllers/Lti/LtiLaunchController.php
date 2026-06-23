@@ -14,7 +14,7 @@ class LtiLaunchController extends Controller {
         $datos = $validador->validar($request);
 
         if ($datos->esDeepLink) {
-            session(['lti_issuer' => $datos->issuer]);
+            session(['lti_issuer' => $datos->issuer, 'lti_launch_id' => $datos->launchId]);
             return redirect()->route('lti.deeplink');
         }
 

@@ -21,6 +21,9 @@ class PanelResultadoController extends Controller {
 
     public function sesion(Request $request, SesionPractica $sesion) {
         $sesion->load(['alumno.usuario', 'practica', 'evento']);
+        if ($sesion->evento === null) {
+            abort(404, 'Esta sesión no pertenece a un grupo (sesión LTI).');
+        }
         $grupo = Grupo::findOrFail($sesion->evento->id_grupo);
         $this->panel->autorizarGrupo($request->user(), $grupo);
         return view('panel.sesion', ['sesion' => $sesion]);

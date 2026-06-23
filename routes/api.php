@@ -11,6 +11,7 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::post('/game/redeem', [GameAuthController::class, 'redeem']);
+Route::post('/game/lti-redeem', [GameAuthController::class, 'ltiRedeem']);
 
 // MVP: sin auth (uso interno/maestro); proteger con teacher auth en fase 2
 Route::post('/links', [LinkController::class, 'store']);
