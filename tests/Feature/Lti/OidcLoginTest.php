@@ -29,3 +29,17 @@ it('redirige el OIDC login a la plataforma con los parametros requeridos', funct
     expect($r->headers->get('Location'))->toContain('redirect_uri=');
     expect($r->headers->get('Location'))->toContain('client_id=CID');
 });
+
+it('redirige el OIDC login por POST tambien', function () {
+    $params = [
+        'iss' => 'http://localhost:8080',
+        'login_hint' => 'user-123',
+        'target_link_uri' => route('lti.launch'),
+        'client_id' => 'CID',
+        'lti_deployment_id' => 'DEP1',
+    ];
+    $r = $this->post('/lti/login', $params);
+    $r->assertRedirect();
+    expect($r->headers->get('Location'))->toContain('http://localhost:8080/mod/lti/auth.php');
+    expect($r->headers->get('Location'))->toContain('client_id=CID');
+});
