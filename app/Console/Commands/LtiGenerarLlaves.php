@@ -14,7 +14,10 @@ class LtiGenerarLlaves extends Command {
             'private_key_bits' => 2048,
             'private_key_type' => OPENSSL_KEYTYPE_RSA,
         ]);
-        openssl_pkey_export($res, $privatePem);
+        if (! openssl_pkey_export($res, $privatePem)) {
+            $this->error('No se pudo exportar la llave privada (OpenSSL).');
+            return self::FAILURE;
+        }
         $publicPem = openssl_pkey_get_details($res)['key'];
 
         $key = LtiKey::create([
