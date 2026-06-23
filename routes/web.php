@@ -28,9 +28,8 @@ Route::middleware('panel')->group(function () {
     Route::get('/panel', [PanelController::class, 'dashboard'])->name('panel.dashboard');
     Route::get('/panel/grupos/{grupo}', [PanelController::class, 'show'])->name('panel.grupos.show');
 
-    // Task 5: magic links
+    // Task 5: magic links (CSV se genera del lado del cliente desde la tabla renderizada)
     Route::post('/panel/grupos/{grupo}/eventos/{evento}/links', [PanelLinkController::class, 'generar'])->name('panel.grupos.eventos.links');
-    Route::get('/panel/grupos/{grupo}/eventos/{evento}/links.csv', [PanelLinkController::class, 'csv'])->name('panel.grupos.eventos.links.csv');
 
     // placeholder (Task 6)
     Route::get('/panel/grupos/{grupo}/resultados', fn () => 'ok')->name('panel.grupos.resultados');

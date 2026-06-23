@@ -32,19 +32,4 @@ class PanelLinkController extends Controller {
         $filas = $this->filasDeLinks($grupo, $evento);
         return view('panel.links', ['grupo' => $grupo, 'evento' => $evento, 'filas' => $filas]);
     }
-
-    public function csv(Request $request, Grupo $grupo, EventoAgenda $evento) {
-        $this->panel->autorizarGrupo($request->user(), $grupo);
-        abort_unless($evento->id_grupo === $grupo->id_grupo, 404);
-        $filas = $this->filasDeLinks($grupo, $evento);
-        $callback = function () use ($filas) {
-            $out = fopen('php://output', 'w');
-            fputcsv($out, ['nombre', 'matricula', 'url']);
-            foreach ($filas as $f) fputcsv($out, [$f['nombre'], $f['matricula'], $f['url']]);
-            fclose($out);
-        };
-        return response()->streamDownload($callback, "links-grupo-{$grupo->id_grupo}-evento-{$evento->id_evento}.csv", [
-            'Content-Type' => 'text/csv',
-        ]);
-    }
 }

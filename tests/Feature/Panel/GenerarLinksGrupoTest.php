@@ -30,7 +30,14 @@ it('genera un magic link por alumno inscrito del grupo', function () {
     $r = $this->post(route('panel.grupos.eventos.links', [$grupo->id_grupo, $evento->id_evento]));
     $r->assertOk();
     expect(TokenJuego::where('id_evento', $evento->id_evento)->count())->toBe(3);
-    expect($r->viewData('filas'))->toHaveCount(3);
+
+    $filas = $r->viewData('filas');
+    expect($filas)->toHaveCount(3);
+    // La página renderizada debe incluir cada URL para que el CSV del lado del cliente la pueda exportar.
+    foreach ($filas as $f) {
+        expect($f['url'])->toBeString();
+        $r->assertSee($f['url'], false);
+    }
 });
 
 it('un maestro no puede generar links de un grupo ajeno', function () {
@@ -40,14 +47,4 @@ it('un maestro no puede generar links de un grupo ajeno', function () {
     Maestro::create(['id_usuario' => $otro->id_usuario, 'numero_empleado' => 'EZZ']);
     $this->actingAs($otro);
     $this->post(route('panel.grupos.eventos.links', [$grupo->id_grupo, $evento->id_evento]))->assertForbidden();
-});
-
-it('exporta CSV con una fila por alumno', function () {
-    [$uMaestro, $grupo, $evento] = grupoConAlumnos(2);
-    $this->actingAs($uMaestro);
-    $r = $this->get(route('panel.grupos.eventos.links.csv', [$grupo->id_grupo, $evento->id_evento]));
-    $r->assertOk();
-    expect($r->headers->get('content-type'))->toContain('text/csv');
-    $lineas = array_filter(explode("\n", trim($r->streamedContent() ?? $r->getContent())));
-    expect(count($lineas))->toBe(3); // encabezado + 2 alumnos
 });
