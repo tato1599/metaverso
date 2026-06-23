@@ -20,7 +20,7 @@ class DemoSeeder extends Seeder {
         $grupo = Grupo::create(['id_materia' => $materia->id_materia, 'id_maestro' => $maestro->id_maestro, 'id_ciclo' => $ciclo->id_ciclo, 'clave' => '3A', 'cupo_maximo' => 30]);
         $practica = Practica::create(['id_materia' => $materia->id_materia, 'titulo' => 'Práctica 1: Variables', 'descripcion' => 'Introducción', 'objetivos' => 'Comprender variables', 'duracion_estimada' => 30, 'orden' => 1, 'escena_referencia' => 'Lab_Variables']);
 
-        foreach ([['Ana','Ruiz','20250001'],['Beto','Díaz','20250002'],['Caro','León','20250003']] as $i => [$nom,$ape,$mat]) {
+        foreach ([['Ana','Ruiz','20250001'],['Beto','Díaz','20250002'],['Caro','León','20250003']] as [$nom,$ape,$mat]) {
             $u = Usuario::create(['id_rol' => $roles['Alumno'], 'correo' => strtolower($nom).'@tecnm.mx', 'nombre' => $nom, 'apellidos' => $ape]);
             $alumno = Alumno::create(['id_usuario' => $u->id_usuario, 'id_carrera' => $carrera->id_carrera, 'matricula' => $mat, 'semestre_actual' => 3, 'generacion' => '2025']);
             Inscripcion::create(['id_alumno' => $alumno->id_alumno, 'id_grupo' => $grupo->id_grupo, 'fecha_inscripcion' => now(), 'estatus' => 'activa']);

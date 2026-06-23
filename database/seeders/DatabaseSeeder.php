@@ -11,13 +11,10 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Seed the application's database.
-     *
-     * Note: Removed the default Laravel User::factory() call because this app
-     * uses a custom `Usuario` model (not the framework's `User` model), and
-     * running User::factory() would fail since no User factory exists for our schema.
      */
     public function run(): void
     {
+        // La app usa el modelo Usuario, no el User del scaffold; sembramos solo datos del dominio.
         $this->call(DemoSeeder::class);
     }
 }
