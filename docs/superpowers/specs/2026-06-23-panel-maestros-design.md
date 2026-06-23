@@ -86,6 +86,10 @@ método. El panel no cambia.
 - `contrasena_hash` nunca se serializa (ya está en `$hidden`).
 - La generación de links desde el panel reutiliza `MagicLinkService` (token
   hasheado, un solo uso, TTL del juego).
+- **Riesgo aceptado (MVP):** el enlace de acceso firmado es reutilizable hasta
+  que caduca (TTL `PANEL_LOGIN_TTL_MINUTES`, default 30 min), no es de un solo
+  uso. Para staff interno con TTL corto es aceptable; en producción considerar
+  TTL más corto o enlace de un solo uso.
 
 ## 7. Manejo de errores
 

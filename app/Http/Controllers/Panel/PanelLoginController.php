@@ -7,7 +7,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class PanelLoginController extends Controller {
-    // Punto unico de inicio de sesion del panel (reutilizable por LTI).
+    /**
+     * Punto único de inicio de sesión del panel (reutilizable por el launch de LTI).
+     * OJO: este método NO valida el rol. Todo caller debe verificar antes
+     * $usuario->esStaffPanel() (como hace acceso()), o un Alumno entraría al panel.
+     */
     public function establecerSesion(Usuario $usuario): void {
         Auth::login($usuario);
     }

@@ -36,3 +36,10 @@ it('rechaza a un Alumno aunque el enlace sea valido', function () {
 it('el middleware panel bloquea acceso sin sesion', function () {
     $this->get(route('panel.dashboard'))->assertForbidden();
 });
+
+it('bloquea a un Alumno autenticado en una ruta del panel', function () {
+    $rol = Rol::create(['nombre' => 'Alumno']);
+    $u = Usuario::create(['id_rol' => $rol->id_rol, 'correo' => 'al@b.com', 'nombre' => 'A', 'apellidos' => 'L']);
+    $this->actingAs($u);
+    $this->get(route('panel.dashboard'))->assertForbidden();
+});
