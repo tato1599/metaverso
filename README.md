@@ -142,10 +142,26 @@ Respuesta `201`: `{ "url": "...", "deeplink": "...", "expira": "..." }`
 
 Las siguientes variables se añaden en `.env` (ya incluidas en `.env.example`):
 
-| Variable                 | Default           | Descripción                              |
-|--------------------------|-------------------|------------------------------------------|
-| `MAGIC_LINK_TTL_MINUTES` | `120`             | Vigencia del magic link en minutos       |
-| `GAME_DEEPLINK_SCHEME`   | `tecnm-metaverso` | URL scheme que Unreal Engine registra    |
+| Variable                    | Default           | Descripción                                      |
+|-----------------------------|-------------------|--------------------------------------------------|
+| `MAGIC_LINK_TTL_MINUTES`    | `120`             | Vigencia del magic link en minutos               |
+| `GAME_DEEPLINK_SCHEME`      | `tecnm-metaverso` | URL scheme que Unreal Engine registra            |
+| `SANCTUM_TOKEN_TTL_MINUTES` | `480`             | Vigencia del Bearer de sesión del juego          |
+| `LINKS_API_KEY`             | _(vacío)_         | Clave para `POST /api/links` (header `X-Api-Key`). Si está vacía, el endpoint rechaza todo (fail-closed). |
+
+---
+
+## Documentación interactiva y demo visual
+
+Con el servidor corriendo (`php artisan serve`):
+
+| Recurso | URL | Qué es |
+|---------|-----|--------|
+| **Doc API interactiva** | `http://localhost:8000/docs` | Documentación generada con Scribe: todos los endpoints, ejemplos y "Try it out". También exporta Postman (`/docs.postman`) y OpenAPI (`/docs.openapi`). |
+| **Demo visual** | `http://localhost:8000/demo` | Página interactiva que muestra el diagrama de flujo y ejecuta el flujo completo (generar link → redeem → iniciar → completar) en vivo. |
+| **Diagrama de flujo** | `docs/api/flujo-del-juego.md` | Diagrama Mermaid del flujo (se renderiza en GitHub). |
+
+> Para usar `/demo` y `/api/links` localmente, define `LINKS_API_KEY` en tu `.env`.
 
 ---
 
@@ -157,7 +173,7 @@ php artisan test
 composer test
 ```
 
-Suite actual: **17 tests, 68 assertions** — todos en verde.
+Suite actual: **22 tests** — todos en verde.
 
 La base de datos de tests se configura con `DB_DATABASE=metaverso_test` en `phpunit.xml`.
 
