@@ -1,6 +1,7 @@
 @extends('panel.layout')
 @section('titulo', 'Sesión #'.$sesion->id_sesion)
 @section('contenido')
+<a class="row-link" href="{{ route('panel.grupos.resultados', optional($sesion->evento)->id_grupo) }}">← Volver a resultados</a>
 <h1>Sesión #{{ $sesion->id_sesion }}</h1>
 <div class="card">
     <p><strong>Alumno:</strong> {{ optional(optional($sesion->alumno)->usuario)->nombre }} {{ optional(optional($sesion->alumno)->usuario)->apellidos }}</p>
