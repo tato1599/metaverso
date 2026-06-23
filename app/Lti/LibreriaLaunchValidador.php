@@ -4,16 +4,19 @@ namespace App\Lti;
 use App\Models\LtiPlatform;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
-use Packback\Lti1p3\LtiMessageLaunch;
+use Packback\Lti1p3\Factories\MessageFactory;
 use Packback\Lti1p3\LtiServiceConnector;
+use Packback\Lti1p3\Messages\DeepLinkingRequest;
 
 class LibreriaLaunchValidador implements LaunchValidador {
     public function validar(Request $request): DatosLaunch {
         $connector = new LtiServiceConnector(new LtiCache(), new Client());
-        $launch = LtiMessageLaunch::new(new LtiDatabase(), new LtiCache(), new LtiCookie(), $connector)
-            ->validate();
+        // API no-deprecada de v6.4: MessageFactory::create() reemplaza a
+        // LtiMessageLaunch::new()->validate() (deprecado en 6.4).
+        $factory = new MessageFactory(new LtiDatabase(), $connector, new LtiCache(), new LtiCookie());
+        $launch = $factory->create($request->all());
 
-        $data = $launch->getLaunchData();
+        $data = $launch->getBody();
         $iss = $data['iss'];
         $platform = LtiPlatform::where('issuer', $iss)->first();
 
@@ -21,7 +24,7 @@ class LibreriaLaunchValidador implements LaunchValidador {
         $ags = $data['https://purl.imsglobal.org/spec/lti-ags/claim/endpoint'] ?? [];
 
         return new DatosLaunch(
-            esDeepLink: $launch->isDeepLinkLaunch(),
+            esDeepLink: $launch instanceof DeepLinkingRequest,
             issuer: $iss,
             ltiUserId: $data['sub'] ?? '',
             nombre: $data['given_name'] ?? ($data['name'] ?? 'Alumno'),

@@ -34,6 +34,7 @@ it('un resource launch crea sesion LTI y muestra Abrir juego', function () {
 
     $r = $this->post('/lti/launch');
     $r->assertOk()->assertSee('Abrir juego');
+    $r->assertSee('lti_session_token=', false);
 
     expect(Usuario::where('lti_user_id', 'mu-77')->count())->toBe(1);
     $sesion = SesionPractica::first();
@@ -41,6 +42,14 @@ it('un resource launch crea sesion LTI y muestra Abrir juego', function () {
     expect($sesion->id_evento)->toBeNull();
     expect($sesion->ags_lineitem_url)->not->toBeNull();
     expect($sesion->lti_platform_id)->toBe($p->id);
+    expect($sesion->estatus)->toBe('en_progreso');
+    expect($sesion->ags_endpoint)->toBe('http://localhost:8080/mod/lti/services.php');
+
+    // El deeplink lleva un token de juego ligado a la sesión via cache.
+    $html = $r->getContent();
+    preg_match('/lti_session_token=([A-Za-z0-9]+)/', $html, $m);
+    expect($m[1] ?? null)->not->toBeNull();
+    expect(\Illuminate\Support\Facades\Cache::get('lti_play_'.hash('sha256', $m[1])))->toBe($sesion->id_sesion);
 });
 
 it('un deep-link launch redirige al selector', function () {
