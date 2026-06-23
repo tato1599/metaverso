@@ -6,12 +6,15 @@ use App\Http\Controllers\Panel\PanelController;
 use App\Http\Controllers\Panel\PanelLinkController;
 use App\Http\Controllers\Panel\PanelResultadoController;
 use App\Http\Controllers\Lti\JwksController;
+use App\Http\Controllers\Lti\LtiLoginController;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
 Route::get('/lti/jwks', [JwksController::class, 'index'])->name('lti.jwks');
+Route::match(['get', 'post'], '/lti/login', [LtiLoginController::class, 'login'])->name('lti.login');
+Route::post('/lti/launch', fn () => abort(501))->name('lti.launch'); // placeholder — implemented in Task 5 (LTI launch)
 
 Route::get('/jugar/{token}', function (string $token) {
     $scheme = config('metaverso.deeplink_scheme', 'tecnm-metaverso');
