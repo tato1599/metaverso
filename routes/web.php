@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Panel\PanelLoginController;
 use App\Http\Controllers\Panel\PanelController;
 use App\Http\Controllers\Panel\PanelLinkController;
+use App\Http\Controllers\Panel\PanelResultadoController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -31,6 +32,6 @@ Route::middleware('panel')->group(function () {
     // Task 5: magic links (CSV se genera del lado del cliente desde la tabla renderizada)
     Route::post('/panel/grupos/{grupo}/eventos/{evento}/links', [PanelLinkController::class, 'generar'])->name('panel.grupos.eventos.links');
 
-    // placeholder (Task 6)
-    Route::get('/panel/grupos/{grupo}/resultados', fn () => 'ok')->name('panel.grupos.resultados');
+    Route::get('/panel/grupos/{grupo}/resultados', [PanelResultadoController::class, 'index'])->name('panel.grupos.resultados');
+    Route::get('/panel/sesiones/{sesion}', [PanelResultadoController::class, 'sesion'])->name('panel.sesiones.show');
 });
