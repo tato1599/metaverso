@@ -9,6 +9,11 @@ class LinkController extends Controller {
     public function __construct(private MagicLinkService $magicLink) {}
 
     public function store(Request $request) {
+        $expected = config('metaverso.links_api_key');
+        if (! $expected || ! hash_equals($expected, (string) $request->header('X-Api-Key'))) {
+            return response()->json(['message' => 'No autorizado'], 401);
+        }
+
         $data = $request->validate([
             'id_usuario' => 'required|integer',
             'id_evento' => 'required|integer',

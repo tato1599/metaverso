@@ -19,6 +19,11 @@ class GameSessionController extends Controller {
 
         $evento = EventoAgenda::findOrFail($data['id_evento']);
 
+        $inscrito = \App\Models\Inscripcion::where('id_alumno', $alumno->id_alumno)
+            ->where('id_grupo', $evento->id_grupo)
+            ->exists();
+        abort_unless($inscrito, 403, 'El alumno no está inscrito en el grupo de este evento');
+
         $sesion = SesionPractica::create([
             'id_evento' => $evento->id_evento,
             'id_alumno' => $alumno->id_alumno,

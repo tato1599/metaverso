@@ -5,4 +5,5 @@ return [
     'deeplink_scheme' => env('GAME_DEEPLINK_SCHEME', 'tecnm-metaverso'),
     'calificacion_min' => 0,
     'calificacion_max' => 100,
+    'links_api_key' => env('LINKS_API_KEY'),
 ];

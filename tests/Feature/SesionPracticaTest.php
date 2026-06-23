@@ -1,5 +1,5 @@
 <?php
-use App\Models\{Rol, Usuario, Alumno, Carrera, SesionPractica};
+use App\Models\{Rol, Usuario, Alumno, Carrera, SesionPractica, Inscripcion};
 use App\Services\MagicLinkService;
 use Laravel\Sanctum\Sanctum;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -12,6 +12,12 @@ beforeEach(function () {
     $carrera = Carrera::create(['clave' => 'ISC', 'nombre' => 'Sis', 'duracion_semestres' => 9]);
     $this->alumno = Alumno::create(['id_usuario' => $this->usuario->id_usuario, 'id_carrera' => $carrera->id_carrera, 'matricula' => '20250001', 'semestre_actual' => 3, 'generacion' => '2025']);
     $this->evento = crearEventoBasico();
+    Inscripcion::create([
+        'id_alumno' => $this->alumno->id_alumno,
+        'id_grupo'  => $this->evento->id_grupo,
+        'fecha_inscripcion' => now(),
+        'estatus'   => 'activa',
+    ]);
 });
 
 it('inicia y completa una sesion guardando calificacion y telemetria', function () {
@@ -65,4 +71,22 @@ it('rechaza completar dos veces la misma sesion con 409', function () {
 it('rechaza token sin ability game con 403', function () {
     Sanctum::actingAs($this->usuario, []);   // sin abilities
     $this->getJson('/api/game/me')->assertStatus(403);
+});
+
+it('rechaza start si el alumno no está inscrito en el grupo del evento con 403', function () {
+    // $this->alumno is enrolled (from beforeEach), create a *different* alumno NOT enrolled
+    $rol = Rol::create(['nombre' => 'AlumnoExtra']);
+    $otroUsuario = Usuario::create(['id_rol' => $rol->id_rol, 'correo' => 'x@y.com', 'nombre' => 'X', 'apellidos' => 'Y']);
+    $carrera = Carrera::first();
+    $otroAlumno = Alumno::create([
+        'id_usuario' => $otroUsuario->id_usuario,
+        'id_carrera' => $carrera->id_carrera,
+        'matricula'  => '20259999',
+        'semestre_actual' => 1,
+        'generacion' => '2025',
+    ]);
+
+    Sanctum::actingAs($otroUsuario, ['game']);
+    $this->postJson('/api/game/sessions', ['id_evento' => $this->evento->id_evento])
+        ->assertStatus(403);
 });
