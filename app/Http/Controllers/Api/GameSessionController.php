@@ -31,13 +31,6 @@ class GameSessionController extends Controller {
     }
 
     public function complete(Request $request, int $id) {
-        $min = config('metaverso.calificacion_min', 0);
-        $max = config('metaverso.calificacion_max', 100);
-        $data = $request->validate([
-            'calificacion' => "required|numeric|min:{$min}|max:{$max}",
-            'datos_resultado' => 'nullable|array',
-        ]);
-
         $sesion = SesionPractica::findOrFail($id);
         $alumno = $request->user()->alumno;
         abort_unless($alumno && $sesion->id_alumno === $alumno->id_alumno, 403, 'Sesión de otro alumno');
@@ -45,6 +38,13 @@ class GameSessionController extends Controller {
         if ($sesion->estatus !== 'en_progreso') {
             return response()->json(['message' => 'La sesión no está en progreso'], 409);
         }
+
+        $min = config('metaverso.calificacion_min', 0);
+        $max = config('metaverso.calificacion_max', 100);
+        $data = $request->validate([
+            'calificacion' => "required|numeric|min:{$min}|max:{$max}",
+            'datos_resultado' => 'nullable|array',
+        ]);
 
         $sesion->update([
             'calificacion' => $data['calificacion'],

@@ -53,3 +53,11 @@ it('impide completar la sesion de otro alumno con 403', function () {
 
     $this->postJson("/api/game/sessions/{$idSesion}/complete", ['calificacion' => 80, 'datos_resultado' => []])->assertStatus(403);
 });
+
+it('rechaza completar dos veces la misma sesion con 409', function () {
+    Sanctum::actingAs($this->usuario, ['game']);
+    $idSesion = $this->postJson('/api/game/sessions', ['id_evento' => $this->evento->id_evento])->json('id_sesion');
+
+    $this->postJson("/api/game/sessions/{$idSesion}/complete", ['calificacion' => 80, 'datos_resultado' => []])->assertOk();
+    $this->postJson("/api/game/sessions/{$idSesion}/complete", ['calificacion' => 90, 'datos_resultado' => []])->assertStatus(409);
+});
