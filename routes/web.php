@@ -5,10 +5,13 @@ use App\Http\Controllers\Panel\PanelLoginController;
 use App\Http\Controllers\Panel\PanelController;
 use App\Http\Controllers\Panel\PanelLinkController;
 use App\Http\Controllers\Panel\PanelResultadoController;
+use App\Http\Controllers\Lti\JwksController;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/lti/jwks', [JwksController::class, 'index'])->name('lti.jwks');
 
 Route::get('/jugar/{token}', function (string $token) {
     $scheme = config('metaverso.deeplink_scheme', 'tecnm-metaverso');
