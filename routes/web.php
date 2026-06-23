@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Panel\PanelLoginController;
 use App\Http\Controllers\Panel\PanelController;
+use App\Http\Controllers\Panel\PanelLinkController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -27,7 +28,10 @@ Route::middleware('panel')->group(function () {
     Route::get('/panel', [PanelController::class, 'dashboard'])->name('panel.dashboard');
     Route::get('/panel/grupos/{grupo}', [PanelController::class, 'show'])->name('panel.grupos.show');
 
-    // placeholders (Task 5 y 6)
-    Route::post('/panel/grupos/{grupo}/eventos/{evento}/links', fn () => 'ok')->name('panel.grupos.eventos.links');
+    // Task 5: magic links
+    Route::post('/panel/grupos/{grupo}/eventos/{evento}/links', [PanelLinkController::class, 'generar'])->name('panel.grupos.eventos.links');
+    Route::get('/panel/grupos/{grupo}/eventos/{evento}/links.csv', [PanelLinkController::class, 'csv'])->name('panel.grupos.eventos.links.csv');
+
+    // placeholder (Task 6)
     Route::get('/panel/grupos/{grupo}/resultados', fn () => 'ok')->name('panel.grupos.resultados');
 });
