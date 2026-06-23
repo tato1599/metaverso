@@ -1,5 +1,5 @@
 <?php
-use App\Models\{Rol, Usuario, Carrera, Materia, Maestro, CicloEscolar, Grupo, Practica, EventoAgenda, TokenJuego};
+use App\Models\{Rol, Usuario, Materia, Maestro, CicloEscolar, Grupo, Practica, EventoAgenda, TokenJuego};
 use App\Services\MagicLinkService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -31,6 +31,7 @@ it('genera un magic link con token hasheado y expiracion default', function () {
     expect($modelo->token_hash)->toBe(hash('sha256', $res['token']));
     expect($modelo->usado)->toBeFalse();
     // default 120 min: expira aprox en 2h
-    expect(abs($modelo->fecha_expiracion->diffInMinutes(now())))->toBeGreaterThan(115);
+    $diff = abs($modelo->fecha_expiracion->diffInMinutes(now()));
+    expect($diff)->toBeGreaterThan(115)->toBeLessThan(125);
     expect($res['deeplink'])->toContain('tecnm-metaverso://play?token=');
 });
