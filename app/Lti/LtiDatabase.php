@@ -24,7 +24,7 @@ class LtiDatabase implements IDatabase
             return null;
         }
 
-        $key = LtiKey::where('activo', true)->first();
+        $key = LtiKey::where('activo', true)->orderByDesc('id')->first();
         if (! $key) {
             return null;
         }
