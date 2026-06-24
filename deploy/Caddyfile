@@ -1,0 +1,11 @@
+# Reverse proxy con HTTPS automático. El dominio viene de APP_DOMAIN (deploy/.env).
+{$APP_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy app:80
+
+	# ── Solo red interna (sin internet / sin Let's Encrypt) ──
+	# Si el servidor NO sale a internet y usarás un certificado interno,
+	# descomenta la siguiente línea: Caddy emitirá su propia CA interna.
+	# Luego hay que hacer que Moodle confíe en esa CA (ver DEPLOY.md).
+	# tls internal
+}
