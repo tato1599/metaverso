@@ -18,7 +18,8 @@
 \usepackage{fancyhdr}
 \usepackage{titlesec}
 \usepackage{tikz}
-\usetikzlibrary{shapes.geometric,arrows.meta,positioning,fit,backgrounds}
+\usetikzlibrary{shapes.geometric,shapes.multipart,arrows.meta,positioning,fit,backgrounds}
+\usepackage{pdflscape}
 \usepackage[hidelinks]{hyperref}
 \hypersetup{colorlinks=true,linkcolor=azultec,urlcolor=blue!60!black,
   pdftitle={Diseno Tecnico - Metaverso Escolar TecNM},pdfauthor={Daniel Octavio Ramirez Neri}}
@@ -185,6 +186,81 @@ Esquema relacional normalizado, nombres en español, llaves primarias propias
 \textbf{Decisiones de seguridad del esquema:} el token del magic link se guarda
 \emph{hasheado} (nunca en claro); \texttt{id\_evento} se hizo nullable para no
 forzar un evento de agenda en los lanzamientos por LTI.
+
+\subsection{Diagrama entidad-relación}
+La Figura~\ref{fig:er} muestra el modelo completo. Cada entidad lista su llave
+primaria (subrayada) y sus llaves foráneas (FK). Las flechas van de la entidad
+del lado ``1'' hacia la del lado ``N'' (relaciones uno-a-muchos); las relaciones
+hacia \texttt{sesiones\_practica} marcadas con FK \emph{nullable} aplican solo a
+las sesiones creadas por LTI.
+
+\begin{landscape}
+\begin{figure}[p]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  ent/.style={rectangle split, rectangle split parts=2, rectangle split part align=left,
+    draw=azultec, thick, rounded corners=1pt, fill=white,
+    rectangle split part fill={azultec!18,white}, font=\scriptsize,
+    text width=2.7cm, align=left, inner sep=3pt},
+  rel/.style={-{Stealth[length=2mm]}, gray!70, semithick},
+  reln/.style={-{Stealth[length=2mm]}, dashed, gray!70, semithick}]
+
+  % --- Columna 0 ---
+  \node[ent] (rol)     at (0,10.5) {\textbf{roles} \nodepart{two}\underline{id\_rol}};
+  \node[ent] (carrera) at (0,7.5)  {\textbf{carreras} \nodepart{two}\underline{id\_carrera}};
+  \node[ent] (ciclo)   at (0,4.5)  {\textbf{ciclos\_escolares} \nodepart{two}\underline{id\_ciclo}};
+  \node[ent] (espacio) at (0,1.5)  {\textbf{espacios} \nodepart{two}\underline{id\_espacio}};
+
+  % --- Columna 1 ---
+  \node[ent] (usuario) at (4,10.5) {\textbf{usuarios} \nodepart{two}\underline{id\_usuario}\\ id\_rol (FK)\\ lti\_user\_id};
+  \node[ent] (materia) at (4,6.5)  {\textbf{materias} \nodepart{two}\underline{id\_materia}};
+  \node[ent] (matcar)  at (4,3.3)  {\textbf{materia\_carrera} \nodepart{two}\underline{id\_materia\_carrera}\\ id\_materia (FK)\\ id\_carrera (FK)};
+
+  % --- Columna 2 ---
+  \node[ent] (alumno)  at (8,11.3) {\textbf{alumnos} \nodepart{two}\underline{id\_alumno}\\ id\_usuario (FK)\\ id\_carrera (FK)};
+  \node[ent] (maestro) at (8,8.3)  {\textbf{maestros} \nodepart{two}\underline{id\_maestro}\\ id\_usuario (FK)};
+  \node[ent] (grupo)   at (8,5.3)  {\textbf{grupos} \nodepart{two}\underline{id\_grupo}\\ id\_materia (FK)\\ id\_maestro (FK)\\ id\_ciclo (FK)};
+  \node[ent] (practica)at (8,1.8)  {\textbf{practicas} \nodepart{two}\underline{id\_practica}\\ id\_materia (FK)};
+
+  % --- Columna 3 ---
+  \node[ent] (token)   at (12.2,11.3){\textbf{tokens\_juego} \nodepart{two}\underline{id\_token}\\ id\_usuario (FK)\\ id\_evento (FK)};
+  \node[ent] (inscr)   at (12.2,8)   {\textbf{inscripciones} \nodepart{two}\underline{id\_inscripcion}\\ id\_alumno (FK)\\ id\_grupo (FK)};
+  \node[ent] (evento)  at (12.2,4.3) {\textbf{eventos\_agenda} \nodepart{two}\underline{id\_evento}\\ id\_practica (FK)\\ id\_grupo (FK)\\ id\_espacio (FK)};
+
+  % --- Columna 4 ---
+  \node[ent] (sesion)  at (16.6,7.5) {\textbf{sesiones\_practica} \nodepart{two}\underline{id\_sesion}\\ id\_evento (FK, null)\\ id\_alumno (FK)\\ id\_practica (FK)\\ lti\_platform\_id (FK, null)};
+  \node[ent] (platform)at (16.6,3)   {\textbf{lti\_platforms} \nodepart{two}\underline{id}};
+  \node[ent] (ltikey)  at (16.6,1)   {\textbf{lti\_keys} \nodepart{two}\underline{id}};
+  \node[ent] (ltinonce)at (19.4,1)   {\textbf{lti\_nonces} \nodepart{two}\underline{id}};
+
+  % --- Relaciones 1..N ---
+  \draw[rel] (rol) -- (usuario);
+  \draw[rel] (usuario) -- (alumno);
+  \draw[rel] (usuario) -- (maestro);
+  \draw[rel] (usuario) -- (token);
+  \draw[rel] (carrera) -- (alumno);
+  \draw[rel] (carrera) -- (matcar);
+  \draw[rel] (materia) -- (matcar);
+  \draw[rel] (materia) -- (grupo);
+  \draw[rel] (materia) -- (practica);
+  \draw[rel] (maestro) -- (grupo);
+  \draw[rel] (ciclo) -- (grupo);
+  \draw[rel] (alumno) -- (inscr);
+  \draw[rel] (grupo) -- (inscr);
+  \draw[rel] (practica) -- (evento);
+  \draw[rel] (grupo) -- (evento);
+  \draw[rel] (espacio) to[bend right=10] (evento);
+  \draw[rel] (evento) -- (token);
+  \draw[rel] (evento) -- (sesion);
+  \draw[rel] (alumno) to[bend left=12] (sesion);
+  \draw[rel] (practica) to[bend right=18] (sesion);
+  \draw[reln] (platform) -- (sesion);
+\end{tikzpicture}}
+\caption{Diagrama entidad-relación completo. Flecha continua = relación uno-a-muchos (de ``1'' a ``N''); flecha discontinua = FK \emph{nullable} (solo sesiones LTI).}
+\label{fig:er}
+\end{figure}
+\end{landscape}
 
 % ============================================================
 \section{Autenticación y seguridad}
