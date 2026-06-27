@@ -1,0 +1,541 @@
+% ============================================================================
+%  Cuerpo de la presentacion: diapositivas + guion (\note) por slide.
+%  Se incluye desde presentacion.tex (limpia) y presentacion-notas.tex (con guion).
+% ============================================================================
+
+% ---------------------------------------------------------------------------
+%  PORTADA
+% ---------------------------------------------------------------------------
+{
+\setbeamercolor{background canvas}{bg=azultec}
+\begin{frame}[plain]
+\begin{tikzpicture}[remember picture,overlay]
+  % banda diagonal guinda inferior
+  \fill[guinda] ([yshift=3.4cm]current page.south west)
+    -- (current page.south west) -- (current page.south east)
+    -- ([yshift=1.6cm]current page.south east) -- cycle;
+  % filo ambar
+  \fill[ambar]  ([yshift=3.4cm]current page.south west)
+    -- ([yshift=3.15cm]current page.south west)
+    -- ([yshift=1.35cm]current page.south east)
+    -- ([yshift=1.6cm]current page.south east) -- cycle;
+  % eyebrow
+  \node[anchor=north west, text=ambar, font=\demi\large]
+    at ([xshift=1.15cm,yshift=-1.0cm]current page.north west)
+    {INSTITUTO TECNOL\'OGICO DE CIUDAD JU\'AREZ \, $\cdot$ \, TecNM};
+  % titulo (una sola linea, sin guion feo)
+  \node[anchor=north west, text=white, font=\heavy\fontsize{42}{44}\selectfont]
+    at ([xshift=1.05cm,yshift=-1.85cm]current page.north west)
+    {Metaverso Escolar};
+  % subtitulo
+  \node[anchor=north west, text=white, font=\medium\fontsize{17}{21}\selectfont, text width=13cm]
+    at ([xshift=1.15cm,yshift=-3.5cm]current page.north west)
+    {Pr\'acticas en videojuego conectadas a Moodle,\\ con calificaci\'on autom\'atica};
+  % autor / fecha sobre la banda
+  \node[anchor=west, text=white, font=\demi\normalsize]
+    at ([xshift=1.18cm,yshift=2.15cm]current page.south west)
+    {Daniel Octavio Ram\'irez Neri};
+  \node[anchor=west, text=white!85, font=\normalsize]
+    at ([xshift=1.18cm,yshift=1.4cm]current page.south west)
+    {Residencia Profesional \, $\cdot$ \, Junio 2026};
+\end{tikzpicture}
+\end{frame}
+}
+\note{
+\textbf{Apertura (30 s).} Saluda y presenta: ``Esto es el Metaverso Escolar, un
+proyecto que conecta un videojuego de pr\'acticas con Moodle. El alumno juega, y su
+calificaci\'on llega sola a la plataforma, sin que el maestro capture nada.''
+Aclara que el autor (Daniel) no pudo asistir y que esta presentaci\'on los lleva
+paso a paso. Promete una demo al final.
+}
+
+% ---------------------------------------------------------------------------
+%  EL PROBLEMA
+% ---------------------------------------------------------------------------
+\begin{frame}{El problema que resolvemos}
+\vspace{0.2cm}
+\begin{columns}[T]
+\column{0.5\textwidth}
+\begin{tarjetabox}{rojoitcj}
+{\demi\color{rojoitcj}Hoy}\\[2pt]
+Las pr\'acticas en simuladores o juegos viven \hl{aparte} de la plataforma escolar.
+El maestro \hl{revisa a mano} y \hl{captura calificaciones} una por una.
+\end{tarjetabox}
+\begin{tarjetabox}{gristenue}
+{\demi\color{gristenue}Consecuencia}\\[2pt]
+Tiempo perdido, errores de captura y poca evidencia de lo que realmente hizo cada alumno.
+\end{tarjetabox}
+
+\column{0.5\textwidth}
+\begin{tarjetabox}{verde}
+{\demi\color{verde}Con el Metaverso}\\[2pt]
+El juego se abre \hlb{desde Moodle} como una actividad m\'as. Al terminar,
+la calificaci\'on \hlb{regresa sola} a la plataforma.
+\end{tarjetabox}
+\begin{tarjetabox}{azulviv}
+{\demi\color{azulviv}Resultado}\\[2pt]
+Cero captura manual, evidencia automatica del desempe\~no y una experiencia
+mucho m\'as atractiva para el alumno.
+\end{tarjetabox}
+\end{columns}
+\end{frame}
+\note{
+\textbf{El porqu\'e (1 min).} Plantea el dolor: hoy las pr\'acticas digitales no
+``hablan'' con Moodle. El maestro tiene que revisar y capturar a mano. Eso cuesta
+tiempo y se presta a errores. Recalca la columna verde: con esto, el juego vive
+DENTRO de Moodle y la nota se sincroniza sola. Pregunta ret\'orica al p\'ublico:
+``\textit{?`Cu\'antas horas se van en capturar calificaciones?}''
+}
+
+% ---------------------------------------------------------------------------
+%  LA SOLUCION EN UNA FRASE
+% ---------------------------------------------------------------------------
+\begin{frame}{La idea, en una frase}
+\vspace{0.9cm}
+\begin{center}
+{\heavy\fontsize{26}{32}\selectfont\color{azultec}
+El alumno entra a Moodle, abre la actividad,\\[6pt]
+\hl{juega la pr\'actica}\, y su \hlb{calificaci\'on aparece sola}\\[6pt]
+en el curso.}
+\end{center}
+\vspace{0.8cm}
+\begin{center}
+{\medium\color{gristenue}\large Sin instalar nada raro. Sin capturar a mano. Usando el
+est\'andar que Moodle ya entiende.}
+\end{center}
+\end{frame}
+\note{
+\textbf{Ancla mental (30 s).} Esta es la frase que quieres que recuerden. L\'eela
+despacio. El mensaje clave: ``usa un est\'andar que Moodle YA entiende'' (se llama
+LTI, lo vemos en un momento) — no es un parche ni un hack, es la forma oficial de
+integrar herramientas con Moodle.
+}
+
+% ---------------------------------------------------------------------------
+%  QUE GANA CADA QUIEN
+% ---------------------------------------------------------------------------
+\begin{frame}{Qu\'e gana cada quien}
+\vspace{0.25cm}
+\begin{columns}[T]
+\column{0.33\textwidth}
+\begin{tarjetabox}{azulviv}
+\begin{center}\bolanum{azulviv}{A}\end{center}
+\vspace{2pt}{\demi\color{azulviv}\large Alumno}\\[3pt]
+Una pr\'actica divertida tipo videojuego. Entra con un clic desde su curso, sin
+crear otra cuenta.
+\end{tarjetabox}
+
+\column{0.33\textwidth}
+\begin{tarjetabox}{guinda}
+\begin{center}\bolanum{guinda}{M}\end{center}
+\vspace{2pt}{\demi\color{guinda}\large Maestro}\\[3pt]
+Califica solo. Ve resultados y un panel propio, sin tocar c\'odigo ni capturar
+notas a mano.
+\end{tarjetabox}
+
+\column{0.33\textwidth}
+\begin{tarjetabox}{verde}
+\begin{center}\bolanum{verde}{I}\end{center}
+\vspace{2pt}{\demi\color{verde}\large Instituci\'on}\\[3pt]
+Tecnolog\'ia est\'andar y abierta. Cada escuela puede tener su propio servidor,
+con sus datos.
+\end{tarjetabox}
+\end{columns}
+\end{frame}
+\note{
+\textbf{Beneficios por p\'ublico (1 min).} Adapta seg\'un qui\'en est\'e en la sala:
+si hay directivos, enf\'atiza ``Instituci\'on'' (datos propios, est\'andar, sin
+amarre a un proveedor). Si hay docentes, enf\'atiza ``Maestro'' (no capturan nada).
+Para todos: el alumno entra con UN clic, sin cuenta nueva.
+}
+
+% ---------------------------------------------------------------------------
+%  DIVISOR 01
+% ---------------------------------------------------------------------------
+\divisor{01}{C\'omo se vive}
+
+% ---------------------------------------------------------------------------
+%  EL RECORRIDO DEL ALUMNO (linea de tiempo)
+% ---------------------------------------------------------------------------
+\begin{frame}{El recorrido del alumno, paso a paso}
+\vspace{0.7cm}
+\begin{center}
+\begin{tikzpicture}[every node/.style={font=\small}]
+  % linea base
+  \draw[line width=2pt, gristenue!50] (0,0) -- (12.4,0);
+  \foreach \x/\c/\n in {0/azulviv/1, 3.1/guinda/2, 6.2/azulviv/3, 9.3/guinda/4, 12.4/verde/5}{
+    \fill[\c] (\x,0) circle (8pt);
+    \node[text=white, font=\cond\small] at (\x,0) {\n};
+  }
+  \node[text width=2.6cm, align=center, anchor=north] at (0,-0.45)   {\demi Entra a Moodle\\[1pt]\scriptsize con su cuenta de siempre};
+  \node[text width=2.6cm, align=center, anchor=north] at (3.1,-0.45) {\demi Abre la actividad\\[1pt]\scriptsize ``Pr\'actica en metaverso''};
+  \node[text width=2.6cm, align=center, anchor=north] at (6.2,-0.45) {\demi Se lanza el juego\\[1pt]\scriptsize con un enlace seguro};
+  \node[text width=2.6cm, align=center, anchor=north] at (9.3,-0.45) {\demi Realiza la pr\'actica\\[1pt]\scriptsize aciertos y avance};
+  \node[text width=2.8cm, align=center, anchor=north] at (12.4,-0.45){\demi\color{verde}Su nota aparece\\[1pt]\scriptsize sola en el curso};
+\end{tikzpicture}
+\end{center}
+\vspace{0.5cm}
+\begin{center}
+\begin{calloutbox}{azulviv}
+\demi El alumno nunca ve nada t\'ecnico: todo pasa entre Moodle, el servidor y el
+juego \textbf{de forma autom\'atica}.
+\end{calloutbox}
+\end{center}
+\end{frame}
+\note{
+\textbf{El flujo completo (1.5 min).} Recorre los 5 c\'irculos con el dedo.
+(1) El alumno YA tiene su Moodle. (2) En su curso aparece la actividad como
+cualquier tarea. (3) Al darle clic, el juego se abre solo con un enlace seguro de
+un solo uso. (4) Juega la pr\'actica. (5) Al terminar, la calificaci\'on viaja de
+regreso y aparece en Moodle. Remata con el callout: el alumno no ve nada t\'ecnico.
+}
+
+% ---------------------------------------------------------------------------
+%  LTI: se ve como una actividad mas
+% ---------------------------------------------------------------------------
+\begin{frame}{?`Por qu\'e parece parte de Moodle?}
+\vspace{0.25cm}
+\begin{columns}[T]
+\column{0.52\textwidth}
+Usa \hl{LTI}, el est\'andar oficial para conectar herramientas con plataformas
+educativas. Por eso:
+\vspace{4pt}
+\begin{itemize}\setlength\itemsep{6pt}
+  \item Se agrega como ``\demi herramienta externa'', igual que un Kahoot.
+  \item El alumno \hl{no crea otra cuenta}: usa su sesi\'on de Moodle.
+  \item Es abierto: \hlb{no amarra} a la escuela con un proveedor.
+\end{itemize}
+\column{0.48\textwidth}
+\begin{tarjetabox}{guinda}
+{\demi\color{guinda}En cristiano}\\[2pt]
+LTI es el ``cable universal'' entre Moodle y herramientas de fuera. Nuestro juego
+se enchufa sin trucos.
+\end{tarjetabox}
+\begin{tarjetabox}{verde}
+{\demi\color{verde}Ya probado}\\[2pt]
+Funciona contra un Moodle \textbf{real}, no solo en teor\'ia.
+\end{tarjetabox}
+\end{columns}
+\end{frame}
+\note{
+\textbf{LTI sin tecnicismos (1 min).} La palabra clave es LTI. No te metas en
+siglas: di que es el ``cable universal'' (o ``el USB'') entre Moodle y herramientas
+externas. Es el MISMO mecanismo que usan Kahoot, Turnitin, etc. Eso da confianza:
+no inventamos nada raro, seguimos el est\'andar que la industria ya usa. Subraya:
+ya se prob\'o contra un Moodle real.
+}
+
+% ---------------------------------------------------------------------------
+%  LA CALIFICACION REGRESA SOLA
+% ---------------------------------------------------------------------------
+\begin{frame}{La calificaci\'on regresa sola}
+\vspace{0.5cm}
+\begin{center}
+\begin{tikzpicture}[node distance=0.8cm, every node/.style={font=\demi}]
+  \node[draw=azulviv, line width=1.5pt, rounded corners=8pt, fill=white,
+        text width=2.7cm, align=center, minimum height=1.5cm] (juego)
+        {Juego\\[2pt]\scriptsize El alumno termina la pr\'actica};
+  \node[draw=azultec, line width=1.5pt, rounded corners=8pt, fill=white,
+        text width=2.9cm, align=center, minimum height=1.5cm, right=1.6cm of juego] (server)
+        {Servidor\\[2pt]\scriptsize calcula la nota};
+  \node[draw=guinda, line width=1.5pt, rounded corners=8pt, fill=white,
+        text width=2.7cm, align=center, minimum height=1.5cm, right=1.6cm of server] (moodle)
+        {Moodle\\[2pt]\scriptsize la nota aparece en el curso};
+  \draw[-{Stealth}, line width=2pt, azulviv] (juego) -- (server)
+        node[midway, above, font=\scriptsize\demi, text=azulviv]{aciertos};
+  \draw[-{Stealth}, line width=2pt, guinda] (server) -- (moodle)
+        node[midway, above, font=\scriptsize\demi, text=guinda]{AGS};
+\end{tikzpicture}
+\end{center}
+\vspace{0.5cm}
+\begin{center}
+\begin{calloutbox}{verde}
+\demi El maestro \textbf{no captura nada}. La calificaci\'on del libro de notas de
+Moodle se actualiza autom\'aticamente al terminar la sesi\'on.
+\end{calloutbox}
+\end{center}
+\end{frame}
+\note{
+\textbf{El cierre del c\'irculo (1 min).} Esta es la magia que m\'as impresiona.
+Explica el flujo de derecha: el juego reporta los aciertos al servidor, el servidor
+calcula la nota y la manda a Moodle usando AGS (el mecanismo de calificaciones de
+LTI). Resultado: la nota aparece en el libro de calificaciones SIN que nadie la
+escriba. Esta es la diapositiva para hacer una pausa y dejar que cale.
+}
+
+% ---------------------------------------------------------------------------
+%  DIVISOR 02
+% ---------------------------------------------------------------------------
+\divisor{02}{C\'omo est\'a hecho}
+
+% ---------------------------------------------------------------------------
+%  ARQUITECTURA
+% ---------------------------------------------------------------------------
+\begin{frame}{La arquitectura, a vista de p\'ajaro}
+\vspace{0.3cm}
+\begin{center}
+\begin{tikzpicture}[every node/.style={font=\demi\small}]
+  \node[draw=guinda, line width=1.6pt, rounded corners=9pt, fill=guinda!6,
+        text width=2.8cm, align=center, minimum height=1.4cm] (moodle)
+        {\color{guinda}Moodle\\[1pt]\scriptsize plataforma del curso};
+  \node[draw=azultec, line width=1.6pt, rounded corners=9pt, fill=azultec!6,
+        text width=3.2cm, align=center, minimum height=1.4cm, right=2.0cm of moodle] (back)
+        {\color{azultec}Servidor (Laravel)\\[1pt]\scriptsize la l\'ogica + la seguridad};
+  \node[draw=azulviv, line width=1.6pt, rounded corners=9pt, fill=azulviv!6,
+        text width=2.8cm, align=center, minimum height=1.4cm, right=2.0cm of back] (juego)
+        {\color{azulviv}Juego (Unreal)\\[1pt]\scriptsize la pr\'actica};
+  \node[draw=tinta!55, line width=1.4pt, rounded corners=9pt, fill=tinta!4,
+        text width=3.2cm, align=center, minimum height=0.85cm, below=0.8cm of back] (db)
+        {\color{tinta}Base de datos\\[1pt]\scriptsize alumnos, sesiones, notas};
+
+  \draw[{Stealth}-{Stealth}, line width=1.6pt, guinda] (moodle) -- (back)
+        node[midway, above, font=\scriptsize\demi, text=guinda]{LTI};
+  \draw[{Stealth}-{Stealth}, line width=1.6pt, azulviv] (back) -- (juego)
+        node[midway, above, font=\scriptsize\demi, text=azulviv]{enlace + API};
+  \draw[-{Stealth}, line width=1.4pt, tinta!55] (back) -- (db);
+\end{tikzpicture}
+\end{center}
+\vspace{0.25cm}
+\begin{itemize}\small\setlength\itemsep{2pt}
+  \item \hl{Moodle} manda al alumno y recibe la nota (v\'ia LTI).
+  \item El \hlb{servidor} es el cerebro: valida, genera el enlace y guarda todo.
+  \item El \textbf{juego} solo se enfoca en la pr\'actica y reporta resultados.
+\end{itemize}
+\end{frame}
+\note{
+\textbf{Arquitectura (1.5 min).} Tres piezas, f\'acil de recordar. (1) Moodle:
+lo que ya tienen. (2) El servidor en Laravel: el cerebro; aqu\'i vive la seguridad,
+la l\'ogica y la base de datos. (3) El juego en Unreal: solo se preocupa por la
+pr\'actica. Las flechas: Moodle y servidor hablan por LTI; servidor y juego por un
+enlace seguro + API. No entres en detalle t\'ecnico salvo que pregunten.
+}
+
+% ---------------------------------------------------------------------------
+%  EL ENLACE SEGURO (MAGIC LINK)
+% ---------------------------------------------------------------------------
+\begin{frame}{El enlace que abre el juego es seguro}
+\vspace{0.25cm}
+\begin{columns}[T]
+\column{0.5\textwidth}
+Cuando el alumno abre la actividad, el servidor crea un \hl{enlace m\'agico} con un
+token \'unico:
+\begin{itemize}\setlength\itemsep{5pt}
+  \item \demi De un solo uso: una vez abierto, \hl{ya no sirve}.
+  \item \demi Con caducidad: vence solo (por defecto 2 horas).
+  \item \demi Personal: identifica a ese alumno, ese curso, esa pr\'actica.
+\end{itemize}
+\column{0.5\textwidth}
+\begin{tarjetabox}{azultec}
+{\demi\color{azultec}?`Por qu\'e importa?}\\[3pt]
+Nadie puede ``reusar'' el enlace de otro ni hacer trampa abriendo el juego por su
+cuenta. La identidad viene \textbf{firmada} desde Moodle.
+\end{tarjetabox}
+\begin{calloutbox}{ambar}
+\demi As\'i, la calificaci\'on siempre se le asigna a \textbf{la persona correcta}.
+\end{calloutbox}
+\end{columns}
+\end{frame}
+\note{
+\textbf{Seguridad del lanzamiento (1 min).} El concepto a transmitir: el enlace que
+abre el juego es como un boleto de un solo uso, con caducidad y a nombre del alumno.
+Eso evita trampas (no puedes reusar el enlace de un compa\~nero) y garantiza que la
+nota se le ponga a quien de verdad jug\'o. La identidad viene firmada desde Moodle,
+no la inventa el juego.
+}
+
+% ---------------------------------------------------------------------------
+%  PANEL DE MAESTROS
+% ---------------------------------------------------------------------------
+\begin{frame}{El panel para maestros}
+\vspace{0.25cm}
+\begin{columns}[T]
+\column{0.5\textwidth}
+\begin{tarjetabox}{guinda}
+{\demi\color{guinda}Sin tocar Moodle ni c\'odigo}\\[3pt]
+El maestro entra con un enlace propio y administra sus grupos y pr\'acticas desde
+una pantalla sencilla.
+\end{tarjetabox}
+\begin{tarjetabox}{azulviv}
+{\demi\color{azulviv}Compatible con LTI}\\[3pt]
+El panel y la integraci\'on con Moodle \textbf{conviven}: lo que se hace en uno se
+refleja en el otro.
+\end{tarjetabox}
+\column{0.5\textwidth}
+Desde el panel puede:
+\begin{itemize}\setlength\itemsep{4pt}
+  \item Ver sus \hl{grupos} y a los alumnos.
+  \item Generar \hl{enlaces} de pr\'actica.
+  \item Consultar \hlb{resultados} y avance.
+\end{itemize}
+\end{columns}
+\end{frame}
+\note{
+\textbf{Panel docente (1 min).} Aclara la duda t\'ipica: ``?`y si el maestro no usa
+Moodle para todo?'' Tiene un panel propio, con enlace de acceso, donde ve grupos,
+genera enlaces de pr\'actica y consulta resultados. Lo importante: el panel y LTI
+NO se pelean, conviven. Es flexibilidad para distintos estilos de docente.
+}
+
+% ---------------------------------------------------------------------------
+%  SEGURIDAD
+% ---------------------------------------------------------------------------
+\begin{frame}{Pensado con seguridad desde el inicio}
+\vspace{0.3cm}
+\begin{columns}[T]
+\column{0.5\textwidth}
+\begin{tarjetabox}{azultec}
+{\demi\color{azultec}Identidad firmada}\\[2pt]\scriptsize
+La identidad del alumno viaja firmada desde Moodle (LTI 1.3). No se puede falsificar.
+\end{tarjetabox}
+\begin{tarjetabox}{guinda}
+{\demi\color{guinda}Enlaces de un solo uso}\\[2pt]\scriptsize
+Tokens \'unicos, con caducidad, que se invalidan al usarse.
+\end{tarjetabox}
+\column{0.5\textwidth}
+\begin{tarjetabox}{verde}
+{\demi\color{verde}Conexi\'on cifrada (HTTPS)}\\[2pt]\scriptsize
+Todo viaja cifrado, con certificado autom\'atico en el despliegue.
+\end{tarjetabox}
+\begin{tarjetabox}{azulviv}
+{\demi\color{azulviv}Datos en casa}\\[2pt]\scriptsize
+Cada escuela puede alojar su propio servidor y su propia base de datos.
+\end{tarjetabox}
+\end{columns}
+\end{frame}
+\note{
+\textbf{Seguridad (45 s).} Cuatro mensajes, no m\'as: identidad firmada (no se
+falsifica), enlaces de un solo uso, todo cifrado por HTTPS, y los datos se quedan en
+la escuela. Si alguien de sistemas pregunta detalles, ofrece el documento t\'ecnico.
+}
+
+% ---------------------------------------------------------------------------
+%  DIVISOR 03
+% ---------------------------------------------------------------------------
+\divisor{03}{Listo para usarse}
+
+% ---------------------------------------------------------------------------
+%  DESPLIEGUE
+% ---------------------------------------------------------------------------
+\begin{frame}{F\'acil de instalar y de replicar}
+\vspace{0.25cm}
+\begin{columns}[T]
+\column{0.5\textwidth}
+\begin{tarjetabox}{azulviv}
+{\demi\color{azulviv}Un par de comandos}\\[3pt]
+Se instala con Docker: la app, la base de datos y el HTTPS autom\'atico se levantan
+juntos. No hay que configurar servidores a mano.
+\end{tarjetabox}
+\begin{tarjetabox}{verde}
+{\demi\color{verde}En el servidor de la escuela}\\[3pt]
+Pensado para vivir \textbf{on-premise}, junto a su propio Moodle, sin depender de la nube.
+\end{tarjetabox}
+\column{0.5\textwidth}
+\begin{tarjetabox}{guinda}
+{\demi\color{guinda}Un servidor por escuela}\\[3pt]
+Si cada plantel quiere el suyo, se replica clonando el proyecto y cambiando un
+archivo de configuraci\'on. Cada quien con sus datos.
+\end{tarjetabox}
+\begin{calloutbox}{ambar}
+\demi Ya existe un \textbf{kit de despliegue} con gu\'ia paso a paso.
+\end{calloutbox}
+\end{columns}
+\end{frame}
+\note{
+\textbf{Despliegue (1 min). } Mensaje para directivos/sistemas: instalar es f\'acil
+(Docker, un par de comandos) y vive en el servidor de la escuela, junto a su Moodle,
+sin nube obligatoria. Si quieren un servidor por plantel, se replica cambiando un
+archivo. Ya hay un kit con gu\'ia. Esto baja el miedo de ``?`y qui\'en lo va a
+mantener?''.
+}
+
+% ---------------------------------------------------------------------------
+%  ESTADO ACTUAL
+% ---------------------------------------------------------------------------
+\begin{frame}{Qu\'e ya funciona hoy}
+\vspace{0.35cm}
+\newcommand{\ok}{\textcolor{verde}{\large\textbf{\checkmark}}\;}
+\begin{columns}[T]
+\column{0.5\textwidth}
+\ok Lanzamiento desde Moodle real (LTI 1.3)\\[7pt]
+\ok Selecci\'on de pr\'actica (Deep Linking)\\[7pt]
+\ok Calificaci\'on de regreso a Moodle (AGS)\\[7pt]
+\ok Enlaces seguros de un solo uso
+\column{0.5\textwidth}
+\ok Panel de maestros funcional\\[7pt]
+\ok API documentada para el juego\\[7pt]
+\ok Ejemplo de cliente en Unreal\\[7pt]
+\ok Kit de despliegue + documentaci\'on
+\end{columns}
+\vspace{0.5cm}
+\begin{center}
+\begin{calloutbox}{verde}
+\demi Todo el flujo se prob\'o de extremo a extremo contra un \textbf{Moodle real},
+respaldado por \textbf{59 pruebas autom\'aticas}.
+\end{calloutbox}
+\end{center}
+\end{frame}
+\note{
+\textbf{Prueba de que es real (1 min).} Esta es la diapositiva de credibilidad. No
+es una maqueta: el flujo completo se prob\'o contra un Moodle real instalado para
+eso. Menciona las 59 pruebas autom\'aticas como se\~nal de calidad. Recorre las
+palomitas r\'apido; lo importante es la frase verde de abajo.
+}
+
+% ---------------------------------------------------------------------------
+%  LA DEMO DE HOY
+% ---------------------------------------------------------------------------
+\begin{frame}{La demo de hoy}
+\vspace{0.3cm}
+{\medium\color{gristenue}\large Lo que van a ver, en orden:}
+\vspace{0.45cm}
+
+\begin{enumerate}\setlength\itemsep{8pt}
+  \item[\bolanum{azulviv}{1}] Entrar a Moodle y abrir la actividad ``Pr\'actica en metaverso''.
+  \item[\bolanum{guinda}{2}] El juego se abre solo con el enlace seguro.
+  \item[\bolanum{azulviv}{3}] Realizar la pr\'actica (responder / acertar).
+  \item[\bolanum{verde}{4}] Volver a Moodle y ver la \hl{calificaci\'on ya puesta}.
+\end{enumerate}
+\end{frame}
+\note{
+\textbf{Gu\'ia de la demo (clave, ya que el autor no est\'a).} Sigue EXACTAMENTE
+estos 4 pasos en pantalla. (1) Inicia sesi\'on en Moodle con la cuenta de alumno de
+prueba y abre el curso; ah\'i est\'a la actividad. (2) Dale clic: el juego se abre.
+(3) Juega un poco para generar aciertos y termina la sesi\'on. (4) Regresa al libro
+de calificaciones de Moodle y muestra que la nota ya aparece.
+\medskip
+\textbf{Si algo falla:} no improvises con la consola. Ten a la mano las capturas de
+respaldo (carpeta de la demo) y di ``as\'i se ve cuando corre''. El soporte t\'ecnico
+de Daniel queda para preguntas por correo.
+}
+
+% ---------------------------------------------------------------------------
+%  CIERRE
+% ---------------------------------------------------------------------------
+{
+\setbeamercolor{background canvas}{bg=azultec}
+\begin{frame}[plain]
+\begin{tikzpicture}[remember picture,overlay]
+  \fill[guinda] ([yshift=2.6cm]current page.south west)
+    -- (current page.south west) -- (current page.south east)
+    -- ([yshift=1.1cm]current page.south east) -- cycle;
+  \fill[ambar]  ([yshift=2.6cm]current page.south west)
+    -- ([yshift=2.4cm]current page.south west)
+    -- ([yshift=0.9cm]current page.south east)
+    -- ([yshift=1.1cm]current page.south east) -- cycle;
+  \node[anchor=west, text=white, font=\heavy\fontsize{34}{38}\selectfont, text width=12cm]
+    at ([xshift=1.1cm,yshift=-2.6cm]current page.north west)
+    {Gracias.};
+  \node[anchor=west, text=white, font=\medium\fontsize{17}{22}\selectfont, text width=12cm]
+    at ([xshift=1.15cm,yshift=-4.2cm]current page.north west)
+    {El alumno juega.\\ La calificaci\'on llega sola.};
+  \node[anchor=west, text=ambar, font=\demi\normalsize]
+    at ([xshift=1.18cm,yshift=1.55cm]current page.south west)
+    {Daniel Octavio Ram\'irez Neri \, $\cdot$ \, Metaverso Escolar TecNM $\times$ ITCJ};
+\end{tikzpicture}
+\end{frame}
+}
+\note{
+\textbf{Cierre (30 s).} Repite el mantra: ``el alumno juega, la calificaci\'on llega
+sola''. Invita a preguntas. Para dudas t\'ecnicas profundas, ofrece el documento de
+dise\~no t\'ecnico y el correo de Daniel. Agradece el tiempo.
+}
