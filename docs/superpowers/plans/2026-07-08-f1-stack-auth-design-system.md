@@ -8,6 +8,18 @@
 
 **Tech Stack:** Laravel 12, Inertia v2 (`inertiajs/inertia-laravel` + `@inertiajs/react`), React 19, Tailwind v4 (`@theme` tokens), Vite 7, Pest 4.
 
+## Enmiendas (revisión experta 2026-07-08, decisor delegado)
+
+1. Cliente Inertia pineado a `@inertiajs/react@^2.0` (v3 tenía skew con servidor v2).
+2. `routes/web.php` debe importar `use Inertia\Inertia;`.
+3. El stub `mi.calendario` es OBLIGATORIO en Task 3 (sin él, `route()` lanza RouteNotFoundException); Task 4 lo MUEVE (no duplica) al grupo `[auth, alumno]`.
+4. No existe ningún test del redirect viejo de `salir`; el único test a actualizar es "el middleware panel bloquea acceso sin sesion" (`tests/Feature/Panel/AccesoPanelTest.php`): 403 → `assertRedirect('/login')`.
+5. `/demo`: `'apiKey' => app()->environment('local') ? config('metaverso.links_api_key') : null`. Gate `['local','testing']` aceptado como desviación documentada del spec (producción 404; testing sin clave).
+6. Task 4 agrega el test guardrail Sanctum por invariantes: el grupo `api` no contiene `EnsureFrontendRequestsAreStateful` ni `StartSession`, y `/api/game/me` sin credenciales → 401. (La formulación cookie-only da falso verde/rojo con SESSION_DRIVER=array.)
+7. `LoginController::store` SIN `intended()` — redirect puro por rol. Test extra: guest visita /panel, luego login como alumno → `/mi/calendario`.
+8. A11y: FormField liga el error con `aria-describedby`/`aria-invalid`; nav de AppLayout con focus visible. (Aplicado.)
+9. `tests/TestCase.php` con `$this->withoutVite()` en `setUp` (la suite debe pasar en un clon sin `public/build`).
+
 ## Global Constraints
 
 - Spec: `docs/superpowers/specs/2026-07-08-portal-agenda-reservas-design.md` (§2 Autenticación, §5 UI, §6 F1).

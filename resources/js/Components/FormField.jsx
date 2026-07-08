@@ -1,11 +1,23 @@
+import { cloneElement, isValidElement } from 'react';
+
 export default function FormField({ label, name, error, children }) {
+    const errorId = `${name}-error`;
+    const control =
+        isValidElement(children) && error
+            ? cloneElement(children, { 'aria-describedby': errorId, 'aria-invalid': true })
+            : children;
+
     return (
         <div className="space-y-1.5">
             <label htmlFor={name} className="block text-[13px] font-medium text-tinta-2">
                 {label}
             </label>
-            {children}
-            {error && <p className="text-xs text-alerta">{error}</p>}
+            {control}
+            {error && (
+                <p id={errorId} className="text-xs text-alerta">
+                    {error}
+                </p>
+            )}
         </div>
     );
 }

@@ -37,7 +37,7 @@ export default function AppLayout({ children }) {
                                 <a
                                     key={l.href}
                                     href={l.href}
-                                    className={`rounded-ctl px-3 py-1.5 text-[13px] font-medium transition-colors ${
+                                    className={`rounded-ctl px-3 py-1.5 text-[13px] font-medium transition-colors outline-offset-2 focus-visible:outline-2 focus-visible:outline-portal ${
                                         path.startsWith(l.href)
                                             ? 'bg-portal-tinte text-portal'
                                             : 'text-tinta-2 hover:bg-hueco hover:text-tinta'
@@ -55,7 +55,7 @@ export default function AppLayout({ children }) {
                             </span>
                             <button
                                 onClick={() => router.post('/logout')}
-                                className="rounded-ctl px-3 py-1.5 text-[13px] font-medium text-tinta-2 transition-colors hover:bg-hueco hover:text-tinta"
+                                className="rounded-ctl px-3 py-1.5 text-[13px] font-medium text-tinta-2 transition-colors outline-offset-2 hover:bg-hueco hover:text-tinta focus-visible:outline-2 focus-visible:outline-portal"
                             >
                                 Salir
                             </button>

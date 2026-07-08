@@ -1,18 +1,29 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Panel\PanelLoginController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Lti\JwksController;
+use App\Http\Controllers\Lti\LtiDeepLinkController;
+use App\Http\Controllers\Lti\LtiLaunchController;
+use App\Http\Controllers\Lti\LtiLoginController;
 use App\Http\Controllers\Panel\PanelController;
 use App\Http\Controllers\Panel\PanelLinkController;
+use App\Http\Controllers\Panel\PanelLoginController;
 use App\Http\Controllers\Panel\PanelResultadoController;
-use App\Http\Controllers\Lti\JwksController;
-use App\Http\Controllers\Lti\LtiLoginController;
-use App\Http\Controllers\Lti\LtiLaunchController;
-use App\Http\Controllers\Lti\LtiDeepLinkController;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [LoginController::class, 'create'])->name('login');
+    Route::post('/login', [LoginController::class, 'store']);
+});
+Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
+
+// Task 4 mueve esta ruta al grupo [auth, alumno].
+Route::get('/mi/calendario', fn () => Inertia::render('Mi/Calendario'))->name('mi.calendario');
 
 Route::get('/lti/jwks', [JwksController::class, 'index'])->name('lti.jwks');
 Route::match(['get', 'post'], '/lti/login', [LtiLoginController::class, 'login'])->name('lti.login');
@@ -22,11 +33,12 @@ Route::post('/lti/deeplink', [LtiDeepLinkController::class, 'responder'])->name(
 
 Route::get('/jugar/{token}', function (string $token) {
     $scheme = config('metaverso.deeplink_scheme', 'tecnm-metaverso');
+
     return view('jugar', ['deeplink' => "{$scheme}://play?token={$token}"]);
 })->where('token', '[A-Za-z0-9_\-]+');
 
 Route::get('/demo', fn () => view('demo', [
-    'apiKey'  => config('metaverso.links_api_key'),
+    'apiKey' => config('metaverso.links_api_key'),
     'baseUrl' => url('/'),
 ]));
 
