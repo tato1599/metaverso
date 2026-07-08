@@ -84,10 +84,25 @@ class GameSessionController extends Controller {
             ->exists();
         abort_unless($inscrito, 403, 'El alumno no está inscrito en el grupo de este evento');
 
+        // Enlace sesión↔reserva (aditivo): el evento confiable viene de la ability del
+        // bearer emitida en el redeem, nunca del body. Sin ability o sin coincidencia → null.
+        $token = $request->user()->currentAccessToken();
+        $abilities = $token instanceof \Laravel\Sanctum\PersonalAccessToken ? $token->abilities : [];
+        $ligado = collect($abilities)->first(fn ($a) => str_starts_with($a, 'evento:'));
+        $idEventoLigado = $ligado ? (int) substr($ligado, 7) : null;
+        $idReserva = null;
+        if ($idEventoLigado && $idEventoLigado === (int) $data['id_evento']) {
+            $idReserva = \App\Models\Reserva::where('id_evento', $idEventoLigado)
+                ->where('id_alumno', $alumno->id_alumno)
+                ->where('estatus', 'activa')
+                ->value('id_reserva');
+        }
+
         $sesion = SesionPractica::create([
             'id_evento' => $evento->id_evento,
             'id_alumno' => $alumno->id_alumno,
             'id_practica' => $evento->id_practica,
+            'id_reserva' => $idReserva,
             'fecha_inicio' => now(),
             'estatus' => 'en_progreso',
         ]);

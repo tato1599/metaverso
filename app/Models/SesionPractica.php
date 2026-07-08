@@ -14,4 +14,5 @@ class SesionPractica extends Model {
     public function alumno() { return $this->belongsTo(Alumno::class, 'id_alumno'); }
     public function evento() { return $this->belongsTo(EventoAgenda::class, 'id_evento'); }
     public function practica() { return $this->belongsTo(Practica::class, 'id_practica'); }
+    public function reserva() { return $this->belongsTo(Reserva::class, 'id_reserva'); }
 }

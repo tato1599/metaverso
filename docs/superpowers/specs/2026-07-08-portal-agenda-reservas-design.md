@@ -117,6 +117,13 @@ Cada fase termina con: `vendor/bin/pint`, `php artisan test --compact`, revisió
 - **Concurrencia:** caso "último lugar" secuencial + revisión experta del código transaccional. `ponytail:` prueba de paralelismo real con dos conexiones pendiente; se agrega si aparece un incidente de sobreventa.
 - Suite existente (LTI, game API, panel) verde en todas las fases.
 
+> **Nota sobre códigos de estado (decisor delegado, F3):** en el portal web los conflictos
+> de negocio (lleno, duplicada, fuera de ventana, tarde para cancelar, evento no reservable)
+> se materializan como **422 / redirect-back con errores** (`ValidationException`, flujo
+> nativo de formularios Inertia; un 409 se pintaría como modal de error crudo). Los **403**
+> de autorización siguen siendo abort. Los 409/410 literales aplican solo a la API JSON del
+> juego, cuyo contrato está congelado. F4/F5 no deben "corregir" los tests de vuelta a 409.
+
 ## 8. Puntos de extensión preparados (NO construir ahora)
 
 | Pendiente (CONTEXTO §8) | Preparación en este diseño |

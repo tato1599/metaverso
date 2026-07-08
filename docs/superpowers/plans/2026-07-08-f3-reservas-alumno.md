@@ -8,6 +8,18 @@
 
 **Tech Stack:** Laravel 12, Inertia v2 + React 19 (reusa `WeekCalendar`/`CupoPuntos`), Pest 4, PostgreSQL.
 
+## Enmiendas (revisión experta 2026-07-08, decisor delegado)
+
+1. Throttle con bucket propio por endpoint: `throttle:10,1,reservas` y `throttle:10,1,jugar` (sin prefijo, ambos comparten un solo bucket por usuario).
+2. `JugarController` exige además **inscripción activa** en el grupo del evento (403) — un exalumno con reserva vieja podía crear sesión calificable. No se toca `start()` de la API (camino congelado).
+3. Test de 429 en jugar (11º POST) + assert de que reservas no consume el bucket de jugar.
+4. `id_evento` ausente/no entero → 422 (validate); inexistente → 404 (`firstOrFail`). Dos tests.
+5. Snippet de abilities: `instanceof PersonalAccessToken` (no `optional()`), variable real `$data`.
+6. La invalidación de tokens alcanza también los links del maestro (mismo par usuario/evento) — nota + assert explícito; el alumno siempre termina con token vigente.
+7. Desviación 409→422 aprobada por el decisor: nota al pie en el spec (§4/§7) — códigos según consumidor; API JSON del juego congelada.
+8. Tests de calendario: dataset sin inscripción y dataset con inscripción `baja`; `puede_jugar=false` en cancelado dentro de ventana.
+9. Contratos con forma exacta (`assertExactJson` en start; claves exactas en redeem) para detectar fugas de claves nuevas.
+
 ## Global Constraints
 
 - Spec §3.3, §4 (reservar/cancelar/jugar/calendario), §6-F3, §7. Secuencia: `RESERVA_SECUENCIA.md`.

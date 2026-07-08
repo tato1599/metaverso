@@ -84,7 +84,10 @@ class GameAuthController extends Controller {
             return response()->json(['message' => 'Token inválido'], 410);
         }
 
-        $accessToken = $usuario->createToken('unreal-session', ['game'])->plainTextToken;
+        // La ability evento:{id} liga el bearer al evento del magic link: es la única
+        // fuente confiable para enlazar sesión↔reserva (el id_evento del body es del cliente).
+        $abilities = $tokenJuego->id_evento ? ['game', 'evento:'.$tokenJuego->id_evento] : ['game'];
+        $accessToken = $usuario->createToken('unreal-session', $abilities)->plainTextToken;
 
         return response()->json([
             'access_token' => $accessToken,
