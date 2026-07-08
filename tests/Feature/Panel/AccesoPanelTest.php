@@ -29,6 +29,13 @@ it('rechaza enlace con firma manipulada', function () {
     expect(auth()->check())->toBeFalse();
 });
 
+it('rechaza a un staff desactivado aunque el enlace sea valido', function () {
+    $rol = Rol::create(['nombre' => 'Maestro']);
+    $u = Usuario::create(['id_rol' => $rol->id_rol, 'correo' => 'off@b.com', 'nombre' => 'M', 'apellidos' => 'X', 'activo' => false]);
+    $this->get(urlAcceso($u))->assertForbidden();
+    expect(auth()->check())->toBeFalse();
+});
+
 it('rechaza a un Alumno aunque el enlace sea valido', function () {
     $rol = Rol::create(['nombre' => 'Alumno']);
     $u = Usuario::create(['id_rol' => $rol->id_rol, 'correo' => 'a@b.com', 'nombre' => 'A', 'apellidos' => 'Y']);

@@ -22,10 +22,9 @@ class PanelLoginController extends Controller
     public function acceso(Request $request, Usuario $usuario)
     {
         // La firma ya fue validada por el middleware 'signed'.
-        if (! $usuario->esStaffPanel()) {
-            abort(403, 'Esta cuenta no tiene acceso al panel.');
-        }
+        abort_unless($usuario->activo && $usuario->esStaffPanel(), 403, 'Esta cuenta no tiene acceso al panel.');
         $this->establecerSesion($usuario);
+        $request->session()->regenerate();
 
         return redirect()->route('panel.dashboard');
     }

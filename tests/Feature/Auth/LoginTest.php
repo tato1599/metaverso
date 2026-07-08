@@ -69,6 +69,25 @@ it('aplica rate limit tras 5 intentos fallidos', function () {
     $this->assertGuest();
 });
 
+it('el rate limit distingue IPs detrás del proxy (trustProxies)', function () {
+    $u = crearUsuarioConRol('Alumno');
+    foreach (range(1, 5) as $i) {
+        $this->withHeaders(['X-Forwarded-For' => '1.1.1.1'])
+            ->post('/login', ['correo' => $u->correo, 'password' => 'mala']);
+    }
+    $this->withHeaders(['X-Forwarded-For' => '2.2.2.2'])
+        ->post('/login', ['correo' => $u->correo, 'password' => 'secreto123']);
+    $this->assertAuthenticatedAs($u);
+});
+
+it('redirige por rol a un usuario autenticado que visita /login', function () {
+    $alumno = crearUsuarioConRol('Alumno');
+    $this->actingAs($alumno)->get('/login')->assertRedirect('/mi/calendario');
+
+    $maestro = crearUsuarioConRol('Maestro');
+    $this->actingAs($maestro)->get('/login')->assertRedirect('/panel');
+});
+
 it('logout redirige a login para cualquier rol', function () {
     $u = crearUsuarioConRol('Alumno');
     $this->actingAs($u)->post('/logout')->assertRedirect('/login');

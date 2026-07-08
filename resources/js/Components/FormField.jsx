@@ -2,10 +2,12 @@ import { cloneElement, isValidElement } from 'react';
 
 export default function FormField({ label, name, error, children }) {
     const errorId = `${name}-error`;
-    const control =
-        isValidElement(children) && error
-            ? cloneElement(children, { 'aria-describedby': errorId, 'aria-invalid': true })
-            : children;
+    const control = isValidElement(children)
+        ? cloneElement(children, {
+              id: children.props.id ?? name,
+              ...(error && { 'aria-describedby': errorId, 'aria-invalid': true }),
+          })
+        : children;
 
     return (
         <div className="space-y-1.5">

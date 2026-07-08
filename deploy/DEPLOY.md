@@ -103,3 +103,7 @@ independiente (su propia BD y su propio registro LTI en su Moodle).
 
 > **Seguridad (F1):** al desplegar esta versión, **rota `LINKS_API_KEY`**. Las versiones
 > anteriores exponían la clave en la página pública `/demo` (ahora gateada a `local`).
+
+> **Usuarios demo:** `db:seed --class=DemoSeeder` crea usuarios CON contraseña logueable
+> en `/login`. Fuera de `local`, la contraseña es aleatoria y se imprime en la salida del
+> comando — guárdala o cambia las cuentas de inmediato.
