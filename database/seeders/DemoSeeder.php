@@ -35,6 +35,7 @@ class DemoSeeder extends Seeder
         $ciclo = CicloEscolar::create(['nombre' => '2026-1', 'fecha_inicio' => '2026-01-15', 'fecha_fin' => '2026-06-15', 'activo' => true]);
         $espacio = Espacio::create(['nombre' => 'Laboratorio Virtual A', 'tipo' => 'virtual', 'capacidad' => 30]);
 
+        Usuario::create(['id_rol' => $roles['Coordinador'], 'correo' => 'coordinacion@tecnm.mx', 'contrasena_hash' => $hash, 'nombre' => 'Carmen', 'apellidos' => 'Ortiz']);
         $uMaestro = Usuario::create(['id_rol' => $roles['Maestro'], 'correo' => 'maestro@tecnm.mx', 'contrasena_hash' => $hash, 'nombre' => 'Laura', 'apellidos' => 'Gómez']);
         $maestro = Maestro::create(['id_usuario' => $uMaestro->id_usuario, 'numero_empleado' => 'EMP001', 'grado_academico' => 'M.C.', 'especialidad' => 'Software']);
 
