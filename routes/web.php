@@ -5,6 +5,7 @@ use App\Http\Controllers\Lti\JwksController;
 use App\Http\Controllers\Lti\LtiDeepLinkController;
 use App\Http\Controllers\Lti\LtiLaunchController;
 use App\Http\Controllers\Lti\LtiLoginController;
+use App\Http\Controllers\Mi\CalendarioController;
 use App\Http\Controllers\Mi\JugarController;
 use App\Http\Controllers\Mi\ReservaController;
 use App\Http\Controllers\Panel\AgendaController;
@@ -13,7 +14,6 @@ use App\Http\Controllers\Panel\PanelLinkController;
 use App\Http\Controllers\Panel\PanelLoginController;
 use App\Http\Controllers\Panel\PanelResultadoController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::get('/', function () {
     return view('welcome');
@@ -26,7 +26,7 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
 
 Route::middleware(['auth', 'alumno'])->group(function () {
-    Route::get('/mi/calendario', fn () => Inertia::render('Mi/Calendario'))->name('mi.calendario');
+    Route::get('/mi/calendario', [CalendarioController::class, 'index'])->name('mi.calendario');
     Route::post('/mi/reservas', [ReservaController::class, 'store'])
         ->middleware('throttle:10,1,reservas')->name('mi.reservas.store');
     Route::delete('/mi/reservas/{reserva}', [ReservaController::class, 'destroy'])

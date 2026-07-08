@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Alumno;
+use App\Models\Carrera;
 use App\Models\Rol;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,7 +15,7 @@ function usuarioDeRol(string $rol): Usuario
 {
     $r = Rol::firstOrCreate(['nombre' => $rol]);
 
-    return Usuario::create([
+    $u = Usuario::create([
         'id_rol' => $r->id_rol,
         'correo' => fake()->unique()->safeEmail(),
         'contrasena_hash' => Hash::make('x'),
@@ -21,6 +23,13 @@ function usuarioDeRol(string $rol): Usuario
         'apellidos' => 'U',
         'activo' => true,
     ]);
+
+    if ($rol === 'Alumno') {
+        $carrera = Carrera::firstOrCreate(['clave' => 'ISC'], ['nombre' => 'ISC', 'duracion_semestres' => 9]);
+        Alumno::create(['id_usuario' => $u->id_usuario, 'id_carrera' => $carrera->id_carrera, 'matricula' => fake()->unique()->numerify('2025####'), 'semestre_actual' => 3, 'generacion' => '2025']);
+    }
+
+    return $u;
 }
 
 it('redirige invitados a login en /mi/calendario', function () {
