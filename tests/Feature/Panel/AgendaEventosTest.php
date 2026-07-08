@@ -186,6 +186,7 @@ it('IDOR: detalle, PUT y DELETE de evento ajeno dan 403; coordinador pasa', func
     $coord = agendaUsuario('Coordinador');
     $this->actingAs($coord)->get("/panel/eventos/{$evento->id_evento}")->assertOk();
     $this->actingAs($coord)->put("/panel/eventos/{$evento->id_evento}", $cambio)->assertRedirect();
+    $this->actingAs($coord)->delete("/panel/eventos/{$evento->id_evento}")->assertRedirect(route('panel.agenda'));
 });
 
 it('PUT no puede dejar el cupo debajo de las reservas activas', function () {
@@ -252,6 +253,7 @@ it('el detalle incluye las reservas activas con nombre y matrícula', function (
         fn (Assert $page) => $page->component('Panel/EventoDetalle')
             ->has('reservas', 1)
             ->where('reservas.0.matricula', $alumno->matricula)
+            ->where('evento.inicio_local', $evento->fecha_hora_inicio->format('Y-m-d\TH:i'))
     );
 });
 

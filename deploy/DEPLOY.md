@@ -110,3 +110,11 @@ independiente (su propia BD y su propio registro LTI en su Moodle).
 
 > **Zona horaria:** define `APP_TIMEZONE` (p. ej. `America/Mexico_City`) en el `.env` del
 > despliegue. La agenda captura y muestra horas en la zona del campus.
+
+> **Importante:** `APP_TIMEZONE` se fija **antes del primer despliegue** y no se cambia
+> después. Las columnas datetime son `timestamp without time zone`: cambiar la zona en un
+> sistema vivo reinterpreta cada timestamp (p. ej. UTC→CDMX corre todo -6h), extendiendo la
+> validez de magic links y bearers vigentes y moviendo la hora efectiva de eventos/sesiones.
+> Si es inevitable, convierte los timestamps (`UPDATE t SET col = (col AT TIME ZONE 'UTC') AT
+> TIME ZONE 'America/Mexico_City'`) o al menos invalida `tokens_juego` no usados y
+> `personal_access_tokens` pendientes en ese momento.

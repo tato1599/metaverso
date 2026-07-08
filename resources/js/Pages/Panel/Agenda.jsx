@@ -10,14 +10,11 @@ import AppLayout from '../../Layouts/AppLayout';
 
 const TONO_ESTATUS = { en_curso: 'ok', cancelado: 'danger', finalizado: 'muted' };
 
-function hora(iso) {
-    return new Date(iso).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
-}
-
 function sumarDias(fecha, dias) {
-    const d = new Date(`${fecha}T00:00:00`);
-    d.setDate(d.getDate() + dias);
-    return d.toISOString().slice(0, 10);
+    const [anio, mes, dia] = fecha.split('-').map(Number);
+    const d = new Date(anio, mes - 1, dia + dias);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 export default function Agenda({ semana, eventos, grupos, espacios, cupoDefault }) {
@@ -70,7 +67,7 @@ export default function Agenda({ semana, eventos, grupos, espacios, cupoDefault 
                             }`}
                         >
                             <p className="font-mono text-[11px] tabular-nums text-tinta-2">
-                                {hora(e.inicio)}–{hora(e.fin)}
+                                {e.inicio_local.slice(11, 16)}–{e.fin_local.slice(11, 16)}
                             </p>
                             <p className="mt-0.5 text-[13px] leading-snug font-semibold text-tinta">{e.practica}</p>
                             <p className="text-[11px] text-tinta-3">

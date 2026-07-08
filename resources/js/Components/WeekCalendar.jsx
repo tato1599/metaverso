@@ -1,30 +1,30 @@
 const DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
-function mismaFecha(a, b) {
-    return a.toDateString() === b.toDateString();
+function fechaLocalStr(d) {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 /**
  * Grid semanal reutilizable (docente en F2, alumno en F3).
- * `semana` es el lunes en formato YYYY-MM-DD; `renderEvento` pinta el chip de cada slot.
+ * `semana` es el lunes YYYY-MM-DD y los eventos traen `inicio_local`
+ * (string en la zona horaria del campus) — el agrupamiento compara strings,
+ * nunca `new Date()` del navegador, para que la TZ del cliente no mueva eventos de columna.
  */
 export default function WeekCalendar({ semana, eventos, renderEvento }) {
-    const lunes = new Date(`${semana}T00:00:00`);
-    const hoy = new Date();
-    const dias = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(lunes);
-        d.setDate(d.getDate() + i);
-        return d;
-    });
+    const [anio, mes, dia] = semana.split('-').map(Number);
+    const hoyStr = fechaLocalStr(new Date());
+    const dias = Array.from({ length: 7 }, (_, i) => new Date(anio, mes - 1, dia + i));
 
     return (
         <div className="grid gap-3 md:grid-cols-7">
             {dias.map((d, i) => {
-                const esHoy = mismaFecha(d, hoy);
-                const delDia = eventos.filter((e) => mismaFecha(new Date(e.inicio), d));
+                const fechaDia = fechaLocalStr(d);
+                const esHoy = fechaDia === hoyStr;
+                const delDia = eventos.filter((e) => e.inicio_local.slice(0, 10) === fechaDia);
                 return (
                     <div
-                        key={d.toISOString()}
+                        key={fechaDia}
                         className={`min-h-28 rounded-carta bg-superficie p-2 ring-1 ${
                             esHoy ? 'ring-2 ring-portal' : 'ring-borde'
                         }`}

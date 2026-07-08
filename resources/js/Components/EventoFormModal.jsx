@@ -3,13 +3,6 @@ import Button from './Button';
 import FormField, { TextInput } from './FormField';
 import Modal from './Modal';
 
-function aInputLocal(iso) {
-    if (!iso) return '';
-    const d = new Date(iso);
-    const pad = (n) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
 function selectClases() {
     return 'h-9 w-full rounded-ctl bg-hueco px-3 text-sm text-tinta ring-1 ring-borde ring-inset focus:bg-superficie focus:ring-2 focus:ring-portal focus:outline-none';
 }
@@ -24,8 +17,9 @@ export default function EventoFormModal({ open, onClose, grupos, espacios, cupoD
         id_grupo: '',
         id_practica: '',
         id_espacio: evento?.id_espacio ?? '',
-        fecha_hora_inicio: aInputLocal(evento?.inicio),
-        fecha_hora_fin: aInputLocal(evento?.fin),
+        // Strings del servidor ya en la TZ del campus — nunca new Date() del navegador.
+        fecha_hora_inicio: evento?.inicio_local ?? '',
+        fecha_hora_fin: evento?.fin_local ?? '',
         cupo_maximo: evento?.cupo_maximo ?? cupoDefault,
     });
 

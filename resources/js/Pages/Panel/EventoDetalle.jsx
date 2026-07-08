@@ -11,15 +11,17 @@ import AppLayout from '../../Layouts/AppLayout';
 
 const TONO_ESTATUS = { programado: 'muted', en_curso: 'ok', cancelado: 'danger', finalizado: 'muted' };
 
-function fechaHora(iso) {
-    return new Date(iso).toLocaleString('es-MX', {
+function fechaBonita(local) {
+    // `local` viene del servidor en la TZ del campus (YYYY-MM-DDTHH:mm);
+    // se reconstruye por componentes para que la TZ del navegador no la mueva.
+    const [fecha, hora] = local.split('T');
+    const [anio, mes, dia] = fecha.split('-').map(Number);
+    const dow = new Date(anio, mes - 1, dia).toLocaleDateString('es-MX', {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
     });
+    return `${dow}, ${hora}`;
 }
 
 export default function EventoDetalle({ evento, reservas, espacios }) {
@@ -63,7 +65,7 @@ export default function EventoDetalle({ evento, reservas, espacios }) {
                         <div>
                             <dt className="text-tinta-3">Horario</dt>
                             <dd className="mt-0.5 font-mono text-sm tabular-nums text-tinta">
-                                {fechaHora(evento.inicio)} — {new Date(evento.fin).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                                {fechaBonita(evento.inicio_local)} — {evento.fin_local.slice(11, 16)}
                             </dd>
                         </div>
                         <div>
@@ -104,14 +106,17 @@ export default function EventoDetalle({ evento, reservas, espacios }) {
                 </div>
             </div>
 
-            <EventoFormModal
-                open={editando}
-                onClose={() => setEditando(false)}
-                grupos={[]}
-                espacios={espacios}
-                cupoDefault={evento.cupo_maximo}
-                evento={evento}
-            />
+            {/* Montado condicional: useForm se reinicializa con el evento vigente en cada apertura. */}
+            {editando && (
+                <EventoFormModal
+                    open
+                    onClose={() => setEditando(false)}
+                    grupos={[]}
+                    espacios={espacios}
+                    cupoDefault={evento.cupo_maximo}
+                    evento={evento}
+                />
+            )}
         </AppLayout>
     );
 }

@@ -123,6 +123,8 @@ class AgendaController extends Controller
         // Misma receta que reservar: lock del evento antes de contar (evita carrera con reservas nuevas).
         DB::transaction(function () use ($evento, $datos) {
             $bloqueado = EventoAgenda::whereKey($evento->id_evento)->lockForUpdate()->firstOrFail();
+            // Re-verificar sobre la fila bloqueada: un destroy() concurrente pudo cancelarlo (TOCTOU).
+            abort_if($bloqueado->estatus === 'cancelado', 409, 'El evento está cancelado.');
             $activas = $bloqueado->reservasActivas()->count();
             if ($datos['cupo_maximo'] < $activas) {
                 throw ValidationException::withMessages([
@@ -164,6 +166,8 @@ class AgendaController extends Controller
             'id_espacio' => $e->id_espacio,
             'inicio' => $e->fecha_hora_inicio->toIso8601String(),
             'fin' => $e->fecha_hora_fin->toIso8601String(),
+            'inicio_local' => $e->fecha_hora_inicio->format('Y-m-d\TH:i'),
+            'fin_local' => $e->fecha_hora_fin->format('Y-m-d\TH:i'),
             'estatus' => $e->estatus,
             'cupo_maximo' => $e->cupo_maximo,
             'reservas_activas' => $reservasActivas ?? (int) ($e->reservas_activas ?? 0),
