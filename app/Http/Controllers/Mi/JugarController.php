@@ -8,6 +8,7 @@ use App\Models\Inscripcion;
 use App\Models\TokenJuego;
 use App\Services\MagicLinkService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -43,13 +44,17 @@ class JugarController extends Controller
 
         // Invalida TODOS los tokens no canjeados del par (usuario, evento), incluidos
         // los emitidos por el maestro vía panel o /api/links: el alumno siempre queda
-        // con exactamente un enlace vigente.
-        TokenJuego::where('id_usuario', $u->id_usuario)
-            ->where('id_evento', $evento->id_evento)
-            ->where('usado', false)
-            ->update(['usado' => true]);
+        // con exactamente un enlace vigente. El lock del evento serializa dos POST
+        // concurrentes (mismo orden de locks que ReservaController::store).
+        $res = DB::transaction(function () use ($u, $evento, $magicLink) {
+            EventoAgenda::whereKey($evento->id_evento)->lockForUpdate()->firstOrFail();
+            TokenJuego::where('id_usuario', $u->id_usuario)
+                ->where('id_evento', $evento->id_evento)
+                ->where('usado', false)
+                ->update(['usado' => true]);
 
-        $res = $magicLink->generar($u->id_usuario, $evento->id_evento);
+            return $magicLink->generar($u->id_usuario, $evento->id_evento);
+        });
 
         // /jugar/{token} es Blade y dispara un deeplink de esquema custom: exige
         // navegación top-level, por eso Inertia::location y no un redirect normal.

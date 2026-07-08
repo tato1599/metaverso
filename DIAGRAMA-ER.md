@@ -135,6 +135,7 @@ erDiagram
         int id_sesion PK
         int id_evento FK
         int id_alumno FK
+        int id_reserva FK "nullable; solo camino agenda"
         int id_practica FK
         datetime fecha_inicio
         datetime fecha_fin

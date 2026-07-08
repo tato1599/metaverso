@@ -61,6 +61,13 @@ it('genera el enlace y redirige al lanzador con reserva activa en ventana', func
     $response->assertRedirect();
     expect($response->headers->get('Location'))->toContain('/jugar/');
     expect(TokenJuego::where('id_usuario', $e['usuario']->id_usuario)->where('usado', false)->count())->toBe(1);
+
+    // Amarre extremo a extremo: el token generado abre sesión de juego real
+    // y el bearer queda ligado al evento vía ability.
+    $token = basename(parse_url($response->headers->get('Location'), PHP_URL_PATH));
+    $this->postJson('/api/game/redeem', ['token' => $token])->assertOk();
+    expect($e['usuario']->tokens()->latest('id')->first()->abilities)
+        ->toBe(['game', 'evento:'.$e['evento']->id_evento]);
 });
 
 it('en visita Inertia responde 409 con X-Inertia-Location (cruce a Blade)', function () {

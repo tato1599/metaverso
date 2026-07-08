@@ -30,11 +30,9 @@ function ChipEvento({ e }) {
             <div className="mt-1.5 flex items-center justify-between gap-2">
                 <CupoPuntos ocupados={e.reservas_activas} cupo={e.cupo_maximo} />
                 {cancelado && <Badge tone="danger">cancelado</Badge>}
-                {!cancelado && e.mi_reserva && !e.puede_jugar && <Badge tone="ok">reservado</Badge>}
-                {!cancelado && !e.mi_reserva && !e.puede_reservar && e.estatus === 'programado' && (
-                    <Badge tone="warn">lleno</Badge>
-                )}
-                {e.estatus === 'finalizado' && <Badge tone="muted">finalizado</Badge>}
+                {!cancelado && e.mi_reserva && !e.puede_jugar && !e.finalizado && <Badge tone="ok">reservado</Badge>}
+                {e.lleno && <Badge tone="warn">lleno</Badge>}
+                {e.finalizado && <Badge tone="muted">finalizado</Badge>}
             </div>
             <div className="mt-2 space-y-1.5">
                 {e.puede_jugar && (

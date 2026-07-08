@@ -13,10 +13,15 @@ use App\Models\Reserva;
 use App\Models\Rol;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
+
+// Reloj congelado a miércoles: con now()->addDay() un domingo real caería en la
+// semana siguiente y los eventos desaparecerían del rango [lunes..domingo].
+beforeEach(fn () => Carbon::setTestNow('2026-07-08 09:00:00'));
 
 function calendarioGrupo(): Grupo
 {
@@ -103,6 +108,28 @@ it('puede_jugar solo en ventana con reserva activa, nunca en cancelados', functi
     $enCurso->update(['estatus' => 'cancelado']);
     $this->actingAs($u)->get('/mi/calendario')->assertInertia(
         fn (Assert $page) => $page->where('eventos.0.puede_jugar', false)
+    );
+});
+
+it('expone lleno y finalizado calculados en servidor', function () {
+    $grupo = calendarioGrupo();
+    $llenoEvento = calendarioEvento($grupo, ['cupo_maximo' => 1]);
+    [$u, $alumno] = calendarioAlumno($grupo);
+    [, $otro] = calendarioAlumno($grupo);
+    Reserva::create(['id_evento' => $llenoEvento->id_evento, 'id_alumno' => $otro->id_alumno]);
+
+    $this->actingAs($u)->get('/mi/calendario')->assertInertia(
+        fn (Assert $page) => $page->where('eventos.0.lleno', true)->where('eventos.0.finalizado', false)
+    );
+
+    // Evento pasado 'programado' sin reserva: no está lleno, está finalizado.
+    $llenoEvento->update([
+        'cupo_maximo' => 5,
+        'fecha_hora_inicio' => now()->subHours(3),
+        'fecha_hora_fin' => now()->subHours(2),
+    ]);
+    $this->actingAs($u)->get('/mi/calendario')->assertInertia(
+        fn (Assert $page) => $page->where('eventos.0.lleno', false)->where('eventos.0.finalizado', true)
     );
 });
 

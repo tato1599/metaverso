@@ -1,12 +1,20 @@
 <?php
-use App\Models\{Rol, Usuario, Alumno, Carrera, Materia, Practica, SesionPractica};
+
+use App\Models\Alumno;
+use App\Models\Carrera;
+use App\Models\Materia;
+use App\Models\Practica;
+use App\Models\Rol;
+use App\Models\SesionPractica;
+use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
-function crearSesionLti(): array {
+function crearSesionLti(): array
+{
     $rolA = Rol::firstOrCreate(['nombre' => 'Alumno']);
     $usuario = Usuario::create([
         'id_rol' => $rolA->id_rol,
@@ -32,6 +40,7 @@ function crearSesionLti(): array {
         'fecha_inicio' => now(),
         'estatus' => 'en_progreso',
     ]);
+
     return [$sesion, $usuario];
 }
 
@@ -43,12 +52,14 @@ it('canjea un token LTI valido y devuelve bearer con id_sesion', function () {
 
     $r = $this->postJson('/api/game/lti-redeem', ['lti_session_token' => $token]);
     $r->assertOk()
-      ->assertJsonStructure(['access_token', 'token_type', 'id_sesion', 'alumno', 'practica']);
+        ->assertJsonStructure(['access_token', 'token_type', 'id_sesion', 'alumno', 'practica']);
 
     expect($r->json('token_type'))->toBe('Bearer');
     expect($r->json('id_sesion'))->toBe($sesion->id_sesion);
     // contrasena_hash must NOT be in the response (hidden on Usuario via $hidden)
     expect($r->getContent())->not->toContain('contrasena_hash');
+    // El camino LTI no gana la ability evento:{id} (esa es exclusiva del redeem con magic link).
+    expect($usuario->tokens()->latest('id')->first()->abilities)->toBe(['game']);
 });
 
 it('rechaza la segunda llamada con el mismo token LTI (uso unico)', function () {
@@ -65,6 +76,6 @@ it('rechaza la segunda llamada con el mismo token LTI (uso unico)', function () 
 
 it('rechaza un token LTI aleatorio con 410', function () {
     $this->postJson('/api/game/lti-redeem', ['lti_session_token' => Str::random(64)])
-         ->assertStatus(410)
-         ->assertJson(['message' => 'Token inválido o expirado']);
+        ->assertStatus(410)
+        ->assertJson(['message' => 'Token inválido o expirado']);
 });

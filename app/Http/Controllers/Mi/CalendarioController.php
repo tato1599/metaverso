@@ -65,6 +65,9 @@ class CalendarioController extends Controller
                     // La UI no reimplementa reglas: los booleanos se deciden aquí.
                     'puede_reservar' => ! $mia && $e->estatus === 'programado'
                         && $e->fecha_hora_inicio->isFuture() && $activas < $e->cupo_maximo,
+                    'lleno' => ! $mia && $e->estatus === 'programado'
+                        && $e->fecha_hora_inicio->isFuture() && $activas >= $e->cupo_maximo,
+                    'finalizado' => $e->estatus !== 'cancelado' && $e->fecha_hora_fin->lt($ahora),
                     'puede_cancelar' => (bool) $mia && $e->fecha_hora_inicio->isFuture(),
                     'puede_jugar' => (bool) $mia && $e->estatus !== 'cancelado'
                         && $ahora->between($e->fecha_hora_inicio, $e->fecha_hora_fin),
