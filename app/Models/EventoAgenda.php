@@ -12,4 +12,7 @@ class EventoAgenda extends Model {
     public function espacio() { return $this->belongsTo(Espacio::class, 'id_espacio'); }
     public function tokens() { return $this->hasMany(TokenJuego::class, 'id_evento'); }
     public function sesiones() { return $this->hasMany(SesionPractica::class, 'id_evento'); }
+    public function reservas() { return $this->hasMany(Reserva::class, 'id_evento'); }
+    public function reservasActivas() { return $this->reservas()->where('estatus', 'activa'); }
+    public function getRouteKeyName() { return 'id_evento'; }
 }

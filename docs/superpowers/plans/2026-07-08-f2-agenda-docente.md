@@ -8,6 +8,20 @@
 
 **Tech Stack:** Laravel 12, Inertia v2 + React 19, Tailwind v4, Pest 4, PostgreSQL (índice parcial único).
 
+## Enmiendas (revisión experta 2026-07-08, decisor delegado)
+
+1. **BLOQUEANTE** `Reserva`: `protected $attributes = ['estatus' => 'activa'];` — Eloquent `create()` no rehidrata defaults de BD.
+2. Tests de 422 con `postJson`/`putJson` (rutas web devuelven 302 con errores en sesión).
+3. Helpers Pest con prefijo `agenda*` — nombres globales ya reservados: `crearEventoBasico, crearUsuarioConRol, usuarioDeRol, sesionLti, urlAcceso, staff, grupoDe, grupoConAlumnos, plataformaDemo, crearSesionLti, armarEvento, armarAlumno`.
+4. PUT con whitelist estricta (solo fechas/espacio/cupo; jamás `id_grupo`/`id_practica`/`estatus` — `$guarded=[]` los dejaría pasar). Test: payload con esos campos no los muta.
+5. store: validate (exists) → cargar Grupo → `PanelController::autorizarGrupo` (inyección por constructor, patrón `PanelLinkController`) → 422 de dominio (práctica↔materia). `cupo_maximo` `min:1|max:32767` (smallint PG).
+6. `WeekCalendar.jsx` como componente reutilizable con render-prop (F3 lo reutiliza).
+7. PUT sobre evento cancelado → 409 (+ test); UI oculta acciones en cancelados.
+8. Backfill: `GREATEST(1, LEAST(5, e.capacidad))` (capacidad 0 dejaría cupo 0).
+9. `?semana` validado (`nullable|date`) — `Carbon::parse('basura')` daría 500.
+10. Casos 2 y 10 con `AssertableInertia`; caso 8 con 2 alumnos distintos (el índice parcial único impide 2 activas del mismo alumno).
+11. Test del índice parcial: sin asserts de BD tras el `toThrow` (transacción abortada 23505).
+
 ## Global Constraints
 
 - Spec: `docs/superpowers/specs/2026-07-08-portal-agenda-reservas-design.md` §3 (migraciones 1-2), §4 (agenda docente), §6-F2, §7.

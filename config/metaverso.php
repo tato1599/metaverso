@@ -7,4 +7,5 @@ return [
     'calificacion_min' => 0,
     'calificacion_max' => 100,
     'links_api_key' => env('LINKS_API_KEY'),
+    'cupo_default_evento' => (int) env('CUPO_DEFAULT_EVENTO', 5),
 ];
