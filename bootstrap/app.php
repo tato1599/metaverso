@@ -1,8 +1,13 @@
 <?php
 
+use App\Http\Middleware\EnsureAlumno;
+use App\Http\Middleware\EnsurePanelAccess;
+use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Laravel\Sanctum\Http\Middleware\CheckAbilities;
+use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,12 +19,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->validateCsrfTokens(except: ['lti/*']);
         $middleware->web(append: [
-            \App\Http\Middleware\HandleInertiaRequests::class,
+            HandleInertiaRequests::class,
         ]);
         $middleware->alias([
-            'abilities' => \Laravel\Sanctum\Http\Middleware\CheckAbilities::class,
-            'ability'   => \Laravel\Sanctum\Http\Middleware\CheckForAnyAbility::class,
-            'panel'     => \App\Http\Middleware\EnsurePanelAccess::class,
+            'abilities' => CheckAbilities::class,
+            'ability' => CheckForAnyAbility::class,
+            'panel' => EnsurePanelAccess::class,
+            'alumno' => EnsureAlumno::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

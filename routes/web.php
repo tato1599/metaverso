@@ -22,8 +22,9 @@ Route::middleware('guest')->group(function () {
 });
 Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
 
-// Task 4 mueve esta ruta al grupo [auth, alumno].
-Route::get('/mi/calendario', fn () => Inertia::render('Mi/Calendario'))->name('mi.calendario');
+Route::middleware(['auth', 'alumno'])->group(function () {
+    Route::get('/mi/calendario', fn () => Inertia::render('Mi/Calendario'))->name('mi.calendario');
+});
 
 Route::get('/lti/jwks', [JwksController::class, 'index'])->name('lti.jwks');
 Route::match(['get', 'post'], '/lti/login', [LtiLoginController::class, 'login'])->name('lti.login');
@@ -47,7 +48,7 @@ Route::get('/panel/acceso/{usuario}', [PanelLoginController::class, 'acceso'])
 Route::post('/panel/salir', [PanelLoginController::class, 'salir'])->name('panel.salir');
 Route::view('/panel/acceso-invalido', 'panel.acceso-invalido')->name('panel.acceso.invalido');
 
-Route::middleware('panel')->group(function () {
+Route::middleware(['auth', 'panel'])->group(function () {
     Route::get('/panel', [PanelController::class, 'dashboard'])->name('panel.dashboard');
     Route::get('/panel/grupos/{grupo}', [PanelController::class, 'show'])->name('panel.grupos.show');
 

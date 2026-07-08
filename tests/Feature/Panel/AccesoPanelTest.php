@@ -1,11 +1,14 @@
 <?php
-use App\Models\{Rol, Usuario};
-use Illuminate\Support\Facades\URL;
+
+use App\Models\Rol;
+use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\URL;
 
 uses(RefreshDatabase::class);
 
-function urlAcceso(Usuario $u): string {
+function urlAcceso(Usuario $u): string
+{
     return URL::temporarySignedRoute('panel.acceso', now()->addMinutes(30), ['usuario' => $u->id_usuario]);
 }
 
@@ -21,7 +24,7 @@ it('inicia sesion con enlace firmado valido para un Maestro', function () {
 it('rechaza enlace con firma manipulada', function () {
     $rol = Rol::create(['nombre' => 'Maestro']);
     $u = Usuario::create(['id_rol' => $rol->id_rol, 'correo' => 'm@b.com', 'nombre' => 'M', 'apellidos' => 'X']);
-    $url = urlAcceso($u) . 'manipulado';
+    $url = urlAcceso($u).'manipulado';
     $this->get($url)->assertForbidden();
     expect(auth()->check())->toBeFalse();
 });
@@ -34,7 +37,7 @@ it('rechaza a un Alumno aunque el enlace sea valido', function () {
 });
 
 it('el middleware panel bloquea acceso sin sesion', function () {
-    $this->get(route('panel.dashboard'))->assertForbidden();
+    $this->get(route('panel.dashboard'))->assertRedirect('/login');
 });
 
 it('bloquea a un Alumno autenticado en una ruta del panel', function () {
