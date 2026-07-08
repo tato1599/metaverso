@@ -17,6 +17,12 @@ class Usuario extends Authenticatable
 
     protected $hidden = ['contrasena_hash'];
 
+    /**
+     * Alinea el estado en memoria con el DEFAULT de la tabla:
+     * Eloquent create() no rehidrata defaults de BD y los middleware leen $u->activo.
+     */
+    protected $attributes = ['activo' => true];
+
     public $timestamps = true;
 
     public function rol()

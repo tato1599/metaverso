@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureAlumno;
+use App\Http\Middleware\EnsureCoordinadorOAdmin;
 use App\Http\Middleware\EnsurePanelAccess;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -32,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'ability' => CheckForAnyAbility::class,
             'panel' => EnsurePanelAccess::class,
             'alumno' => EnsureAlumno::class,
+            'admin' => EnsureCoordinadorOAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

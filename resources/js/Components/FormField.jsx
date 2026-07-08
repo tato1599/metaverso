@@ -32,3 +32,24 @@ export function TextInput({ className = '', ...rest }) {
         />
     );
 }
+
+export function Select({ className = '', children, ...rest }) {
+    return (
+        <select
+            className={`h-9 w-full rounded-ctl bg-hueco px-3 text-sm text-tinta ring-1 ring-borde ring-inset focus:bg-superficie focus:ring-2 focus:ring-portal focus:outline-none ${className}`}
+            {...rest}
+        >
+            {children}
+        </select>
+    );
+}
+
+export function Textarea({ className = '', ...rest }) {
+    return (
+        <textarea
+            rows={3}
+            className={`w-full rounded-ctl bg-hueco px-3 py-2 text-sm text-tinta ring-1 ring-borde ring-inset placeholder:text-tinta-3 focus:bg-superficie focus:ring-2 focus:ring-portal focus:outline-none ${className}`}
+            {...rest}
+        />
+    );
+}

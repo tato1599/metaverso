@@ -5,11 +5,12 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 
-class EnsureAlumno
+class EnsureCoordinadorOAdmin
 {
     public function handle(Request $request, Closure $next)
     {
-        abort_unless($request->user() && $request->user()->activo && $request->user()->esAlumno(), 403, 'Acceso solo para alumnos.');
+        $u = $request->user();
+        abort_unless($u && $u->activo && $u->esCoordinadorOAdmin(), 403, 'Acceso solo para coordinación.');
 
         return $next($request);
     }

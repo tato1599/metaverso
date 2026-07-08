@@ -1,5 +1,13 @@
 <?php
 
+use App\Http\Controllers\Admin\CarreraController;
+use App\Http\Controllers\Admin\CicloController;
+use App\Http\Controllers\Admin\EspacioController;
+use App\Http\Controllers\Admin\GrupoController;
+use App\Http\Controllers\Admin\InscripcionController;
+use App\Http\Controllers\Admin\MateriaController;
+use App\Http\Controllers\Admin\PracticaController;
+use App\Http\Controllers\Admin\UsuarioController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Lti\JwksController;
 use App\Http\Controllers\Lti\LtiDeepLinkController;
@@ -55,6 +63,26 @@ Route::get('/demo', function () {
         'apiKey' => app()->environment('local') ? config('metaverso.links_api_key') : null,
         'baseUrl' => url('/'),
     ]);
+});
+
+Route::middleware(['auth', 'admin'])->prefix('/admin')->name('admin.')->group(function () {
+    $recursos = [
+        'carreras' => [CarreraController::class, 'carrera'],
+        'materias' => [MateriaController::class, 'materia'],
+        'practicas' => [PracticaController::class, 'practica'],
+        'ciclos' => [CicloController::class, 'ciclo'],
+        'espacios' => [EspacioController::class, 'espacio'],
+        'grupos' => [GrupoController::class, 'grupo'],
+        'usuarios' => [UsuarioController::class, 'usuario'],
+    ];
+    foreach ($recursos as $uri => [$controlador, $parametro]) {
+        Route::get("/{$uri}", [$controlador, 'index'])->name("{$uri}.index");
+        Route::post("/{$uri}", [$controlador, 'store'])->name("{$uri}.store");
+        Route::put("/{$uri}/{{$parametro}}", [$controlador, 'update'])->name("{$uri}.update");
+        Route::delete("/{$uri}/{{$parametro}}", [$controlador, 'destroy'])->name("{$uri}.destroy");
+    }
+    Route::post('/grupos/{grupo}/inscripciones', [InscripcionController::class, 'store'])->name('grupos.inscripciones.store');
+    Route::delete('/grupos/{grupo}/inscripciones/{inscripcion}', [InscripcionController::class, 'destroy'])->name('grupos.inscripciones.destroy');
 });
 
 Route::get('/panel/acceso/{usuario}', [PanelLoginController::class, 'acceso'])

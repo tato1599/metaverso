@@ -17,10 +17,14 @@ function navPorRol(rol) {
         return [{ href: '/mi/calendario', label: 'Calendario' }];
     }
     if (['Maestro', 'Coordinador', 'Admin'].includes(rol)) {
-        return [
+        const links = [
             { href: '/panel', label: 'Panel' },
             { href: '/panel/agenda', label: 'Agenda' },
         ];
+        if (['Coordinador', 'Admin'].includes(rol)) {
+            links.push({ href: '/admin/carreras', label: 'Administración', raiz: '/admin' });
+        }
+        return links;
     }
     return [];
 }
@@ -43,7 +47,7 @@ export default function AppLayout({ children }) {
                                     key={l.href}
                                     href={l.href}
                                     className={`rounded-ctl px-3 py-1.5 text-[13px] font-medium transition-colors outline-offset-2 focus-visible:outline-2 focus-visible:outline-portal ${
-                                        (l.href === '/panel' ? path === '/panel' : path.startsWith(l.href))
+                                        (l.href === '/panel' ? path === '/panel' : path.startsWith(l.raiz ?? l.href))
                                             ? 'bg-portal-tinte text-portal'
                                             : 'text-tinta-2 hover:bg-hueco hover:text-tinta'
                                     }`}

@@ -8,6 +8,22 @@
 
 **Tech Stack:** igual que F1–F3.
 
+## Enmiendas (revisión experta 2026-07-08, decisor delegado)
+
+1. **BLOQUEANTE inscripciones:** unique (alumno,grupo) incondicional en BD → store hace upsert lógico: activa→422 "ya inscrito"; baja→reactivar (estatus activa + fecha_inscripcion=today); inexistente→crear. Test alta→baja→re-alta = UNA fila activa.
+2. Ciclos: delete bloqueado si tiene grupos (422).
+3. Carreras: delete bloqueado también por filas en materia_carrera (mensaje propio).
+4. Materias: destroy hace detach del pivote en la misma transacción tras validar guards de grupos/prácticas.
+5. Materias: campo `creditos` required|integer|min:0 (NOT NULL en BD).
+6. Usuarios rol Alumno: agregar `semestre_actual` (1–15) y `generacion` (prefill año actual) — NOT NULL sin default.
+7. Usuarios rol Maestro: `numero_empleado` required|unique.
+8. Pivote: `Materia::carreras()` belongsToMany con withPivot('semestre')->withTimestamps(); sync con mapWithKeys; validar `carreras.*.id_carrera` distinct.
+9. Contrato de `campos[]` de Recurso.jsx: tipo ∈ {text, number, date, select, checkbox, textarea}; Recurso.jsx es SOLO LECTURA para Tasks 2–5; `Select`/`Textarea` se exportan desde FormField.jsx en Task 1.
+10. Task 1 crea TODOS los controladores restantes como stubs (métodos con abort(501)) junto con las rutas — route:list truena con controladores inexistentes.
+11. Usuarios: nadie puede desactivarse a sí mismo (422, cualquier rol); `id_rol` NO editable en update.
+12. Desactivar corta acceso vivo: `&& $u->activo` en EnsurePanelAccess, EnsureAlumno y EnsureCoordinadorOAdmin. Test: usuario desactivado → 403 en /panel, /mi/calendario y /admin/carreras.
+13. Escrituras SOLO desde el array de validate() (nunca $request->all()); test de mass-assignment en usuarios (contrasena_hash/lti_user_id extra no mutan). Helpers de Task 1 con prefijo `admincarr*`.
+
 ## Global Constraints
 
 - Spec §4 (CRUD académico), §6-F4, §7 y la nota de códigos (conflictos de negocio → 422 validación; autorización → 403).
