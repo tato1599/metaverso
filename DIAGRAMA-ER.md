@@ -26,6 +26,7 @@ erDiagram
     EVENTO_AGENDA ||--o{ TOKEN_JUEGO : autoriza
     EVENTO_AGENDA ||--o{ RESERVA : recibe
     ALUMNO ||--o{ RESERVA : hace
+    RESERVA ||--o{ SESION_PRACTICA : origina
 
     ROL {
         int id_rol PK
