@@ -100,3 +100,6 @@ independiente (su propia BD y su propio registro LTI en su Moodle).
 - HTTPS activo (Let's Encrypt o CA institucional).
 - Firewall: exponer solo 80/443 (y 22 para administración).
 - Respaldos periódicos de PostgreSQL.
+
+> **Seguridad (F1):** al desplegar esta versión, **rota `LINKS_API_KEY`**. Las versiones
+> anteriores exponían la clave en la página pública `/demo` (ahora gateada a `local`).

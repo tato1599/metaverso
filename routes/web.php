@@ -38,10 +38,15 @@ Route::get('/jugar/{token}', function (string $token) {
     return view('jugar', ['deeplink' => "{$scheme}://play?token={$token}"]);
 })->where('token', '[A-Za-z0-9_\-]+');
 
-Route::get('/demo', fn () => view('demo', [
-    'apiKey' => config('metaverso.links_api_key'),
-    'baseUrl' => url('/'),
-]));
+Route::get('/demo', function () {
+    // Exponía LINKS_API_KEY en producción; la clave solo se prellena en local.
+    abort_unless(app()->environment(['local', 'testing']), 404);
+
+    return view('demo', [
+        'apiKey' => app()->environment('local') ? config('metaverso.links_api_key') : null,
+        'baseUrl' => url('/'),
+    ]);
+});
 
 Route::get('/panel/acceso/{usuario}', [PanelLoginController::class, 'acceso'])
     ->name('panel.acceso')->middleware('signed');
