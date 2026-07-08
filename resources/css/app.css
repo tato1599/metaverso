@@ -1,11 +1,85 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/public-sans';
+@import '@fontsource-variable/bricolage-grotesque';
+@import '@fontsource-variable/jetbrains-mono';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
+@source '../**/*.jsx';
 
+/*
+ * Metaverso — tokens del sistema de diseño.
+ * Dirección: "bitácora de laboratorio" — papel frío índigo, tinta académica,
+ * un solo acento (portal) y verde reservado a telemetría/estados vivos.
+ * Todo dato duro (horas, matrículas, claves, cupo) se presenta en mono tabular.
+ */
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Public Sans Variable', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Bricolage Grotesque Variable', 'Public Sans Variable', ui-sans-serif, sans-serif;
+    --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SFMono-Regular', monospace;
+
+    --color-lienzo: oklch(0.975 0.005 260);
+    --color-superficie: oklch(0.995 0.002 260);
+    --color-hueco: oklch(0.955 0.007 260);
+
+    --color-tinta: oklch(0.24 0.03 275);
+    --color-tinta-2: oklch(0.45 0.025 275);
+    --color-tinta-3: oklch(0.58 0.02 275);
+
+    --color-borde: oklch(0.89 0.008 260);
+    --color-borde-fuerte: oklch(0.8 0.012 265);
+
+    --color-portal: oklch(0.51 0.19 272);
+    --color-portal-fuerte: oklch(0.44 0.19 272);
+    --color-portal-tinte: oklch(0.955 0.025 272);
+
+    --color-telemetria: oklch(0.52 0.13 155);
+    --color-telemetria-tinte: oklch(0.95 0.04 155);
+
+    --color-senal: oklch(0.5 0.11 70);
+    --color-senal-tinte: oklch(0.96 0.05 85);
+
+    --color-alerta: oklch(0.53 0.19 25);
+    --color-alerta-tinte: oklch(0.96 0.03 25);
+
+    --radius-ctl: 0.375rem;
+    --radius-carta: 0.625rem;
+    --radius-panel: 0.875rem;
+}
+
+@layer base {
+    html {
+        -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+        background-color: var(--color-lienzo);
+        color: var(--color-tinta);
+        font-family: var(--font-sans);
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+
+    h1,
+    h2,
+    h3 {
+        text-wrap: balance;
+    }
+
+    p {
+        text-wrap: pretty;
+    }
+}
+
+@keyframes modal-in {
+    from {
+        opacity: 0;
+        transform: scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
