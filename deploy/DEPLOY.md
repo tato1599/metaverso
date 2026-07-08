@@ -107,3 +107,6 @@ independiente (su propia BD y su propio registro LTI en su Moodle).
 > **Usuarios demo:** `db:seed --class=DemoSeeder` crea usuarios CON contraseña logueable
 > en `/login`. Fuera de `local`, la contraseña es aleatoria y se imprime en la salida del
 > comando — guárdala o cambia las cuentas de inmediato.
+
+> **Zona horaria:** define `APP_TIMEZONE` (p. ej. `America/Mexico_City`) en el `.env` del
+> despliegue. La agenda captura y muestra horas en la zona del campus.

@@ -24,6 +24,8 @@ erDiagram
     ALUMNO ||--o{ SESION_PRACTICA : ejecuta
     PRACTICA ||--o{ SESION_PRACTICA : evalua
     EVENTO_AGENDA ||--o{ TOKEN_JUEGO : autoriza
+    EVENTO_AGENDA ||--o{ RESERVA : recibe
+    ALUMNO ||--o{ RESERVA : hace
 
     ROL {
         int id_rol PK
@@ -119,6 +121,14 @@ erDiagram
         datetime fecha_hora_inicio
         datetime fecha_hora_fin
         string estatus "programado, en_curso, finalizado, cancelado"
+        int cupo_maximo "limite de reservas del slot (default configurable, 5)"
+    }
+    RESERVA {
+        int id_reserva PK
+        int id_evento FK
+        int id_alumno FK
+        string estatus "activa, cancelada (extensible: lista_espera)"
+        datetime created_at "fecha de la reserva"
     }
     SESION_PRACTICA {
         int id_sesion PK
