@@ -5,6 +5,8 @@ use App\Http\Controllers\Lti\JwksController;
 use App\Http\Controllers\Lti\LtiDeepLinkController;
 use App\Http\Controllers\Lti\LtiLaunchController;
 use App\Http\Controllers\Lti\LtiLoginController;
+use App\Http\Controllers\Mi\JugarController;
+use App\Http\Controllers\Mi\ReservaController;
 use App\Http\Controllers\Panel\AgendaController;
 use App\Http\Controllers\Panel\PanelController;
 use App\Http\Controllers\Panel\PanelLinkController;
@@ -25,6 +27,12 @@ Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')-
 
 Route::middleware(['auth', 'alumno'])->group(function () {
     Route::get('/mi/calendario', fn () => Inertia::render('Mi/Calendario'))->name('mi.calendario');
+    Route::post('/mi/reservas', [ReservaController::class, 'store'])
+        ->middleware('throttle:10,1,reservas')->name('mi.reservas.store');
+    Route::delete('/mi/reservas/{reserva}', [ReservaController::class, 'destroy'])
+        ->name('mi.reservas.destroy');
+    Route::post('/mi/eventos/{evento}/jugar', JugarController::class)
+        ->middleware('throttle:10,1,jugar')->name('mi.eventos.jugar');
 });
 
 Route::get('/lti/jwks', [JwksController::class, 'index'])->name('lti.jwks');
