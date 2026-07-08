@@ -5,6 +5,7 @@ use App\Http\Controllers\Lti\JwksController;
 use App\Http\Controllers\Lti\LtiDeepLinkController;
 use App\Http\Controllers\Lti\LtiLaunchController;
 use App\Http\Controllers\Lti\LtiLoginController;
+use App\Http\Controllers\Panel\AgendaController;
 use App\Http\Controllers\Panel\PanelController;
 use App\Http\Controllers\Panel\PanelLinkController;
 use App\Http\Controllers\Panel\PanelLoginController;
@@ -55,6 +56,12 @@ Route::view('/panel/acceso-invalido', 'panel.acceso-invalido')->name('panel.acce
 
 Route::middleware(['auth', 'panel'])->group(function () {
     Route::get('/panel', [PanelController::class, 'dashboard'])->name('panel.dashboard');
+
+    Route::get('/panel/agenda', [AgendaController::class, 'index'])->name('panel.agenda');
+    Route::post('/panel/eventos', [AgendaController::class, 'store'])->name('panel.eventos.store');
+    Route::get('/panel/eventos/{evento}', [AgendaController::class, 'show'])->name('panel.eventos.show');
+    Route::put('/panel/eventos/{evento}', [AgendaController::class, 'update'])->name('panel.eventos.update');
+    Route::delete('/panel/eventos/{evento}', [AgendaController::class, 'destroy'])->name('panel.eventos.destroy');
     Route::get('/panel/grupos/{grupo}', [PanelController::class, 'show'])->name('panel.grupos.show');
 
     // Task 5: magic links (CSV se genera del lado del cliente desde la tabla renderizada)
