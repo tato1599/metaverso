@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import Badge from '../../Components/Badge';
 import Button from '../../Components/Button';
 import Card from '../../Components/Card';
@@ -8,7 +8,7 @@ import AppLayout from '../../Layouts/AppLayout';
 
 const TONO_ESTATUS = { programado: 'muted', en_curso: 'ok', cancelado: 'danger', finalizado: 'muted' };
 
-export default function Grupo({ grupo, alumnos, eventos, csrf }) {
+export default function Grupo({ grupo, alumnos, eventos }) {
     return (
         <AppLayout>
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -77,18 +77,15 @@ export default function Grupo({ grupo, alumnos, eventos, csrf }) {
                                         </Badge>
                                     </td>
                                     <td className="px-4 py-2.5 text-right">
-                                        {/* Form nativo (no router.post): el endpoint de links aún
-                                            responde Blade hasta que Task B lo migre a Inertia. */}
-                                        <form
-                                            method="post"
-                                            action={`/panel/grupos/${grupo.id_grupo}/eventos/${e.id_evento}/links`}
-                                            className="inline"
+                                        <Button
+                                            variant="secondary"
+                                            className="h-8 px-3 text-xs"
+                                            onClick={() =>
+                                                router.post(`/panel/grupos/${grupo.id_grupo}/eventos/${e.id_evento}/links`)
+                                            }
                                         >
-                                            <input type="hidden" name="_token" value={csrf} />
-                                            <Button type="submit" variant="secondary" className="h-8 px-3 text-xs">
-                                                Generar links del grupo
-                                            </Button>
-                                        </form>
+                                            Generar links del grupo
+                                        </Button>
                                     </td>
                                 </tr>
                             ))}

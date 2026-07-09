@@ -42,8 +42,8 @@ class LoginController extends Controller
         $request->session()->regenerate();
 
         // Redirect puro por rol: intended() de otro contexto mandaría a un alumno a un 403.
-        // Inertia::location: el panel staff aún es Blade (hasta F5) y un redirect normal
-        // dejaría el HTML dentro del modal de error de Inertia.
+        // Inertia::location fuerza una visita top-level tras el login (recarga limpia del
+        // contexto de sesión), válida venga la petición de Inertia o de un POST plano.
         $u = $request->user();
 
         return Inertia::location($u->esStaffPanel() ? route('panel.dashboard') : route('mi.calendario'));

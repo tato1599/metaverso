@@ -1,6 +1,19 @@
 <?php
-use App\Models\{Rol, Usuario, Maestro, Alumno, Carrera, Materia, CicloEscolar, Grupo, Inscripcion, Practica, EventoAgenda, SesionPractica};
+
+use App\Models\Alumno;
+use App\Models\Carrera;
+use App\Models\CicloEscolar;
+use App\Models\EventoAgenda;
+use App\Models\Grupo;
+use App\Models\Inscripcion;
+use App\Models\Maestro;
+use App\Models\Materia;
+use App\Models\Practica;
+use App\Models\Rol;
+use App\Models\SesionPractica;
+use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia;
 
 uses(RefreshDatabase::class);
 
@@ -21,11 +34,18 @@ it('muestra las sesiones del grupo y el detalle con telemetria', function () {
     $sesion = SesionPractica::create(['id_evento' => $evento->id_evento, 'id_alumno' => $alumno->id_alumno, 'id_practica' => $practica->id_practica, 'fecha_inicio' => now(), 'fecha_fin' => now(), 'estatus' => 'completada', 'calificacion' => 88.5, 'datos_resultado' => ['aciertos' => 9]]);
 
     $this->actingAs($uMaestro);
-    $this->get(route('panel.grupos.resultados', $grupo->id_grupo))
-        ->assertOk()->assertSee('Ana')->assertSee('88.5');
+    $this->get(route('panel.grupos.resultados', $grupo->id_grupo))->assertInertia(
+        fn (AssertableInertia $page) => $page->component('Panel/Resultados')
+            ->has('sesiones', 1)
+            ->where('sesiones.0.alumno', 'Ana R')
+            ->where('sesiones.0.calificacion', 88.5)
+    );
 
-    $this->get(route('panel.sesiones.show', $sesion->id_sesion))
-        ->assertOk()->assertSee('aciertos');
+    $this->get(route('panel.sesiones.show', $sesion->id_sesion))->assertInertia(
+        fn (AssertableInertia $page) => $page->component('Panel/Sesion')
+            ->where('sesion.datos_resultado.aciertos', 9)
+            ->where('sesion.id_grupo', $grupo->id_grupo)
+    );
 });
 
 it('un maestro no ve resultados de un grupo ajeno', function () {

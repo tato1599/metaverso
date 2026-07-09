@@ -101,8 +101,8 @@ Route::middleware(['auth', 'panel'])->group(function () {
 
     // Magic links (CSV se genera del lado del cliente desde la tabla renderizada).
     // El GET companion evita 405 en refresh/back tras el POST Inertia (la URL queda en este endpoint).
-    Route::post('/panel/grupos/{grupo}/eventos/{evento}/links', [PanelLinkController::class, 'generar'])->name('panel.grupos.eventos.links');
-    Route::get('/panel/grupos/{grupo}/eventos/{evento}/links', fn (Grupo $grupo) => redirect()->route('panel.grupos.show', $grupo));
+    Route::post('/panel/grupos/{grupo}/eventos/{evento}/links', [PanelLinkController::class, 'generar'])->name('panel.grupos.eventos.links')->whereNumber('grupo')->whereNumber('evento');
+    Route::get('/panel/grupos/{grupo}/eventos/{evento}/links', fn (Grupo $grupo) => redirect()->route('panel.grupos.show', $grupo))->whereNumber('grupo')->whereNumber('evento');
 
     Route::get('/panel/grupos/{grupo}/resultados', [PanelResultadoController::class, 'index'])->name('panel.grupos.resultados');
     Route::get('/panel/sesiones/{sesion}', [PanelResultadoController::class, 'sesion'])->name('panel.sesiones.show');

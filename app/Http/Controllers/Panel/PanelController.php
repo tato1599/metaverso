@@ -70,7 +70,6 @@ class PanelController extends Controller
             ])->values(),
             // El form nativo de "Generar links" postea a un endpoint que aún responde
             // Blade (Task B); router.post de Inertia rompería con esa respuesta.
-            'csrf' => csrf_token(),
         ]);
     }
 }

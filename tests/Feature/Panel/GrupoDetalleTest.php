@@ -46,7 +46,6 @@ it('un Maestro abre su grupo y ve alumnos y eventos; un grupo ajeno da 403', fun
         ->has('eventos', 1)
         ->where('eventos.0.id_evento', $evento->id_evento)
         ->where('eventos.0.practica', 'Lab 1')
-        ->has('csrf')
     );
 
     // grupo de otro maestro

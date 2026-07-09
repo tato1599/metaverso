@@ -6,8 +6,9 @@ import Table from '../../Components/Table';
 import AppLayout from '../../Layouts/AppLayout';
 
 function descargarCsv(grupo, filas) {
+    const esc = (v) => `"${String(v).replace(/"/g, '""')}"`;
     const encabezado = 'nombre,matricula,url';
-    const cuerpo = filas.map((f) => `"${f.nombre}",${f.matricula},${f.url}`).join('\n');
+    const cuerpo = filas.map((f) => [esc(f.nombre), esc(f.matricula), esc(f.url)].join(',')).join('\n');
     const blob = new Blob([`${encabezado}\n${cuerpo}`], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
