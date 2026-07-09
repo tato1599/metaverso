@@ -197,6 +197,8 @@ export default function Grupos({ filas, materias, maestros, ciclos, alumnos }) {
                 <div className="flex items-center gap-2">
                     <TextInput
                         type="search"
+                        name="busqueda"
+                        aria-label="Buscar"
                         placeholder="Buscar…"
                         className="w-56"
                         value={busqueda}

@@ -24,9 +24,7 @@ use App\Http\Controllers\Panel\PanelResultadoController;
 use App\Models\Grupo;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', fn () => redirect()->route('login'));
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
@@ -90,7 +88,6 @@ Route::middleware(['auth', 'admin'])->prefix('/admin')->name('admin.')->group(fu
 Route::get('/panel/acceso/{usuario}', [PanelLoginController::class, 'acceso'])
     ->name('panel.acceso')->middleware('signed');
 Route::post('/panel/salir', [PanelLoginController::class, 'salir'])->name('panel.salir');
-Route::view('/panel/acceso-invalido', 'panel.acceso-invalido')->name('panel.acceso.invalido');
 
 Route::middleware(['auth', 'panel'])->group(function () {
     Route::get('/panel', [PanelController::class, 'dashboard'])->name('panel.dashboard');

@@ -198,6 +198,8 @@ export default function Usuarios({ titulo, filas, roles, carreras }) {
                 <div className="flex items-center gap-2">
                     <TextInput
                         type="search"
+                        name="busqueda"
+                        aria-label="Buscar"
                         placeholder="Buscar…"
                         className="w-56"
                         value={busqueda}

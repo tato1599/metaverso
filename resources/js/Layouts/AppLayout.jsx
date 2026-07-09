@@ -1,4 +1,4 @@
-import { router, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 
 function Wordmark() {
     return (
@@ -9,9 +9,6 @@ function Wordmark() {
     );
 }
 
-/* ponytail: nav con <a> plano — mezcla Blade (panel legado) e Inertia; un <a> funciona
-   para ambos a costa de full reload entre páginas Inertia. Migrar a <Link> en F5,
-   cuando el panel completo sea Inertia. */
 function navPorRol(rol) {
     if (rol === 'Alumno') {
         return [{ href: '/mi/calendario', label: 'Calendario' }];
@@ -33,7 +30,7 @@ export default function AppLayout({ children }) {
     const { auth, flash } = usePage().props;
     const user = auth?.user;
     const links = navPorRol(user?.rol);
-    const path = typeof window !== 'undefined' ? window.location.pathname : '';
+    const path = usePage().url.split('?')[0];
 
     return (
         <div className="min-h-dvh">
@@ -43,7 +40,7 @@ export default function AppLayout({ children }) {
                         <Wordmark />
                         <nav className="flex items-center gap-1">
                             {links.map((l) => (
-                                <a
+                                <Link
                                     key={l.href}
                                     href={l.href}
                                     className={`rounded-ctl px-3 py-1.5 text-[13px] font-medium transition-colors outline-offset-2 focus-visible:outline-2 focus-visible:outline-portal ${
@@ -53,7 +50,7 @@ export default function AppLayout({ children }) {
                                     }`}
                                 >
                                     {l.label}
-                                </a>
+                                </Link>
                             ))}
                         </nav>
                     </div>

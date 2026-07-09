@@ -115,6 +115,8 @@ export default function Recurso({ titulo, rutaBase, idKey, columnas, filas, camp
                 <div className="flex items-center gap-2">
                     <TextInput
                         type="search"
+                        name="busqueda"
+                        aria-label="Buscar"
                         placeholder="Buscar…"
                         className="w-56"
                         value={busqueda}
