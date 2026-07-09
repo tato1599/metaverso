@@ -79,6 +79,10 @@ class CalendarioController extends Controller
                     ];
                 })->values();
 
+                // 'lleno' solo mira horarios aún reservables: un slot pasado libre
+                // no debe ocultar que todo lo que queda por venir ya está lleno.
+                $slotsFuturos = $slots->filter(fn (array $s, int $i) => $slotsCrudos[$i]['inicio']->isFuture());
+
                 // Ventana de juego = slot reservado, capada al fin del evento (F6).
                 $finSlotMio = null;
                 if ($mia) {
@@ -107,9 +111,9 @@ class CalendarioController extends Controller
                     ] : null,
                     // La UI no reimplementa reglas: los booleanos se deciden aquí.
                     'puede_reservar' => $slots->contains(fn (array $s) => $s['puede_reservar']),
-                    'lleno' => $e->estatus === 'programado'
-                        && collect($slotsCrudos)->contains(fn (array $s) => $s['inicio']->isFuture())
-                        && $slots->every(fn (array $s) => $s['lleno']),
+                    'lleno' => ! $mia && $e->estatus === 'programado'
+                        && $slotsFuturos->isNotEmpty()
+                        && $slotsFuturos->every(fn (array $s) => $s['lleno']),
                     'finalizado' => $e->estatus !== 'cancelado' && $e->fecha_hora_fin->lt($ahora),
                     'puede_cancelar' => (bool) $mia && $mia->inicio_slot->isFuture(),
                     'puede_jugar' => (bool) $mia && $e->estatus !== 'cancelado'

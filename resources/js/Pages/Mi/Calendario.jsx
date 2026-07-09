@@ -27,6 +27,13 @@ function diaBonito(fecha) {
     });
 }
 
+function diaCorto(local) {
+    // Día corto ('sáb') del datetime local del campus; se reconstruye por
+    // componentes para que la TZ del navegador no la mueva (patrón diaBonito).
+    const [anio, mes, dia] = local.slice(0, 10).split('-').map(Number);
+    return new Date(anio, mes - 1, dia).toLocaleDateString('es-MX', { weekday: 'short' });
+}
+
 function agruparPorDia(slots) {
     const grupos = new Map();
     for (const s of slots) {
@@ -67,11 +74,15 @@ function ChipEvento({ e }) {
     const [eligiendoHorario, setEligiendoHorario] = useState(false);
     const cancelado = e.estatus === 'cancelado';
     const slotMio = e.mi_reserva ? e.slots.find((s) => s.es_mio) : null;
-    const horarioMio = slotMio
+    const cruzaDias = e.inicio_local.slice(0, 10) !== e.fin_local.slice(0, 10);
+    const inicioMio = slotMio ? slotMio.inicio_local : e.mi_reserva ? e.mi_reserva.inicio_slot_local : null;
+    const horaMia = slotMio
         ? `${slotMio.inicio_local.slice(11, 16)}–${slotMio.fin_local.slice(11, 16)}`
-        : e.mi_reserva
-          ? e.mi_reserva.inicio_slot_local.slice(11, 16)
+        : inicioMio
+          ? inicioMio.slice(11, 16)
           : null;
+    // Si la ventana cruza días, la hora sola es ambigua: se antepone el día corto.
+    const horarioMio = horaMia === null ? null : cruzaDias ? `${diaCorto(inicioMio)} ${horaMia}` : horaMia;
 
     function reservarSlot(slot) {
         router.post(
@@ -92,7 +103,11 @@ function ChipEvento({ e }) {
                 {e.espacio ? ` · ${e.espacio}` : ''}
             </p>
             <div className="mt-1.5 flex items-center justify-between gap-2">
-                <CupoPuntos ocupados={e.reservas_activas} cupo={e.cupo_maximo} />
+                {e.multi_slot ? (
+                    <span className="font-mono text-[11px] tabular-nums text-tinta-2">{e.reservas_activas} reservas</span>
+                ) : (
+                    <CupoPuntos ocupados={e.reservas_activas} cupo={e.cupo_maximo} />
+                )}
                 {cancelado && <Badge tone="danger">cancelado</Badge>}
                 {!cancelado && e.mi_reserva && !e.puede_jugar && !e.finalizado && <Badge tone="ok">reservado</Badge>}
                 {e.lleno && <Badge tone="warn">lleno</Badge>}

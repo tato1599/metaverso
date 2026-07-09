@@ -413,6 +413,50 @@ it('puede_reservar es el OR de los slots y lleno exige todos los slots llenos', 
     );
 });
 
+it('lleno ignora slots pasados: ventana iniciada con futuros llenos marca lleno (F6 must-fix)', function () {
+    $g = slotsGrupo();
+    // Hoy 07:30-10:30, ahora 09:00: 07:30 y 08:30 ya iniciaron; solo 09:30 es futuro.
+    $evento = slotsEvento($g['grupo'], 60, [
+        'fecha_hora_inicio' => now()->setTime(7, 30),
+        'fecha_hora_fin' => now()->setTime(10, 30),
+        'cupo_maximo' => 1,
+    ]);
+    [$u] = slotsAlumno($g['grupo']);
+    [, $otro] = slotsAlumno($g['grupo']);
+    Reserva::create(['id_evento' => $evento->id_evento, 'id_alumno' => $otro->id_alumno, 'inicio_slot' => $evento->slots()[2]['inicio']]);
+
+    // Los slots pasados están libres, pero el único horario futuro está lleno.
+    $this->actingAs($u)->get('/mi/calendario')->assertInertia(
+        fn (Assert $page) => $page
+            ->where('eventos.0.slots.0.lleno', false)
+            ->where('eventos.0.puede_reservar', false)
+            ->where('eventos.0.lleno', true)
+    );
+});
+
+it('lleno excluye al alumno con reserva propia (F6 must-fix)', function () {
+    $g = slotsGrupo();
+    $evento = slotsEvento($g['grupo'], 60, [
+        'fecha_hora_fin' => now()->addDay()->setTime(12, 0),
+        'cupo_maximo' => 1,
+    ]);
+    [$u, $alumno] = slotsAlumno($g['grupo']);
+    [, $otro] = slotsAlumno($g['grupo']);
+    [$uSinReserva] = slotsAlumno($g['grupo']);
+    Reserva::create(['id_evento' => $evento->id_evento, 'id_alumno' => $alumno->id_alumno, 'inicio_slot' => $evento->slots()[0]['inicio']]);
+    Reserva::create(['id_evento' => $evento->id_evento, 'id_alumno' => $otro->id_alumno, 'inicio_slot' => $evento->slots()[1]['inicio']]);
+
+    // Ambos horarios llenos: para quien ya tiene lugar el evento no está "lleno".
+    $this->actingAs($u)->get('/mi/calendario')->assertInertia(
+        fn (Assert $page) => $page
+            ->where('eventos.0.mi_reserva.inicio_slot_local', slotsClave($evento, 0))
+            ->where('eventos.0.lleno', false)
+    );
+    $this->actingAs($uSinReserva)->get('/mi/calendario')->assertInertia(
+        fn (Assert $page) => $page->where('eventos.0.lleno', true)
+    );
+});
+
 it('puede_jugar y puede_cancelar se calculan contra el slot reservado', function () {
     $g = slotsGrupo();
     // eventos.0 = ventana 07:00-11:00, mi horario 10:00 (futuro): aún no juega, sí cancela.
@@ -579,4 +623,22 @@ it('bloquea cambiar duracion_estimada con reservas activas en eventos vigentes (
     $this->actingAs($coord)->put("/admin/practicas/{$practica->id_practica}", $payload(90))
         ->assertRedirect();
     expect($practica->fresh()->duracion_estimada)->toBe(90);
+});
+
+it('omitir duracion_estimada en el update no cuenta como cambio a null (F6 must-fix)', function () {
+    $g = slotsGrupo();
+    $evento = slotsEvento($g['grupo']);
+    $practica = $evento->practica;
+    [, $alumno] = slotsAlumno($g['grupo']);
+    Reserva::create(['id_evento' => $evento->id_evento, 'id_alumno' => $alumno->id_alumno, 'inicio_slot' => $evento->slots()[1]['inicio']]);
+    $coord = slotsUsuario('Coordinador');
+
+    // La llave ausente no es "cambiar a null": el update pasa y la duración queda intacta.
+    $this->actingAs($coord)->putJson("/admin/practicas/{$practica->id_practica}", [
+        'id_materia' => $practica->id_materia,
+        'titulo' => $practica->titulo,
+        'orden' => 1,
+        'escena_referencia' => 'Lab_1',
+    ])->assertRedirect();
+    expect($practica->fresh()->duracion_estimada)->toBe(60);
 });

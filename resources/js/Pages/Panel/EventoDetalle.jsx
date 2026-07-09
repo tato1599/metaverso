@@ -45,9 +45,18 @@ function diaBonito(fecha) {
     });
 }
 
+function diaCorto(local) {
+    // Día corto ('sáb') del datetime local del campus; se reconstruye por
+    // componentes para que la TZ del navegador no la mueva (patrón diaBonito).
+    const [anio, mes, dia] = local.slice(0, 10).split('-').map(Number);
+    return new Date(anio, mes - 1, dia).toLocaleDateString('es-MX', { weekday: 'short' });
+}
+
 export default function EventoDetalle({ evento, reservas, espacios }) {
     const [editando, setEditando] = useState(false);
     const cancelado = evento.estatus === 'cancelado';
+    // Si la ventana cruza días, la hora sola del slot es ambigua: se antepone el día corto.
+    const cruzaDias = evento.inicio_local.slice(0, 10) !== evento.fin_local.slice(0, 10);
 
     function cancelarEvento() {
         if (confirm('¿Cancelar este evento? Los alumnos verán la práctica como cancelada.')) {
@@ -151,7 +160,10 @@ export default function EventoDetalle({ evento, reservas, espacios }) {
                                     <td className="px-4 py-2.5 text-tinta">{r.nombre}</td>
                                     <td className="px-4 py-2.5 font-mono text-xs tabular-nums text-tinta-2">{r.matricula}</td>
                                     <td className="px-4 py-2.5 font-mono text-xs tabular-nums text-tinta-2">
-                                        {r.inicio_slot_local?.slice(11, 16)}
+                                        {r.inicio_slot_local &&
+                                            (cruzaDias
+                                                ? `${diaCorto(r.inicio_slot_local)} ${r.inicio_slot_local.slice(11, 16)}`
+                                                : r.inicio_slot_local.slice(11, 16))}
                                     </td>
                                     <td className="px-4 py-2.5 font-mono text-xs tabular-nums text-tinta-2">{r.fecha}</td>
                                 </tr>

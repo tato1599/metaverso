@@ -9,6 +9,7 @@ use App\Models\Practica;
 use App\Models\Reserva;
 use App\Models\SesionPractica;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -77,23 +78,31 @@ class PracticaController extends Controller
 
         // Enmienda F5: la partición de los eventos vigentes depende de la duración;
         // cambiarla dejaría inicio_slot fuera de la nueva partición (sobreventa).
-        $nuevaDuracion = isset($datos['duracion_estimada']) ? (int) $datos['duracion_estimada'] : null;
-        $duracionActual = $practica->duracion_estimada === null ? null : (int) $practica->duracion_estimada;
-        if ($nuevaDuracion !== $duracionActual) {
-            $reservas = Reserva::where('estatus', 'activa')
-                ->whereHas('evento', fn ($q) => $q
-                    ->where('id_practica', $practica->id_practica)
-                    ->where('estatus', '!=', 'cancelado')
-                    ->where('fecha_hora_fin', '>', now()))
-                ->count();
-            if ($reservas > 0) {
-                throw ValidationException::withMessages([
-                    'duracion_estimada' => "Hay {$reservas} reservas en eventos futuros; cancélalas o espera.",
-                ]);
+        // La transacción + lockForUpdate cierra el TOCTOU: nadie reserva en esos
+        // eventos entre el conteo y el update.
+        DB::transaction(function () use ($datos, $practica) {
+            if (array_key_exists('duracion_estimada', $datos)) {
+                $nuevaDuracion = $datos['duracion_estimada'] === null ? null : (int) $datos['duracion_estimada'];
+                $duracionActual = $practica->duracion_estimada === null ? null : (int) $practica->duracion_estimada;
+                if ($nuevaDuracion !== $duracionActual) {
+                    $idsEventos = EventoAgenda::where('id_practica', $practica->id_practica)
+                        ->where('estatus', '!=', 'cancelado')
+                        ->where('fecha_hora_fin', '>', now())
+                        ->lockForUpdate()
+                        ->pluck('id_evento');
+                    $reservas = Reserva::whereIn('id_evento', $idsEventos)
+                        ->where('estatus', 'activa')
+                        ->count();
+                    if ($reservas > 0) {
+                        throw ValidationException::withMessages([
+                            'duracion_estimada' => "Hay {$reservas} reservas en eventos futuros; cancélalas o espera.",
+                        ]);
+                    }
+                }
             }
-        }
 
-        $practica->update($datos);
+            $practica->update($datos);
+        });
 
         return back()->with('success', 'Práctica actualizada.');
     }

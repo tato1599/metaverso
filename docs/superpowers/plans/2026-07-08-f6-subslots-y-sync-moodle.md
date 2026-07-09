@@ -11,7 +11,7 @@
 - Un alumno conserva **una** reserva activa por evento (cambiar de horario = cancelar + re-reservar). El índice parcial único existente ya lo garantiza.
 - Partición: pasos de `duracion_estimada` min desde el inicio de la ventana; solo slots que caben completos; si la ventana es menor que la duración o `duracion_estimada` es null/0 → **un solo slot = la ventana completa** (compatibilidad con eventos existentes).
 - Jugar: la ventana de juego pasa a ser la del **slot reservado** `[inicio_slot, inicio_slot+duración]` (capada al fin del evento), no la del evento completo.
-- Sync: upsert-only (crea/reactiva usuarios, alumnos, maestros e inscripciones); los que ya no están en Moodle se REPORTAN, nunca se dan de baja automáticamente. Instructores → maestro con `numero_empleado` = `LTI-` + 8 hex del lti_user_id (columna NOT NULL unique). Alumnos reutilizan `AprovisionarAlumno` (idempotente, ya probado).
+- Sync: upsert-only (crea/reactiva usuarios, alumnos, maestros e inscripciones); los que ya no están en Moodle se REPORTAN, nunca se dan de baja automáticamente. Instructores → maestro con `numero_empleado` = `LTI-` + lti_user_id completo (enmienda numero-empleado-lti-truncado) (columna NOT NULL unique). Alumnos reutilizan `AprovisionarAlumno` (idempotente, ya probado).
 
 ## Global Constraints
 
@@ -45,7 +45,7 @@
 - Levantar Moodle (ya en marcha), `php artisan serve --host=0.0.0.0` (el contenedor alcanza el host como `host.docker.internal`).
 - Registrar la herramienta en ambos lados según `docs/LTI-CONFIGURAR-MOODLE.md` (`metaverso:lti-registrar-plataforma`).
 - En Moodle (navegador): crear curso, inscribir alumnos de prueba, agregar la actividad LTI (deep link → elegir práctica), lanzar como alumno.
-- Verificar: launch OK (abrir juego/demo), contexto capturado en `lti_contextos`, vincular grupo y **sincronizar roster** (usuarios de Moodle aparecen en el grupo local), jugar demo y **calificación de vuelta** en el libro de Moodle (AGS).
+- Verificar: launch OK (abrir juego/demo), contexto capturado en `lti_contextos`, `nrps_url` no-null en `lti_contextos` tras el launch, antes de sincronizar, vincular grupo y **sincronizar roster** (usuarios de Moodle aparecen en el grupo local), jugar demo y **calificación de vuelta** en el libro de Moodle (AGS).
 - Suite completa + pint + build; revisión experta del diff F6; aplicar must-fix; commit de cierre.
 
 ## Enmiendas (revisión experta 2026-07-08, decisor delegado — OBLIGATORIAS)
