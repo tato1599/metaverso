@@ -24,6 +24,27 @@ function fechaBonita(local) {
     return `${dow}, ${hora}`;
 }
 
+function agruparPorDia(slots) {
+    const grupos = new Map();
+    for (const s of slots) {
+        const dia = s.inicio_local.slice(0, 10);
+        if (!grupos.has(dia)) {
+            grupos.set(dia, []);
+        }
+        grupos.get(dia).push(s);
+    }
+    return [...grupos.entries()];
+}
+
+function diaBonito(fecha) {
+    const [anio, mes, dia] = fecha.split('-').map(Number);
+    return new Date(anio, mes - 1, dia).toLocaleDateString('es-MX', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+    });
+}
+
 export default function EventoDetalle({ evento, reservas, espacios }) {
     const [editando, setEditando] = useState(false);
     const cancelado = evento.estatus === 'cancelado';
@@ -60,31 +81,62 @@ export default function EventoDetalle({ evento, reservas, espacios }) {
             </div>
 
             <div className="grid gap-4 lg:grid-cols-3">
-                <Card title="Detalles">
-                    <dl className="space-y-3 text-[13px]">
-                        <div>
-                            <dt className="text-tinta-3">Horario</dt>
-                            <dd className="mt-0.5 font-mono text-sm tabular-nums text-tinta">
-                                {fechaBonita(evento.inicio_local)} — {evento.fin_local.slice(11, 16)}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-tinta-3">Cupo</dt>
-                            <dd className="mt-1 flex items-center gap-2">
-                                <CupoPuntos ocupados={evento.reservas_activas} cupo={evento.cupo_maximo} />
-                                <span className="font-mono text-xs tabular-nums text-tinta-2">
-                                    {evento.reservas_activas}/{evento.cupo_maximo}
-                                </span>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-tinta-3">Estatus</dt>
-                            <dd className="mt-1">
-                                <Badge tone={TONO_ESTATUS[evento.estatus] ?? 'muted'}>{evento.estatus.replace('_', ' ')}</Badge>
-                            </dd>
-                        </div>
-                    </dl>
-                </Card>
+                <div className="space-y-4">
+                    <Card title="Detalles">
+                        <dl className="space-y-3 text-[13px]">
+                            <div>
+                                <dt className="text-tinta-3">Horario</dt>
+                                <dd className="mt-0.5 font-mono text-sm tabular-nums text-tinta">
+                                    {fechaBonita(evento.inicio_local)} — {evento.fin_local.slice(11, 16)}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-tinta-3">Cupo</dt>
+                                <dd className="mt-1 flex items-center gap-2">
+                                    <CupoPuntos ocupados={evento.reservas_activas} cupo={evento.cupo_maximo} />
+                                    <span className="font-mono text-xs tabular-nums text-tinta-2">
+                                        {evento.reservas_activas}/{evento.cupo_maximo}
+                                    </span>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-tinta-3">Estatus</dt>
+                                <dd className="mt-1">
+                                    <Badge tone={TONO_ESTATUS[evento.estatus] ?? 'muted'}>
+                                        {evento.estatus.replace('_', ' ')}
+                                    </Badge>
+                                </dd>
+                            </div>
+                        </dl>
+                    </Card>
+
+                    {evento.multi_slot && (
+                        <Card title="Ocupación por horario">
+                            <div className="space-y-3">
+                                {agruparPorDia(evento.ocupacion).map(([dia, slots]) => (
+                                    <div key={dia}>
+                                        <p className="mb-1 text-[11px] font-semibold tracking-wide text-tinta-3 uppercase">
+                                            {diaBonito(dia)}
+                                        </p>
+                                        <div className="space-y-1.5">
+                                            {slots.map((o) => (
+                                                <div
+                                                    key={o.inicio_local}
+                                                    className="flex items-center justify-between gap-3"
+                                                >
+                                                    <span className="font-mono text-xs tabular-nums text-tinta-2">
+                                                        {o.inicio_local.slice(11, 16)}–{o.fin_local.slice(11, 16)}
+                                                    </span>
+                                                    <CupoPuntos ocupados={o.ocupados} cupo={evento.cupo_maximo} />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
+                    )}
+                </div>
 
                 <div className="lg:col-span-2">
                     {reservas.length === 0 ? (
@@ -93,11 +145,14 @@ export default function EventoDetalle({ evento, reservas, espacios }) {
                             hint="Cuando los alumnos reserven su lugar en este slot aparecerán aquí."
                         />
                     ) : (
-                        <Table head={['Alumno', 'Matrícula', 'Reservó el']}>
+                        <Table head={['Alumno', 'Matrícula', 'Horario', 'Reservó el']}>
                             {reservas.map((r) => (
                                 <tr key={r.id_reserva}>
                                     <td className="px-4 py-2.5 text-tinta">{r.nombre}</td>
                                     <td className="px-4 py-2.5 font-mono text-xs tabular-nums text-tinta-2">{r.matricula}</td>
+                                    <td className="px-4 py-2.5 font-mono text-xs tabular-nums text-tinta-2">
+                                        {r.inicio_slot_local?.slice(11, 16)}
+                                    </td>
                                     <td className="px-4 py-2.5 font-mono text-xs tabular-nums text-tinta-2">{r.fecha}</td>
                                 </tr>
                             ))}

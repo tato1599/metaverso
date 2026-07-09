@@ -17,7 +17,9 @@ return new class extends Migration
             $t->timestamps(); // created_at = fecha de reserva
             $t->index('id_alumno');
         });
-        // Respaldo a nivel BD contra dobles reservas; cubre el conteo de cupo con index-only scan.
+        // Respaldo a nivel BD contra dobles reservas (una activa por alumno y evento).
+        // F6: ya no cubre el conteo de cupo — el cupo se cuenta por (id_evento, inicio_slot)
+        // y lo serializa el lockForUpdate del evento en la transacción de reservar.
         DB::statement("CREATE UNIQUE INDEX reservas_evento_alumno_activa ON reservas (id_evento, id_alumno) WHERE estatus = 'activa'");
     }
 

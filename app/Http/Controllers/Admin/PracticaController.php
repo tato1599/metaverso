@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\EventoAgenda;
 use App\Models\Materia;
 use App\Models\Practica;
+use App\Models\Reserva;
 use App\Models\SesionPractica;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -72,6 +73,24 @@ class PracticaController extends Controller
             || SesionPractica::where('id_practica', $practica->id_practica)->exists()
         )) {
             throw ValidationException::withMessages(['id_materia' => 'No se puede cambiar la materia: la práctica tiene eventos o sesiones registradas.']);
+        }
+
+        // Enmienda F5: la partición de los eventos vigentes depende de la duración;
+        // cambiarla dejaría inicio_slot fuera de la nueva partición (sobreventa).
+        $nuevaDuracion = isset($datos['duracion_estimada']) ? (int) $datos['duracion_estimada'] : null;
+        $duracionActual = $practica->duracion_estimada === null ? null : (int) $practica->duracion_estimada;
+        if ($nuevaDuracion !== $duracionActual) {
+            $reservas = Reserva::where('estatus', 'activa')
+                ->whereHas('evento', fn ($q) => $q
+                    ->where('id_practica', $practica->id_practica)
+                    ->where('estatus', '!=', 'cancelado')
+                    ->where('fecha_hora_fin', '>', now()))
+                ->count();
+            if ($reservas > 0) {
+                throw ValidationException::withMessages([
+                    'duracion_estimada' => "Hay {$reservas} reservas en eventos futuros; cancélalas o espera.",
+                ]);
+            }
         }
 
         $practica->update($datos);

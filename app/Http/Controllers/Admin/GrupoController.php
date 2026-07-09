@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Lti\SincronizarRosterMoodle;
 use App\Models\Alumno;
 use App\Models\CicloEscolar;
 use App\Models\Grupo;
 use App\Models\Inscripcion;
+use App\Models\LtiContexto;
 use App\Models\Maestro;
 use App\Models\Materia;
 use Illuminate\Http\Request;
@@ -30,6 +32,7 @@ class GrupoController extends Controller
             'id_materia' => $g->id_materia,
             'id_maestro' => $g->id_maestro,
             'id_ciclo' => $g->id_ciclo,
+            'id_lti_contexto' => $g->id_lti_contexto,
             'materia' => $g->materia->nombre,
             'maestro' => trim($g->maestro->usuario->nombre.' '.$g->maestro->usuario->apellidos),
             'ciclo' => $g->ciclo->nombre,
@@ -56,6 +59,8 @@ class GrupoController extends Controller
                     'id_alumno' => $a->id_alumno,
                     'etiqueta' => trim($a->usuario->nombre.' '.$a->usuario->apellidos)." — {$a->matricula}",
                 ])->values(),
+            'contextos' => LtiContexto::orderBy('titulo')->orderBy('context_id')->get()
+                ->map(fn (LtiContexto $c) => ['value' => $c->id, 'label' => $c->titulo ?: $c->context_id])->values(),
         ]);
     }
 
@@ -93,6 +98,36 @@ class GrupoController extends Controller
         return back()->with('success', 'Grupo eliminado.');
     }
 
+    public function sincronizar(Request $request, Grupo $grupo, SincronizarRosterMoodle $sincronizador)
+    {
+        $resumen = $sincronizador->sincronizar($grupo);
+
+        return back()->with('success', $this->resumenLegible($resumen));
+    }
+
+    /**
+     * @param  array{alumnos_nuevos: int, alumnos_reactivados: int, maestros: int, sin_cambio: int, inactivos: list<string>, en_moodle_no_locales: list<string>, locales_no_en_moodle: list<string>}  $resumen
+     */
+    private function resumenLegible(array $resumen): string
+    {
+        $mensaje = sprintf(
+            'Roster sincronizado: %d alumnos nuevos, %d reactivados, %d maestros, %d sin cambio.',
+            $resumen['alumnos_nuevos'],
+            $resumen['alumnos_reactivados'],
+            $resumen['maestros'],
+            $resumen['sin_cambio'],
+        );
+
+        if ($resumen['locales_no_en_moodle'] !== []) {
+            $mensaje .= ' Solo locales, ya no en Moodle (revisar): '.implode(', ', $resumen['locales_no_en_moodle']).'.';
+        }
+        if ($resumen['inactivos'] !== []) {
+            $mensaje .= ' Inactivos en Moodle (omitidos): '.implode(', ', $resumen['inactivos']).'.';
+        }
+
+        return $mensaje;
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -104,6 +139,7 @@ class GrupoController extends Controller
             'id_ciclo' => ['required', 'integer', Rule::exists('ciclos_escolares', 'id_ciclo')],
             'clave' => ['required', 'string', 'max:20'],
             'cupo_maximo' => ['required', 'integer', 'min:1'],
+            'id_lti_contexto' => ['nullable', 'integer', Rule::exists('lti_contextos', 'id')],
         ];
     }
 }

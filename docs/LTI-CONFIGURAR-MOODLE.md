@@ -72,7 +72,10 @@ Esto guarda `LTI_PRIVATE_KEY` / `LTI_PUBLIC_KEY` (o archivos PEM) según la conf
 | Servicio | Configuración |
 |---|---|
 | **IMS LTI Assignment and Grade Services** | "Use this service for grade sync and column management" |
+| **IMS LTI Names and Role Provisioning** | "Use this service to retrieve members' information as per privacy settings" |
 | **Deep Linking** | Activado (habilitado) |
+
+> Sin **Names and Role Provisioning**, Moodle no concede el scope `contextmembership.readonly` ni manda el claim NRPS en el launch, y la sincronización de roster desde Admin → Grupos no funcionará.
 
 ### 3d. Guardar
 

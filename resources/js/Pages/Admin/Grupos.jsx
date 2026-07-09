@@ -9,13 +9,14 @@ import Modal from '../../Components/Modal';
 import Table from '../../Components/Table';
 import AppLayout from '../../Layouts/AppLayout';
 
-function GrupoFormModal({ fila, materias, maestros, ciclos, cerrar }) {
+function GrupoFormModal({ fila, materias, maestros, ciclos, contextos, cerrar }) {
     const { data, setData, post, put, processing, errors } = useForm({
         id_materia: fila?.id_materia ?? '',
         id_maestro: fila?.id_maestro ?? '',
         id_ciclo: fila?.id_ciclo ?? '',
         clave: fila?.clave ?? '',
         cupo_maximo: fila?.cupo_maximo ?? '',
+        id_lti_contexto: fila?.id_lti_contexto ?? '',
     });
 
     function submit(e) {
@@ -70,6 +71,19 @@ function GrupoFormModal({ fila, materias, maestros, ciclos, cerrar }) {
                         required
                     />
                 </FormField>
+                <FormField label="Curso Moodle" name="id_lti_contexto" error={errors.id_lti_contexto}>
+                    <Select
+                        value={data.id_lti_contexto ?? ''}
+                        onChange={(e) => setData('id_lti_contexto', e.target.value)}
+                    >
+                        <option value="">Sin vincular</option>
+                        {contextos.map((o) => (
+                            <option key={o.value} value={o.value}>
+                                {o.label}
+                            </option>
+                        ))}
+                    </Select>
+                </FormField>
                 <div className="flex justify-end gap-2 pt-1">
                     <Button type="button" variant="ghost" onClick={cerrar}>
                         Cancelar
@@ -84,9 +98,22 @@ function GrupoFormModal({ fila, materias, maestros, ciclos, cerrar }) {
 }
 
 function InscripcionesModal({ grupo, alumnos, cerrar }) {
+    const { flash, errors: erroresPagina } = usePage().props;
     const { data, setData, post, processing, errors, reset } = useForm({ id_alumno: '' });
+    const [sincronizando, setSincronizando] = useState(false);
+    const [resumenVisible, setResumenVisible] = useState(false);
     const inscritos = new Set(grupo.inscripciones.map((i) => i.id_alumno));
     const disponibles = alumnos.filter((a) => !inscritos.has(a.id_alumno));
+
+    function sincronizar() {
+        setResumenVisible(false);
+        setSincronizando(true);
+        router.post(`/admin/grupos/${grupo.id_grupo}/sincronizar`, {}, {
+            preserveScroll: true,
+            onSuccess: () => setResumenVisible(true),
+            onFinish: () => setSincronizando(false),
+        });
+    }
 
     function inscribir(e) {
         e.preventDefault();
@@ -113,6 +140,29 @@ function InscripcionesModal({ grupo, alumnos, cerrar }) {
                         {grupo.inscritos} / {grupo.cupo_maximo}
                     </Badge>
                 </div>
+
+                {grupo.id_lti_contexto && (
+                    <div className="space-y-2">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={sincronizar}
+                            disabled={sincronizando}
+                        >
+                            {sincronizando ? 'Sincronizando…' : 'Sincronizar desde Moodle'}
+                        </Button>
+                        {erroresPagina?.sincronizar && (
+                            <p className="rounded-ctl bg-alerta-tinte px-3 py-2 text-[13px] font-medium text-alerta">
+                                {erroresPagina.sincronizar}
+                            </p>
+                        )}
+                        {resumenVisible && flash?.success && (
+                            <p className="rounded-ctl bg-hueco px-3 py-2 text-[13px] text-tinta-2">
+                                {flash.success}
+                            </p>
+                        )}
+                    </div>
+                )}
 
                 {grupo.inscripciones.length === 0 ? (
                     <p className="rounded-ctl bg-hueco px-4 py-3 text-[13px] text-tinta-3">
@@ -166,7 +216,7 @@ function InscripcionesModal({ grupo, alumnos, cerrar }) {
     );
 }
 
-export default function Grupos({ filas, materias, maestros, ciclos, alumnos }) {
+export default function Grupos({ filas, materias, maestros, ciclos, alumnos, contextos }) {
     const { errors } = usePage().props;
     const [busqueda, setBusqueda] = useState('');
     const [editando, setEditando] = useState(null); // null | 'nuevo' | fila
@@ -264,6 +314,7 @@ export default function Grupos({ filas, materias, maestros, ciclos, alumnos }) {
                     materias={materias}
                     maestros={maestros}
                     ciclos={ciclos}
+                    contextos={contextos}
                     cerrar={() => setEditando(null)}
                 />
             )}

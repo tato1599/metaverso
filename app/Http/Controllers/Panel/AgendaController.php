@@ -91,12 +91,22 @@ class AgendaController extends Controller
         $this->autorizarEvento($request, $evento);
         $evento->load(['practica', 'grupo.materia', 'espacio', 'reservasActivas.alumno.usuario']);
 
+        $ocupadosPorSlot = $evento->reservasActivas->countBy(fn ($r) => $r->inicio_slot->format('Y-m-d\TH:i'));
+
         return Inertia::render('Panel/EventoDetalle', [
-            'evento' => $this->eventoProps($evento, $evento->reservasActivas->count()),
+            'evento' => [
+                ...$this->eventoProps($evento, $evento->reservasActivas->count()),
+                'ocupacion' => collect($evento->slots())->map(fn (array $s) => [
+                    'inicio_local' => $s['inicio']->format('Y-m-d\TH:i'),
+                    'fin_local' => $s['fin']->format('Y-m-d\TH:i'),
+                    'ocupados' => (int) $ocupadosPorSlot->get($s['inicio']->format('Y-m-d\TH:i'), 0),
+                ])->values(),
+            ],
             'reservas' => $evento->reservasActivas->map(fn ($r) => [
                 'id_reserva' => $r->id_reserva,
                 'nombre' => trim($r->alumno->usuario->nombre.' '.$r->alumno->usuario->apellidos),
                 'matricula' => $r->alumno->matricula,
+                'inicio_slot_local' => $r->inicio_slot->format('Y-m-d\TH:i'),
                 'fecha' => $r->created_at->format('Y-m-d H:i'),
             ])->values(),
             'espacios' => Espacio::all()->map(fn ($e) => [
@@ -125,13 +135,38 @@ class AgendaController extends Controller
             $bloqueado = EventoAgenda::whereKey($evento->id_evento)->lockForUpdate()->firstOrFail();
             // Re-verificar sobre la fila bloqueada: un destroy() concurrente pudo cancelarlo (TOCTOU).
             abort_if($bloqueado->estatus === 'cancelado', 409, 'El evento está cancelado.');
-            $activas = $bloqueado->reservasActivas()->count();
+
+            // F4a: el cupo es por slot, así que la cota es el horario más ocupado.
+            $activas = (int) $bloqueado->reservasActivas()
+                ->selectRaw('count(*) as total')
+                ->groupBy('inicio_slot')
+                ->orderByDesc('total')
+                ->limit(1)
+                ->value('total');
             if ($datos['cupo_maximo'] < $activas) {
                 throw ValidationException::withMessages([
                     'cupo_maximo' => "Hay {$activas} reservas activas; el cupo no puede ser menor.",
                 ]);
             }
+
+            $cambiaFechas = ! $bloqueado->fecha_hora_inicio->eq(Carbon::parse($datos['fecha_hora_inicio']))
+                || ! $bloqueado->fecha_hora_fin->eq(Carbon::parse($datos['fecha_hora_fin']));
+            $eraMultiSlot = count($bloqueado->slots()) > 1;
+
+            // F4b: en multi-slot no hay re-mapeo seguro de horarios elegidos.
+            if ($cambiaFechas && $eraMultiSlot && $bloqueado->reservasActivas()->exists()) {
+                throw ValidationException::withMessages([
+                    'fecha_hora_inicio' => 'Hay reservas activas en horarios de este evento; cancela las reservas o el evento antes de reprogramar.',
+                ]);
+            }
+
             $bloqueado->update($datos);
+
+            // F4b: en un evento de un solo slot las reservas siguen a la ventana
+            // (comportamiento F2 "las reservas no se tocan"), sin claves huérfanas.
+            if ($cambiaFechas && ! $eraMultiSlot) {
+                $bloqueado->reservasActivas()->update(['inicio_slot' => $bloqueado->fecha_hora_inicio]);
+            }
         });
 
         return redirect()->route('panel.eventos.show', $evento)->with('success', 'Evento actualizado.');
@@ -171,6 +206,7 @@ class AgendaController extends Controller
             'estatus' => $e->estatus,
             'cupo_maximo' => $e->cupo_maximo,
             'reservas_activas' => $reservasActivas ?? (int) ($e->reservas_activas ?? 0),
+            'multi_slot' => count($e->slots()) > 1,
         ];
     }
 }

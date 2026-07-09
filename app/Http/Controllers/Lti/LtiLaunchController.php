@@ -1,20 +1,30 @@
 <?php
+
 namespace App\Http\Controllers\Lti;
 
 use App\Http\Controllers\Controller;
 use App\Lti\AprovisionarAlumno;
+use App\Lti\DatosLaunch;
 use App\Lti\LaunchValidador;
+use App\Models\LtiContexto;
 use App\Models\SesionPractica;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
-class LtiLaunchController extends Controller {
-    public function launch(Request $request, LaunchValidador $validador, AprovisionarAlumno $aprovisionar) {
+class LtiLaunchController extends Controller
+{
+    public function launch(Request $request, LaunchValidador $validador, AprovisionarAlumno $aprovisionar)
+    {
         $datos = $validador->validar($request);
+
+        // ANTES del branch de deep-link: el deep-link también trae claim de contexto
+        // y es la primera oportunidad de conocer el curso (enmienda lti-contexto-upsert).
+        $this->capturarContexto($datos);
 
         if ($datos->esDeepLink) {
             session(['lti_issuer' => $datos->issuer, 'lti_launch_id' => $datos->launchId]);
+
             return redirect()->route('lti.deeplink');
         }
 
@@ -39,5 +49,30 @@ class LtiLaunchController extends Controller {
         $deeplink = "{$scheme}://play?lti_session_token={$token}";
 
         return view('lti.abrir-juego', ['deeplink' => $deeplink, 'practicaId' => $datos->idPractica]);
+    }
+
+    /**
+     * Upsert atómico de Postgres sobre unique(lti_platform_id, context_id): dos
+     * launches concurrentes del mismo curso no truenan. `nrps_url` solo entra a la
+     * lista de actualización cuando viene no-null, para que un deep-link sin claim
+     * NRPS no pise un nrps_url ya capturado.
+     */
+    private function capturarContexto(DatosLaunch $datos): void
+    {
+        if ($datos->ltiPlatformId === null || $datos->contextId === null) {
+            return;
+        }
+
+        $columnasActualizar = ['titulo'];
+        if ($datos->nrpsUrl !== null) {
+            $columnasActualizar[] = 'nrps_url';
+        }
+
+        LtiContexto::upsert([[
+            'lti_platform_id' => $datos->ltiPlatformId,
+            'context_id' => $datos->contextId,
+            'titulo' => $datos->contextTitulo,
+            'nrps_url' => $datos->nrpsUrl,
+        ]], ['lti_platform_id', 'context_id'], $columnasActualizar);
     }
 }

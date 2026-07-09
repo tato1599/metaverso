@@ -1,15 +1,49 @@
 <?php
+
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Model;
 
-class Grupo extends Model {
+class Grupo extends Model
+{
     protected $table = 'grupos';
+
     protected $primaryKey = 'id_grupo';
+
     protected $guarded = [];
-    public function materia() { return $this->belongsTo(Materia::class, 'id_materia'); }
-    public function maestro() { return $this->belongsTo(Maestro::class, 'id_maestro'); }
-    public function eventos() { return $this->hasMany(EventoAgenda::class, 'id_grupo'); }
-    public function ciclo() { return $this->belongsTo(CicloEscolar::class, 'id_ciclo'); }
-    public function inscripciones() { return $this->hasMany(Inscripcion::class, 'id_grupo'); }
-    public function getRouteKeyName(): string { return 'id_grupo'; }
+
+    public function materia()
+    {
+        return $this->belongsTo(Materia::class, 'id_materia');
+    }
+
+    public function maestro()
+    {
+        return $this->belongsTo(Maestro::class, 'id_maestro');
+    }
+
+    public function eventos()
+    {
+        return $this->hasMany(EventoAgenda::class, 'id_grupo');
+    }
+
+    public function ciclo()
+    {
+        return $this->belongsTo(CicloEscolar::class, 'id_ciclo');
+    }
+
+    public function inscripciones()
+    {
+        return $this->hasMany(Inscripcion::class, 'id_grupo');
+    }
+
+    public function ltiContexto()
+    {
+        return $this->belongsTo(LtiContexto::class, 'id_lti_contexto');
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'id_grupo';
+    }
 }

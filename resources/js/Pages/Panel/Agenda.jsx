@@ -74,7 +74,13 @@ export default function Agenda({ semana, eventos, grupos, espacios, cupoDefault 
                                 {e.grupo} · {e.materia}
                             </p>
                             <div className="mt-1.5 flex items-center justify-between">
-                                <CupoPuntos ocupados={e.reservas_activas} cupo={e.cupo_maximo} />
+                                {e.multi_slot ? (
+                                    <span className="font-mono text-[11px] tabular-nums text-tinta-2">
+                                        {e.reservas_activas} reservas
+                                    </span>
+                                ) : (
+                                    <CupoPuntos ocupados={e.reservas_activas} cupo={e.cupo_maximo} />
+                                )}
                                 {e.estatus !== 'programado' && (
                                     <Badge tone={TONO_ESTATUS[e.estatus] ?? 'muted'}>{e.estatus.replace('_', ' ')}</Badge>
                                 )}

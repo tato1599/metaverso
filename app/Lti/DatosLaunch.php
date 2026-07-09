@@ -1,7 +1,9 @@
 <?php
+
 namespace App\Lti;
 
-class DatosLaunch {
+class DatosLaunch
+{
     public function __construct(
         public bool $esDeepLink,
         public string $issuer,
@@ -14,5 +16,8 @@ class DatosLaunch {
         public ?string $agsEndpoint,
         public ?int $ltiPlatformId,
         public ?string $launchId = null,
+        public ?string $contextId = null,
+        public ?string $contextTitulo = null,
+        public ?string $nrpsUrl = null,
     ) {}
 }

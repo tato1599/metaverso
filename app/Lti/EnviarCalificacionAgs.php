@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Lti;
 
 use App\Models\LtiPlatform;
@@ -25,26 +26,29 @@ class EnviarCalificacionAgs implements AgsCliente
             $platform = LtiPlatform::find($sesion->lti_platform_id);
             if (! $platform) {
                 Log::warning('AGS: plataforma LTI no encontrada', ['lti_platform_id' => $sesion->lti_platform_id]);
+
                 return;
             }
 
-            $db = new LtiDatabase();
-            $registration = $db->findRegistrationByIssuer($platform->issuer);
+            $db = new LtiDatabase;
+            // client_id explícito: dos plataformas pueden compartir issuer (enmienda F7c).
+            $registration = $db->findRegistrationByIssuer($platform->issuer, $platform->client_id);
 
             if (! $registration) {
                 Log::warning('AGS: registro LTI no encontrado', ['issuer' => $platform->issuer]);
+
                 return;
             }
 
-            $connector = new LtiServiceConnector(new LtiCache(), new Client([
-                'timeout'         => 10.0,
+            $connector = new LtiServiceConnector(new LtiCache, new Client([
+                'timeout' => 10.0,
                 'connect_timeout' => 5.0,
             ]));
 
             $ags = new LtiAssignmentsGradesService($connector, $registration, [
-                'lineitem'  => $sesion->ags_lineitem_url,
+                'lineitem' => $sesion->ags_lineitem_url,
                 'lineitems' => $sesion->ags_endpoint,
-                'scope'     => [
+                'scope' => [
                     'https://purl.imsglobal.org/spec/lti-ags/scope/score',
                     'https://purl.imsglobal.org/spec/lti-ags/scope/lineitem',
                 ],
@@ -63,9 +67,9 @@ class EnviarCalificacionAgs implements AgsCliente
             $ags->putGrade($grade, $lineitem);
         } catch (\Throwable $e) {
             Log::warning('AGS: error al enviar calificacion a Moodle', [
-                'id_sesion'       => $sesion->id_sesion,
+                'id_sesion' => $sesion->id_sesion,
                 'ags_lineitem_url' => $sesion->ags_lineitem_url,
-                'error'           => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
     }

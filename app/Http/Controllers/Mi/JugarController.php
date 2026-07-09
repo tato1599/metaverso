@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Mi;
 use App\Http\Controllers\Controller;
 use App\Models\EventoAgenda;
 use App\Models\Inscripcion;
+use App\Models\Reserva;
 use App\Models\TokenJuego;
 use App\Services\MagicLinkService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -24,8 +26,8 @@ class JugarController extends Controller
         $alumno = $u->alumno;
         abort_unless($alumno, 403);
 
-        $reservaActiva = $evento->reservasActivas()->where('id_alumno', $alumno->id_alumno)->exists();
-        abort_unless($reservaActiva, 403, 'Necesitas una reserva activa en este slot.');
+        $reserva = $evento->reservasActivas()->where('id_alumno', $alumno->id_alumno)->first();
+        abort_unless($reserva, 403, 'Necesitas una reserva activa en este slot.');
 
         // Un exalumno con reserva vieja no debe poder crear sesiones calificables.
         $inscrito = Inscripcion::where('id_alumno', $alumno->id_alumno)
@@ -38,8 +40,9 @@ class JugarController extends Controller
             throw ValidationException::withMessages(['evento' => 'Esta práctica fue cancelada.']);
         }
         // ponytail: sin margen de tolerancia previo al inicio; si se pide, es una clave de config.
-        if (! now()->between($evento->fecha_hora_inicio, $evento->fecha_hora_fin)) {
-            throw ValidationException::withMessages(['evento' => 'La práctica no está en curso en este momento.']);
+        // F6: la ventana de juego es la del slot reservado, no la del evento completo.
+        if (! now()->between($reserva->inicio_slot, $this->finDelSlot($evento, $reserva))) {
+            throw ValidationException::withMessages(['evento' => 'Tu horario reservado no está en curso en este momento.']);
         }
 
         // Invalida TODOS los tokens no canjeados del par (usuario, evento), incluidos
@@ -59,5 +62,18 @@ class JugarController extends Controller
         // /jugar/{token} es Blade y dispara un deeplink de esquema custom: exige
         // navegación top-level, por eso Inertia::location y no un redirect normal.
         return Inertia::location($res['url']);
+    }
+
+    /**
+     * Fin de la ventana de juego del slot reservado: inicio_slot + duración,
+     * capado al fin del evento (reservas heredadas o ventanas no divisibles).
+     */
+    private function finDelSlot(EventoAgenda $evento, Reserva $reserva): Carbon
+    {
+        $duracion = $evento->duracionSlotMinutos();
+
+        return $duracion === null
+            ? $evento->fecha_hora_fin
+            : $reserva->inicio_slot->copy()->addMinutes($duracion)->min($evento->fecha_hora_fin);
     }
 }

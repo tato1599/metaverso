@@ -1,19 +1,23 @@
 <?php
+
 namespace App\Lti;
 
 use App\Models\LtiPlatform;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
+use Packback\Lti1p3\Claims\Claim;
 use Packback\Lti1p3\Factories\MessageFactory;
 use Packback\Lti1p3\LtiServiceConnector;
 use Packback\Lti1p3\Messages\DeepLinkingRequest;
 
-class LibreriaLaunchValidador implements LaunchValidador {
-    public function validar(Request $request): DatosLaunch {
-        $connector = new LtiServiceConnector(new LtiCache(), new Client());
+class LibreriaLaunchValidador implements LaunchValidador
+{
+    public function validar(Request $request): DatosLaunch
+    {
+        $connector = new LtiServiceConnector(new LtiCache, new Client);
         // API no-deprecada de v6.4: MessageFactory::create() reemplaza a
         // LtiMessageLaunch::new()->validate() (deprecado en 6.4).
-        $factory = new MessageFactory(new LtiDatabase(), $connector, new LtiCache(), new LtiCookie());
+        $factory = new MessageFactory(new LtiDatabase, $connector, new LtiCache, new LtiCookie);
         $launch = $factory->create($request->all());
 
         $data = $launch->getBody();
@@ -22,6 +26,8 @@ class LibreriaLaunchValidador implements LaunchValidador {
 
         $custom = $data['https://purl.imsglobal.org/spec/lti/claim/custom'] ?? [];
         $ags = $data['https://purl.imsglobal.org/spec/lti-ags/claim/endpoint'] ?? [];
+        $contexto = $data[Claim::CONTEXT] ?? [];
+        $nrps = $data[Claim::NRPS_NAMESROLESSERVICE] ?? [];
 
         return new DatosLaunch(
             esDeepLink: $launch instanceof DeepLinkingRequest,
@@ -35,6 +41,9 @@ class LibreriaLaunchValidador implements LaunchValidador {
             agsEndpoint: $ags['lineitems'] ?? ($ags['lineitem'] ?? null),
             ltiPlatformId: $platform?->id,
             launchId: $launch->getLaunchId(),
+            contextId: $contexto['id'] ?? null,
+            contextTitulo: $contexto['title'] ?? null,
+            nrpsUrl: $nrps['context_memberships_url'] ?? null,
         );
     }
 }

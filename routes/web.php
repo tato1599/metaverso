@@ -81,6 +81,7 @@ Route::middleware(['auth', 'admin'])->prefix('/admin')->name('admin.')->group(fu
         Route::put("/{$uri}/{{$parametro}}", [$controlador, 'update'])->name("{$uri}.update")->whereNumber($parametro);
         Route::delete("/{$uri}/{{$parametro}}", [$controlador, 'destroy'])->name("{$uri}.destroy")->whereNumber($parametro);
     }
+    Route::post('/grupos/{grupo}/sincronizar', [GrupoController::class, 'sincronizar'])->name('grupos.sincronizar')->whereNumber('grupo');
     Route::post('/grupos/{grupo}/inscripciones', [InscripcionController::class, 'store'])->name('grupos.inscripciones.store')->whereNumber('grupo');
     Route::delete('/grupos/{grupo}/inscripciones/{inscripcion}', [InscripcionController::class, 'destroy'])->name('grupos.inscripciones.destroy')->whereNumber('grupo')->whereNumber('inscripcion');
 });
