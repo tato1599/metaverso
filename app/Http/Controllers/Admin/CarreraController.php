@@ -24,7 +24,13 @@ class CarreraController extends Controller
                 ['key' => 'duracion_semestres', 'label' => 'Semestres', 'mono' => true],
                 ['key' => 'alumnos_count', 'label' => 'Alumnos', 'mono' => true],
             ],
-            'filas' => Carrera::withCount('alumnos')->orderBy('clave')->get(),
+            'filas' => Carrera::withCount('alumnos')->orderBy('clave')->get()->map(fn (Carrera $c) => [
+                'id_carrera' => $c->id_carrera,
+                'clave' => $c->clave,
+                'nombre' => $c->nombre,
+                'duracion_semestres' => $c->duracion_semestres,
+                'alumnos_count' => $c->alumnos_count,
+            ])->values(),
             'campos' => [
                 ['name' => 'clave', 'label' => 'Clave', 'tipo' => 'text', 'requerido' => true],
                 ['name' => 'nombre', 'label' => 'Nombre', 'tipo' => 'text', 'requerido' => true],

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Alumno;
 use App\Models\Carrera;
 use App\Models\CicloEscolar;
 use App\Models\EventoAgenda;
@@ -9,6 +10,7 @@ use App\Models\Materia;
 use App\Models\MateriaCarrera;
 use App\Models\Practica;
 use App\Models\Rol;
+use App\Models\SesionPractica;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -76,6 +78,27 @@ function adminmpGrupo(Materia $materia): Grupo
         'id_ciclo' => $ciclo->id_ciclo,
         'clave' => '3A',
         'cupo_maximo' => 30,
+    ]);
+}
+
+function adminmpAlumno(): Alumno
+{
+    return Alumno::create([
+        'id_usuario' => adminmpUsuario('Alumno')->id_usuario,
+        'id_carrera' => adminmpCarrera()->id_carrera,
+        'matricula' => (string) fake()->unique()->numberBetween(20250000, 20259999),
+        'semestre_actual' => 1,
+        'generacion' => '2025',
+    ]);
+}
+
+function adminmpSesion(Practica $practica): SesionPractica
+{
+    return SesionPractica::create([
+        'id_alumno' => adminmpAlumno()->id_alumno,
+        'id_practica' => $practica->id_practica,
+        'fecha_inicio' => now(),
+        'estatus' => 'completada',
     ]);
 }
 
@@ -206,4 +229,59 @@ it('bloquea eliminar práctica con eventos y permite eliminarla libre', function
     $libre = adminmpPractica(adminmpMateria());
     $this->actingAs($coord)->delete("/admin/practicas/{$libre->id_practica}")->assertRedirect();
     expect(Practica::find($libre->id_practica))->toBeNull();
+});
+
+it('bloquea eliminar práctica con sesiones registradas', function () {
+    $coord = adminmpUsuario('Coordinador');
+
+    $conSesion = adminmpPractica(adminmpMateria());
+    adminmpSesion($conSesion);
+
+    $this->actingAs($coord)->deleteJson("/admin/practicas/{$conSesion->id_practica}")
+        ->assertUnprocessable()->assertJsonValidationErrors('eliminar');
+    expect(Practica::find($conSesion->id_practica))->not->toBeNull();
+});
+
+it('bloquea cambiar la materia de una práctica con eventos o sesiones', function () {
+    $coord = adminmpUsuario('Coordinador');
+    $otraMateria = adminmpMateria();
+    $payload = fn (Materia $materia) => [
+        'id_materia' => $materia->id_materia,
+        'titulo' => 'Práctica movida',
+        'orden' => 1,
+        'escena_referencia' => 'nivel_demo',
+    ];
+
+    $conEvento = adminmpPractica(adminmpMateria());
+    adminmpEvento($conEvento);
+    $this->actingAs($coord)->putJson("/admin/practicas/{$conEvento->id_practica}", $payload($otraMateria))
+        ->assertUnprocessable()->assertJsonValidationErrors('id_materia');
+    expect($conEvento->fresh()->id_materia)->not->toBe($otraMateria->id_materia);
+
+    $conSesion = adminmpPractica(adminmpMateria());
+    adminmpSesion($conSesion);
+    $this->actingAs($coord)->putJson("/admin/practicas/{$conSesion->id_practica}", $payload($otraMateria))
+        ->assertUnprocessable()->assertJsonValidationErrors('id_materia');
+    expect($conSesion->fresh()->id_materia)->not->toBe($otraMateria->id_materia);
+
+    $libre = adminmpPractica(adminmpMateria());
+    $this->actingAs($coord)->put("/admin/practicas/{$libre->id_practica}", $payload($otraMateria))->assertRedirect();
+    expect($libre->fresh()->id_materia)->toBe($otraMateria->id_materia);
+});
+
+it('rechaza carreras duplicadas en la asignación de una materia', function () {
+    $coord = adminmpUsuario('Coordinador');
+    $carrera = adminmpCarrera();
+
+    $this->actingAs($coord)->postJson('/admin/materias', [
+        'clave' => 'DUP1',
+        'nombre' => 'Materia duplicada',
+        'creditos' => 5,
+        'carreras' => [
+            ['id_carrera' => $carrera->id_carrera, 'semestre' => 1],
+            ['id_carrera' => $carrera->id_carrera, 'semestre' => 2],
+        ],
+    ])->assertUnprocessable()->assertJsonValidationErrors('carreras.0.id_carrera');
+
+    expect(Materia::where('clave', 'DUP1')->exists())->toBeFalse();
 });

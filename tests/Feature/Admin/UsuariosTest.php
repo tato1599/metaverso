@@ -64,6 +64,7 @@ it('protege /admin/usuarios: invitado a login, maestro 403, coordinador ve la pÃ
             ->where('titulo', 'Usuarios')
             ->has('filas', 2)
             ->missing('filas.0.contrasena_hash')
+            ->missing('filas.0.lti_user_id')
             ->has('roles')
             ->has('carreras')
     );
@@ -125,6 +126,28 @@ it('crea un maestro y rechaza numero_empleado duplicado', function () {
         'password' => 'clave-segura-1',
         'numero_empleado' => 'EMP-001',
     ])->assertStatus(422)->assertJsonValidationErrors('numero_empleado');
+});
+
+it('rechaza id_rol basura (no numÃ©rico o arreglo) con 422 sin tronar', function () {
+    $coord = adminusrUsuario('Coordinador');
+
+    $this->actingAs($coord)->postJson('/admin/usuarios', [
+        'correo' => 'basura1@test.mx',
+        'nombre' => 'Rol',
+        'apellidos' => 'Basura',
+        'id_rol' => 'abc',
+        'password' => 'clave-segura-1',
+    ])->assertStatus(422)->assertJsonValidationErrors('id_rol');
+
+    $this->actingAs($coord)->postJson('/admin/usuarios', [
+        'correo' => 'basura2@test.mx',
+        'nombre' => 'Rol',
+        'apellidos' => 'Basura',
+        'id_rol' => [1, 2],
+        'password' => 'clave-segura-1',
+    ])->assertStatus(422)->assertJsonValidationErrors('id_rol');
+
+    expect(Usuario::whereIn('correo', ['basura1@test.mx', 'basura2@test.mx'])->exists())->toBeFalse();
 });
 
 it('rechaza correo duplicado al crear', function () {

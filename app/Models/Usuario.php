@@ -15,7 +15,7 @@ class Usuario extends Authenticatable
 
     protected $guarded = [];
 
-    protected $hidden = ['contrasena_hash'];
+    protected $hidden = ['contrasena_hash', 'lti_user_id'];
 
     /**
      * Alinea el estado en memoria con el DEFAULT de la tabla:

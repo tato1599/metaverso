@@ -21,7 +21,16 @@ class UsuarioController extends Controller
     {
         return Inertia::render('Admin/Usuarios', [
             'titulo' => 'Usuarios',
-            'filas' => Usuario::with('rol:id_rol,nombre')->orderBy('nombre')->orderBy('apellidos')->get(),
+            'filas' => Usuario::with('rol:id_rol,nombre')->orderBy('nombre')->orderBy('apellidos')->get()
+                ->map(fn (Usuario $u) => [
+                    'id_usuario' => $u->id_usuario,
+                    'correo' => $u->correo,
+                    'nombre' => $u->nombre,
+                    'apellidos' => $u->apellidos,
+                    'activo' => $u->activo,
+                    'id_rol' => $u->id_rol,
+                    'rol' => ['nombre' => $u->rol?->nombre],
+                ])->values(),
             'roles' => Rol::orderBy('nombre')->get(['id_rol', 'nombre']),
             'carreras' => Carrera::orderBy('nombre')->get(['id_carrera', 'nombre']),
         ]);
@@ -29,7 +38,7 @@ class UsuarioController extends Controller
 
     public function store(Request $request)
     {
-        $rol = Rol::find($request->input('id_rol'));
+        $rol = Rol::find($request->integer('id_rol'));
 
         $reglas = [
             'correo' => ['required', 'email', 'max:255', Rule::unique('usuarios', 'correo')],

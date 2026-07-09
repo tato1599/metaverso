@@ -23,7 +23,12 @@ class EspacioController extends Controller
                 ['key' => 'tipo', 'label' => 'Tipo'],
                 ['key' => 'capacidad', 'label' => 'Capacidad', 'mono' => true],
             ],
-            'filas' => Espacio::orderBy('nombre')->get(),
+            'filas' => Espacio::orderBy('nombre')->get()->map(fn (Espacio $e) => [
+                'id_espacio' => $e->id_espacio,
+                'nombre' => $e->nombre,
+                'tipo' => $e->tipo,
+                'capacidad' => $e->capacidad,
+            ])->values(),
             'campos' => [
                 ['name' => 'nombre', 'label' => 'Nombre', 'tipo' => 'text', 'requerido' => true],
                 ['name' => 'tipo', 'label' => 'Tipo', 'tipo' => 'select', 'requerido' => true, 'opciones' => [

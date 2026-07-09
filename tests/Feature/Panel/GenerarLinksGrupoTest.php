@@ -31,13 +31,13 @@ it('genera un magic link por alumno inscrito del grupo', function () {
     $r->assertOk();
     expect(TokenJuego::where('id_evento', $evento->id_evento)->count())->toBe(3);
 
-    $filas = $r->viewData('filas');
-    expect($filas)->toHaveCount(3);
-    // La página renderizada debe incluir cada URL para que el CSV del lado del cliente la pueda exportar.
-    foreach ($filas as $f) {
-        expect($f['url'])->toBeString();
-        $r->assertSee($f['url'], false);
-    }
+    // Las URLs viajan como props (el CSV se arma del lado del cliente); assertSee
+    // no porta porque data-page escapa el JSON.
+    $r->assertInertia(
+        fn (\Inertia\Testing\AssertableInertia $page) => $page->component('Panel/Links')
+            ->has('filas', 3)
+            ->where('filas.0.url', fn ($url) => str_starts_with($url, url('/jugar/')))
+    );
 });
 
 it('un maestro no puede generar links de un grupo ajeno', function () {

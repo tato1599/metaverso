@@ -70,6 +70,11 @@ class GrupoController extends Controller
     public function update(Request $request, Grupo $grupo)
     {
         $datos = $request->validate($this->reglas());
+
+        if ((int) $datos['id_materia'] !== $grupo->id_materia && $grupo->eventos()->exists()) {
+            throw ValidationException::withMessages(['id_materia' => 'No se puede cambiar la materia: el grupo tiene eventos en la agenda.']);
+        }
+
         $grupo->update($datos);
 
         return back()->with('success', 'Grupo actualizado.');
@@ -94,9 +99,9 @@ class GrupoController extends Controller
     private function reglas(): array
     {
         return [
-            'id_materia' => ['required', Rule::exists('materias', 'id_materia')],
-            'id_maestro' => ['required', Rule::exists('maestros', 'id_maestro')],
-            'id_ciclo' => ['required', Rule::exists('ciclos_escolares', 'id_ciclo')],
+            'id_materia' => ['required', 'integer', Rule::exists('materias', 'id_materia')],
+            'id_maestro' => ['required', 'integer', Rule::exists('maestros', 'id_maestro')],
+            'id_ciclo' => ['required', 'integer', Rule::exists('ciclos_escolares', 'id_ciclo')],
             'clave' => ['required', 'string', 'max:20'],
             'cupo_maximo' => ['required', 'integer', 'min:1'],
         ];

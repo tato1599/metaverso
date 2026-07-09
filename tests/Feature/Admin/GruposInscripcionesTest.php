@@ -104,6 +104,14 @@ it('crea y actualiza grupos con validación', function () {
         'cupo_maximo' => 0,
     ])->assertUnprocessable()->assertJsonValidationErrors(['id_materia', 'clave', 'cupo_maximo']);
 
+    $this->actingAs($coord)->postJson('/admin/grupos', [
+        'id_materia' => 'abc',
+        'id_maestro' => 'abc',
+        'id_ciclo' => 'abc',
+        'clave' => '9Z',
+        'cupo_maximo' => 10,
+    ])->assertUnprocessable()->assertJsonValidationErrors(['id_materia', 'id_maestro', 'id_ciclo']);
+
     $this->actingAs($coord)->put("/admin/grupos/{$base->id_grupo}", [
         'id_materia' => $base->id_materia,
         'id_maestro' => $base->id_maestro,
@@ -159,6 +167,41 @@ it('inscribe un alumno con fecha de hoy y rechaza duplicado activo', function ()
     $this->actingAs($coord)->postJson("/admin/grupos/{$grupo->id_grupo}/inscripciones", [
         'id_alumno' => $alumno->id_alumno,
     ])->assertUnprocessable()->assertJsonValidationErrors('id_alumno');
+
+    $this->actingAs($coord)->postJson("/admin/grupos/{$grupo->id_grupo}/inscripciones", [
+        'id_alumno' => 'abc',
+    ])->assertUnprocessable()->assertJsonValidationErrors('id_alumno');
+});
+
+it('bloquea cambiar la materia de un grupo con eventos en la agenda', function () {
+    $coord = admingiUsuario('Coordinador');
+    $grupo = admingiGrupo();
+    $practica = Practica::create(['id_materia' => $grupo->id_materia, 'titulo' => 'P1']);
+    EventoAgenda::create([
+        'id_practica' => $practica->id_practica,
+        'id_grupo' => $grupo->id_grupo,
+        'fecha_hora_inicio' => '2026-03-01 10:00:00',
+        'fecha_hora_fin' => '2026-03-01 12:00:00',
+    ]);
+    $otraMateria = Materia::create(['clave' => 'GI-OTRA', 'nombre' => 'Otra materia', 'creditos' => 5]);
+
+    $this->actingAs($coord)->putJson("/admin/grupos/{$grupo->id_grupo}", [
+        'id_materia' => $otraMateria->id_materia,
+        'id_maestro' => $grupo->id_maestro,
+        'id_ciclo' => $grupo->id_ciclo,
+        'clave' => '3A',
+        'cupo_maximo' => 30,
+    ])->assertUnprocessable()->assertJsonValidationErrors('id_materia');
+    expect($grupo->fresh()->id_materia)->toBe($grupo->id_materia);
+
+    $this->actingAs($coord)->put("/admin/grupos/{$grupo->id_grupo}", [
+        'id_materia' => $grupo->id_materia,
+        'id_maestro' => $grupo->id_maestro,
+        'id_ciclo' => $grupo->id_ciclo,
+        'clave' => '3A',
+        'cupo_maximo' => 35,
+    ])->assertRedirect();
+    expect($grupo->fresh()->cupo_maximo)->toBe(35);
 });
 
 it('alta, baja y re-alta dejan UNA sola fila activa', function () {

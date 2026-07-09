@@ -21,6 +21,7 @@ use App\Http\Controllers\Panel\PanelController;
 use App\Http\Controllers\Panel\PanelLinkController;
 use App\Http\Controllers\Panel\PanelLoginController;
 use App\Http\Controllers\Panel\PanelResultadoController;
+use App\Models\Grupo;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -78,11 +79,12 @@ Route::middleware(['auth', 'admin'])->prefix('/admin')->name('admin.')->group(fu
     foreach ($recursos as $uri => [$controlador, $parametro]) {
         Route::get("/{$uri}", [$controlador, 'index'])->name("{$uri}.index");
         Route::post("/{$uri}", [$controlador, 'store'])->name("{$uri}.store");
-        Route::put("/{$uri}/{{$parametro}}", [$controlador, 'update'])->name("{$uri}.update");
-        Route::delete("/{$uri}/{{$parametro}}", [$controlador, 'destroy'])->name("{$uri}.destroy");
+        // whereNumber: un id no numérico contra bigint de Postgres daría 22P02 (500) en vez de 404.
+        Route::put("/{$uri}/{{$parametro}}", [$controlador, 'update'])->name("{$uri}.update")->whereNumber($parametro);
+        Route::delete("/{$uri}/{{$parametro}}", [$controlador, 'destroy'])->name("{$uri}.destroy")->whereNumber($parametro);
     }
-    Route::post('/grupos/{grupo}/inscripciones', [InscripcionController::class, 'store'])->name('grupos.inscripciones.store');
-    Route::delete('/grupos/{grupo}/inscripciones/{inscripcion}', [InscripcionController::class, 'destroy'])->name('grupos.inscripciones.destroy');
+    Route::post('/grupos/{grupo}/inscripciones', [InscripcionController::class, 'store'])->name('grupos.inscripciones.store')->whereNumber('grupo');
+    Route::delete('/grupos/{grupo}/inscripciones/{inscripcion}', [InscripcionController::class, 'destroy'])->name('grupos.inscripciones.destroy')->whereNumber('grupo')->whereNumber('inscripcion');
 });
 
 Route::get('/panel/acceso/{usuario}', [PanelLoginController::class, 'acceso'])
@@ -100,8 +102,10 @@ Route::middleware(['auth', 'panel'])->group(function () {
     Route::delete('/panel/eventos/{evento}', [AgendaController::class, 'destroy'])->name('panel.eventos.destroy');
     Route::get('/panel/grupos/{grupo}', [PanelController::class, 'show'])->name('panel.grupos.show');
 
-    // Task 5: magic links (CSV se genera del lado del cliente desde la tabla renderizada)
+    // Magic links (CSV se genera del lado del cliente desde la tabla renderizada).
+    // El GET companion evita 405 en refresh/back tras el POST Inertia (la URL queda en este endpoint).
     Route::post('/panel/grupos/{grupo}/eventos/{evento}/links', [PanelLinkController::class, 'generar'])->name('panel.grupos.eventos.links');
+    Route::get('/panel/grupos/{grupo}/eventos/{evento}/links', fn (Grupo $grupo) => redirect()->route('panel.grupos.show', $grupo));
 
     Route::get('/panel/grupos/{grupo}/resultados', [PanelResultadoController::class, 'index'])->name('panel.grupos.resultados');
     Route::get('/panel/sesiones/{sesion}', [PanelResultadoController::class, 'sesion'])->name('panel.sesiones.show');

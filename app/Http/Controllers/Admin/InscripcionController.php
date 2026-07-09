@@ -14,7 +14,7 @@ class InscripcionController extends Controller
     public function store(Request $request, Grupo $grupo)
     {
         $datos = $request->validate([
-            'id_alumno' => ['required', Rule::exists('alumnos', 'id_alumno')],
+            'id_alumno' => ['required', 'integer', Rule::exists('alumnos', 'id_alumno')],
         ]);
 
         /*

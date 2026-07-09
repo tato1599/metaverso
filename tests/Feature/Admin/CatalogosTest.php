@@ -67,6 +67,15 @@ function admincatEventoEn(Espacio $espacio): EventoAgenda
     ]);
 }
 
+it('protege ciclos y espacios: invitado a login y maestro 403', function () {
+    $this->get('/admin/ciclos')->assertRedirect('/login');
+    $this->get('/admin/espacios')->assertRedirect('/login');
+
+    $maestro = admincatUsuario('Maestro');
+    $this->actingAs($maestro)->get('/admin/ciclos')->assertForbidden();
+    $this->actingAs($maestro)->get('/admin/espacios')->assertForbidden();
+});
+
 it('muestra los índices de ciclos y espacios con la página genérica', function () {
     $coord = admincatUsuario('Coordinador');
     admincatCiclo();

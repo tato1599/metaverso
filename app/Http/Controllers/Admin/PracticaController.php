@@ -65,6 +65,15 @@ class PracticaController extends Controller
     public function update(Request $request, Practica $practica)
     {
         $datos = $request->validate($this->reglas());
+
+        $cambiaMateria = (int) $datos['id_materia'] !== $practica->id_materia;
+        if ($cambiaMateria && (
+            EventoAgenda::where('id_practica', $practica->id_practica)->exists()
+            || SesionPractica::where('id_practica', $practica->id_practica)->exists()
+        )) {
+            throw ValidationException::withMessages(['id_materia' => 'No se puede cambiar la materia: la práctica tiene eventos o sesiones registradas.']);
+        }
+
         $practica->update($datos);
 
         return back()->with('success', 'Práctica actualizada.');

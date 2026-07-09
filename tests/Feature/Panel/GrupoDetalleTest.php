@@ -1,6 +1,18 @@
 <?php
-use App\Models\{Rol, Usuario, Maestro, Alumno, Carrera, Materia, CicloEscolar, Grupo, Inscripcion, Practica, EventoAgenda};
+
+use App\Models\Alumno;
+use App\Models\Carrera;
+use App\Models\CicloEscolar;
+use App\Models\EventoAgenda;
+use App\Models\Grupo;
+use App\Models\Inscripcion;
+use App\Models\Maestro;
+use App\Models\Materia;
+use App\Models\Practica;
+use App\Models\Rol;
+use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
@@ -21,11 +33,21 @@ it('un Maestro abre su grupo y ve alumnos y eventos; un grupo ajeno da 403', fun
     Inscripcion::create(['id_alumno' => $alumno->id_alumno, 'id_grupo' => $grupo->id_grupo, 'fecha_inscripcion' => now(), 'estatus' => 'activa']);
 
     $practica = Practica::create(['id_materia' => $mat->id_materia, 'titulo' => 'Lab 1']);
-    EventoAgenda::create(['id_practica' => $practica->id_practica, 'id_grupo' => $grupo->id_grupo, 'fecha_hora_inicio' => now(), 'fecha_hora_fin' => now()->addHour(), 'estatus' => 'programado']);
+    $evento = EventoAgenda::create(['id_practica' => $practica->id_practica, 'id_grupo' => $grupo->id_grupo, 'fecha_hora_inicio' => now(), 'fecha_hora_fin' => now()->addHour(), 'estatus' => 'programado']);
 
     $this->actingAs($uMaestro);
-    $r = $this->get(route('panel.grupos.show', $grupo->id_grupo));
-    $r->assertOk()->assertSee('Ana')->assertSee('Lab 1');
+    $this->get(route('panel.grupos.show', $grupo->id_grupo))->assertOk()->assertInertia(fn (Assert $page) => $page
+        ->component('Panel/Grupo')
+        ->where('grupo.id_grupo', $grupo->id_grupo)
+        ->where('grupo.clave', '3A')
+        ->has('alumnos', 1)
+        ->where('alumnos.0.matricula', '20250001')
+        ->where('alumnos.0.nombre', 'Ana R')
+        ->has('eventos', 1)
+        ->where('eventos.0.id_evento', $evento->id_evento)
+        ->where('eventos.0.practica', 'Lab 1')
+        ->has('csrf')
+    );
 
     // grupo de otro maestro
     $uOtro = Usuario::create(['id_rol' => $rolM->id_rol, 'correo' => 'otro@b.com', 'nombre' => 'Otro', 'apellidos' => 'M']);
