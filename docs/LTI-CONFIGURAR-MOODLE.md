@@ -209,3 +209,23 @@ curl -X POST http://localhost:8000/api/sesiones/$SESION_ID/completar \
 | No aparece la calificación | AGS desactivado o `lineitem` vacío | Verificar que "IMS LTI AGS" esté activado en la configuración de la herramienta |
 | "The command does not exist" | Comando no registrado | Verificar que `LtiRegistrarPlataforma` esté en `app/Console/Commands/` |
 | OIDC loop / cookie error | `APP_URL` no coincide con la URL que usa el navegador | Asegurar que `APP_URL=http://host.docker.internal:8000` y que el navegador también use esa URL |
+
+---
+
+## Gotcha (Docker local): seguridad cURL de Moodle
+
+Moodle bloquea por default las peticiones salientes a IPs privadas (`172.16.0.0/12`,
+donde cae `host.docker.internal`) y solo permite los puertos 80/443. Sin abrir esto,
+la respuesta de Deep Linking falla con `jwks_helper::fix_jwks_alg(): Argument #1
+($jwks) must be of type array, null given` (Moodle no pudo leer nuestro keyset).
+
+Solo para la instancia local desechable:
+
+```bash
+docker exec moodle-moodle-1 php /bitnami/moodle/admin/cli/cfg.php --name=curlsecurityblockedhosts --set=''
+docker exec moodle-moodle-1 php /bitnami/moodle/admin/cli/cfg.php --name=curlsecurityallowedport --set=''
+docker exec moodle-moodle-1 php /bitnami/moodle/admin/cli/purge_caches.php
+```
+
+En producción NO se vacían estas listas: se agrega el host/puerto real de la
+herramienta a las listas permitidas.
