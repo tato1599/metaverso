@@ -35,6 +35,32 @@ it('crea una practica con tipo valido y config valida', function () {
         ->toEqual(['meta_objetos' => 15, 'tiempo_limite_seg' => 100, 'dificultad' => 'dificil']);
 });
 
+it('crea una practica ensambla con checkbox reintentos en false', function () {
+    $m = materiaBase();
+    $this->actingAs(coordinador())
+        ->post('/admin/practicas', [
+            'id_materia' => $m->id_materia, 'titulo' => 'P1', 'orden' => 1,
+            'escena_referencia' => 'ensambla',
+            'config' => ['num_piezas' => 8, 'tiempo_limite_seg' => 180, 'reintentos' => false],
+        ])->assertSessionHasNoErrors();
+
+    expect(Practica::sole()->config)
+        ->toEqual(['num_piezas' => 8, 'tiempo_limite_seg' => 180, 'reintentos' => false]);
+});
+
+it('crea una practica circuito con checkbox en_orden en false', function () {
+    $m = materiaBase();
+    $this->actingAs(coordinador())
+        ->post('/admin/practicas', [
+            'id_materia' => $m->id_materia, 'titulo' => 'P1', 'orden' => 1,
+            'escena_referencia' => 'circuito',
+            'config' => ['num_estaciones' => 3, 'en_orden' => false, 'tiempo_limite_seg' => 300],
+        ])->assertSessionHasNoErrors();
+
+    expect(Practica::sole()->config)
+        ->toEqual(['num_estaciones' => 3, 'en_orden' => false, 'tiempo_limite_seg' => 300]);
+});
+
 it('rechaza un tipo de juego desconocido', function () {
     $m = materiaBase();
     $this->actingAs(coordinador())

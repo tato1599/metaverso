@@ -7,6 +7,7 @@ use App\Lti\AprovisionarAlumno;
 use App\Lti\DatosLaunch;
 use App\Lti\LaunchValidador;
 use App\Models\LtiContexto;
+use App\Models\Practica;
 use App\Models\SesionPractica;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -48,7 +49,7 @@ class LtiLaunchController extends Controller
         $scheme = config('metaverso.deeplink_scheme', 'tecnm-metaverso');
         $deeplink = "{$scheme}://play?lti_session_token={$token}";
 
-        $practica = \App\Models\Practica::find($datos->idPractica);
+        $practica = Practica::find($datos->idPractica);
 
         return view('lti.abrir-juego', [
             'deeplink' => $deeplink,

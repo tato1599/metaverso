@@ -54,6 +54,9 @@ class RegistroJuegos
                 'number' => ['required', 'integer', 'min:'.$p['min'], 'max:'.$p['max']],
                 'select' => ['required', Rule::in(array_column($p['opciones'], 'value'))],
                 'checkbox' => ['required', 'boolean'],
+                // Inalcanzable con los tipos actuales (number|select|checkbox): si se agrega
+                // un nuevo `tipo` sin case explícito, cae aquí y queda SIN validación real
+                // (nullable) de forma silenciosa. Quien agregue un tipo debe agregar su regla.
                 default => ['nullable'],
             };
         }
