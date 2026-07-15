@@ -605,7 +605,8 @@ it('bloquea cambiar duracion_estimada con reservas activas en eventos vigentes (
         'id_materia' => $practica->id_materia,
         'titulo' => $practica->titulo,
         'orden' => 1,
-        'escena_referencia' => 'Lab_1',
+        'escena_referencia' => 'recolecta',
+        'config' => ['meta_objetos' => 10, 'tiempo_limite_seg' => 120, 'dificultad' => 'media'],
         'duracion_estimada' => $duracion,
     ];
 
@@ -638,7 +639,8 @@ it('omitir duracion_estimada en el update no cuenta como cambio a null (F6 must-
         'id_materia' => $practica->id_materia,
         'titulo' => $practica->titulo,
         'orden' => 1,
-        'escena_referencia' => 'Lab_1',
+        'escena_referencia' => 'recolecta',
+        'config' => ['meta_objetos' => 10, 'tiempo_limite_seg' => 120, 'dificultad' => 'media'],
     ])->assertRedirect();
     expect($practica->fresh()->duracion_estimada)->toBe(60);
 });
