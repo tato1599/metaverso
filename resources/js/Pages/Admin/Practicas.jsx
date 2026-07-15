@@ -12,7 +12,7 @@ const RUTA = '/admin/practicas';
 function ParamControl({ param, value, onChange }) {
     if (param.tipo === 'select') {
         return (
-            <Select id={param.name} value={value ?? param.default} onChange={(e) => onChange(e.target.value)}>
+            <Select value={value ?? param.default} onChange={(e) => onChange(e.target.value)}>
                 {param.opciones.map((o) => (
                     <option key={o.value} value={o.value}>
                         {o.label}
@@ -24,7 +24,6 @@ function ParamControl({ param, value, onChange }) {
     if (param.tipo === 'checkbox') {
         return (
             <input
-                id={param.name}
                 type="checkbox"
                 checked={Boolean(value)}
                 onChange={(e) => onChange(e.target.checked)}
@@ -34,7 +33,6 @@ function ParamControl({ param, value, onChange }) {
     }
     return (
         <TextInput
-            id={param.name}
             type="number"
             min={param.min}
             max={param.max}

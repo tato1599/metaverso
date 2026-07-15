@@ -47,14 +47,6 @@ class PracticaController extends Controller
                 'config' => $p->config,
                 'materia_nombre' => $p->materia->nombre,
             ]),
-            'campos' => [
-                ['name' => 'id_materia', 'label' => 'Materia', 'tipo' => 'select', 'requerido' => true, 'opciones' => $opcionesMaterias],
-                ['name' => 'titulo', 'label' => 'Título', 'tipo' => 'text', 'requerido' => true],
-                ['name' => 'descripcion', 'label' => 'Descripción', 'tipo' => 'textarea'],
-                ['name' => 'objetivos', 'label' => 'Objetivos', 'tipo' => 'textarea'],
-                ['name' => 'orden', 'label' => 'Orden', 'tipo' => 'number', 'requerido' => true, 'min' => 1],
-                ['name' => 'duracion_estimada', 'label' => 'Duración estimada (min)', 'tipo' => 'number', 'min' => 1],
-            ],
             'materias' => $opcionesMaterias,
         ]);
     }
