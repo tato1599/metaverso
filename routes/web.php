@@ -24,7 +24,7 @@ use App\Http\Controllers\Panel\PanelResultadoController;
 use App\Models\Grupo;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => redirect()->route('login'));
+Route::get('/', fn () => view('portada'))->name('portada');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');

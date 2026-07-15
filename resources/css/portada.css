@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+
+/* Entry propio de la portada: no comparte tokens con el design system del panel,
+   asi el rediseno del panel (Inertia/React) y la landing evolucionan por separado. */
+@import '@fontsource-variable/plus-jakarta-sans';
+@import '@fontsource-variable/libre-franklin';
+
+/* Solo escanea la portada: mantiene el bundle chico y aislado. */
+@source '../views/portada.blade.php';
+
+@theme {
+    --color-azultec: #1a3a8f;
+    --color-azultec-dark: #132b6b;
+    --color-azultec-bright: #6ba6e8;
+    --color-rojotec: #b3123b;
+    --color-rojotec-soft: #e0728a;
+    --color-navy: #0e1f3a;
+    --color-navy-700: #12223d;
+    --color-cielo: #f5f8fb;
+    --font-jakarta: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif;
+    --font-franklin: 'Libre Franklin Variable', ui-sans-serif, system-ui, sans-serif;
+}

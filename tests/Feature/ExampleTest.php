@@ -6,8 +6,9 @@ use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
-    public function test_la_raiz_redirige_al_login(): void
+    public function test_la_raiz_muestra_la_portada(): void
     {
-        $this->get('/')->assertRedirect(route('login'));
+        // La raíz sirve la portada pública; el detalle se cubre en PortadaTest.
+        $this->get('/')->assertOk()->assertSee('Metaverso Escolar');
     }
 }

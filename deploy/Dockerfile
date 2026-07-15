@@ -1,6 +1,20 @@
 # Imagen de producción del backend Metaverso Escolar TecNM.
 # PHP 8.3 + Apache (mod_php) sirviendo public/. Construir desde la raíz del repo:
 #   docker compose -f deploy/docker-compose.prod.yml up -d --build
+
+# --- Etapa 1: compilar el front (Inertia/React + Tailwind + portada) ---
+# El panel es una app React/Inertia; sin esta etapa no existe public/build/manifest.json
+# y la app se cae en produccion. Las fuentes quedan embebidas: el on-premise no
+# necesita internet.
+FROM node:22-alpine AS assets
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY vite.config.js ./
+COPY resources ./resources
+RUN npm run build
+
+# --- Etapa 2: la aplicación ---
 FROM php:8.3-apache
 
 # --- Extensiones de PHP requeridas por Laravel + PostgreSQL ---
@@ -24,6 +38,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 COPY . .
+COPY --from=assets /app/public/build ./public/build
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist \
     && chown -R www-data:www-data storage bootstrap/cache
 
