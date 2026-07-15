@@ -9,10 +9,12 @@ import AppLayout from '../../Layouts/AppLayout';
 
 const RUTA = '/admin/practicas';
 
-function ParamControl({ param, value, onChange }) {
+function ParamControl({ param, value, onChange, ...rest }) {
+    // rest lleva el id (y props aria) que FormField inyecta; hay que reenviarlo al
+    // control real para que el <label htmlFor> lo enfoque.
     if (param.tipo === 'select') {
         return (
-            <Select value={value ?? param.default} onChange={(e) => onChange(e.target.value)}>
+            <Select value={value ?? param.default} onChange={(e) => onChange(e.target.value)} {...rest}>
                 {param.opciones.map((o) => (
                     <option key={o.value} value={o.value}>
                         {o.label}
@@ -28,6 +30,7 @@ function ParamControl({ param, value, onChange }) {
                 checked={Boolean(value)}
                 onChange={(e) => onChange(e.target.checked)}
                 className="size-4 rounded-sm accent-(--color-portal)"
+                {...rest}
             />
         );
     }
@@ -38,6 +41,7 @@ function ParamControl({ param, value, onChange }) {
             max={param.max}
             value={value ?? param.default}
             onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))}
+            {...rest}
         />
     );
 }
