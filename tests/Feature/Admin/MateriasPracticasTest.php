@@ -192,7 +192,7 @@ it('elimina materia con solo pivote (detach) y bloquea si tiene grupos o prácti
         ->assertUnprocessable()->assertJsonValidationErrors('eliminar');
 });
 
-it('crea una práctica y el index usa la página genérica', function () {
+it('crea una práctica y el index usa la página de prácticas', function () {
     $coord = adminmpUsuario('Coordinador');
     $materia = adminmpMateria();
 
@@ -213,7 +213,7 @@ it('crea una práctica y el index usa la página genérica', function () {
         ->and($practica->escena_referencia)->toBe('ensambla');
 
     $this->actingAs($coord)->get('/admin/practicas')->assertInertia(
-        fn (Assert $page) => $page->component('Admin/Recurso')
+        fn (Assert $page) => $page->component('Admin/Practicas')
             ->where('titulo', 'Prácticas')
             ->has('filas', 1)
             ->where('filas.0.materia_nombre', $materia->nombre)

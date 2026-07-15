@@ -23,10 +23,11 @@ class PracticaController extends Controller
             ->map(fn (Materia $m) => ['value' => $m->id_materia, 'label' => "{$m->clave} — {$m->nombre}"])
             ->values();
 
-        return Inertia::render('Admin/Recurso', [
+        return Inertia::render('Admin/Practicas', [
             'titulo' => 'Prácticas',
             'rutaBase' => '/admin/practicas',
             'idKey' => 'id_practica',
+            'registro' => RegistroJuegos::tipos(),
             'columnas' => [
                 ['key' => 'materia_nombre', 'label' => 'Materia'],
                 ['key' => 'titulo', 'label' => 'Título'],
@@ -43,6 +44,7 @@ class PracticaController extends Controller
                 'orden' => $p->orden,
                 'duracion_estimada' => $p->duracion_estimada,
                 'escena_referencia' => $p->escena_referencia,
+                'config' => $p->config,
                 'materia_nombre' => $p->materia->nombre,
             ]),
             'campos' => [
@@ -52,8 +54,8 @@ class PracticaController extends Controller
                 ['name' => 'objetivos', 'label' => 'Objetivos', 'tipo' => 'textarea'],
                 ['name' => 'orden', 'label' => 'Orden', 'tipo' => 'number', 'requerido' => true, 'min' => 1],
                 ['name' => 'duracion_estimada', 'label' => 'Duración estimada (min)', 'tipo' => 'number', 'min' => 1],
-                ['name' => 'escena_referencia', 'label' => 'Escena de referencia', 'tipo' => 'text', 'requerido' => true],
             ],
+            'materias' => $opcionesMaterias,
         ]);
     }
 
