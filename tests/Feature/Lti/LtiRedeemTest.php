@@ -32,7 +32,12 @@ function crearSesionLti(): array
         'generacion' => '2025',
     ]);
     $mat = Materia::create(['clave' => 'LTI', 'nombre' => 'Practica LTI', 'creditos' => 5]);
-    $practica = Practica::create(['id_materia' => $mat->id_materia, 'titulo' => 'Lab LTI']);
+    $practica = Practica::create([
+        'id_materia' => $mat->id_materia,
+        'titulo' => 'Lab LTI',
+        'escena_referencia' => 'ensambla',
+        'config' => ['num_piezas' => 8],
+    ]);
     $sesion = SesionPractica::create([
         'id_practica' => $practica->id_practica,
         'id_evento' => null,
@@ -56,6 +61,10 @@ it('canjea un token LTI valido y devuelve bearer con id_sesion', function () {
 
     expect($r->json('token_type'))->toBe('Bearer');
     expect($r->json('id_sesion'))->toBe($sesion->id_sesion);
+    // practica.config: defaults del tipo (config/juegos.php) con lo guardado encima.
+    // toEqual (no toBe) porque jsonb en Postgres normaliza el orden de claves.
+    expect($r->json('practica.config'))
+        ->toEqual(['num_piezas' => 8, 'tiempo_limite_seg' => 180, 'reintentos' => true]);
     // contrasena_hash must NOT be in the response (hidden on Usuario via $hidden)
     expect($r->getContent())->not->toContain('contrasena_hash');
     // El camino LTI no gana la ability evento:{id} (esa es exclusiva del redeem con magic link).
