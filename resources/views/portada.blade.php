@@ -95,10 +95,7 @@
 <section class="relative overflow-hidden" style="background:linear-gradient(180deg,#fff 0%,var(--color-cielo) 100%)">
     <div class="mx-auto grid max-w-[1400px] items-center gap-14 px-5 pb-12 pt-16 sm:px-10 lg:grid-cols-[1fr_1.1fr] lg:pt-24">
         <div>
-            <p data-reveal class="mb-6 inline-flex items-center gap-2 rounded-full border border-azultec/20 bg-azultec/5 px-3.5 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-azultec">
-                <span class="size-1.5 rounded-full bg-rojotec"></span> Laboratorios virtuales · ITCJ
-            </p>
-            <h1 data-reveal style="--reveal-delay:80ms;font-family:var(--font-jakarta);font-weight:800;letter-spacing:-.025em"
+            <h1 data-reveal style="font-family:var(--font-jakarta);font-weight:800;letter-spacing:-.025em"
                 class="text-[13vw] leading-[1.03] text-[#101f38] sm:text-6xl lg:text-[64px]">
                 El laboratorio del Tec,<br>en un <span class="palabra-clave">metaverso</span>.
             </h1>
