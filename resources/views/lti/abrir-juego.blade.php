@@ -29,6 +29,11 @@
     <div class="card">
         <h2>Modo demo (sin Unreal)</h2>
         <p class="muted">Simula la partida desde el navegador: canjea la sesión y envía la calificación de regreso a Moodle.</p>
+        @isset($escenaReferencia)
+            <p class="muted" style="margin-top:.75rem">El juego cargaría la escena
+                <strong>{{ $escenaReferencia }}</strong> con esta configuración:</p>
+            <pre style="background:#0b1020;color:#d1d5db;padding:.75rem;border-radius:.5rem;overflow:auto">{{ json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+        @endisset
         <label>Calificación: <span class="val" id="valCal">90</span></label>
         <input type="range" id="cal" min="0" max="100" value="90" oninput="document.getElementById('valCal').textContent=this.value">
         <button class="btn" id="btnDemo" style="width:100%;margin-top:1rem">Simular partida y enviar calificación</button>

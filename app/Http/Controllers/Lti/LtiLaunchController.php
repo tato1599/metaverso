@@ -48,7 +48,14 @@ class LtiLaunchController extends Controller
         $scheme = config('metaverso.deeplink_scheme', 'tecnm-metaverso');
         $deeplink = "{$scheme}://play?lti_session_token={$token}";
 
-        return view('lti.abrir-juego', ['deeplink' => $deeplink, 'practicaId' => $datos->idPractica]);
+        $practica = \App\Models\Practica::find($datos->idPractica);
+
+        return view('lti.abrir-juego', [
+            'deeplink' => $deeplink,
+            'practicaId' => $datos->idPractica,
+            'escenaReferencia' => $practica?->escena_referencia,
+            'config' => $practica?->configResuelta() ?? [],
+        ]);
     }
 
     /**
