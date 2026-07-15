@@ -8,6 +8,7 @@ use App\Models\Materia;
 use App\Models\Practica;
 use App\Models\Reserva;
 use App\Models\SesionPractica;
+use App\Support\RegistroJuegos;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -58,7 +59,7 @@ class PracticaController extends Controller
 
     public function store(Request $request)
     {
-        $datos = $request->validate($this->reglas());
+        $datos = $this->validarConTipo($request);
         Practica::create($datos);
 
         return back()->with('success', 'Práctica creada.');
@@ -66,7 +67,7 @@ class PracticaController extends Controller
 
     public function update(Request $request, Practica $practica)
     {
-        $datos = $request->validate($this->reglas());
+        $datos = $this->validarConTipo($request);
 
         $cambiaMateria = (int) $datos['id_materia'] !== $practica->id_materia;
         if ($cambiaMateria && (
@@ -132,7 +133,23 @@ class PracticaController extends Controller
             'objetivos' => ['nullable', 'string'],
             'orden' => ['required', 'integer', 'min:1'],
             'duracion_estimada' => ['nullable', 'integer', 'min:1'],
-            'escena_referencia' => ['required', 'string', 'max:255'],
+            'escena_referencia' => ['required', 'string', Rule::in(collect(RegistroJuegos::tipos())->pluck('id'))],
         ];
+    }
+
+    /**
+     * Valida la request incluyendo config.* según el tipo elegido.
+     *
+     * @return array<string, mixed>
+     */
+    private function validarConTipo(Request $request): array
+    {
+        $tipo = $request->input('escena_referencia');
+        $reglas = $this->reglas();
+        if (is_string($tipo) && RegistroJuegos::existe($tipo)) {
+            $reglas = array_merge($reglas, RegistroJuegos::reglasConfig($tipo));
+        }
+
+        return $request->validate($reglas);
     }
 }

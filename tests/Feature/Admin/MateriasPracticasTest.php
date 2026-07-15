@@ -56,7 +56,8 @@ function adminmpPractica(Materia $materia, array $extra = []): Practica
         'id_materia' => $materia->id_materia,
         'titulo' => 'Práctica '.fake()->unique()->word(),
         'orden' => 1,
-        'escena_referencia' => 'nivel_demo',
+        'escena_referencia' => 'recolecta',
+        'config' => ['meta_objetos' => 10, 'tiempo_limite_seg' => 120, 'dificultad' => 'media'],
     ], $extra));
 }
 
@@ -202,13 +203,14 @@ it('crea una práctica y el index usa la página genérica', function () {
         'objetivos' => 'Identificar el equipo y soldar una unión simple',
         'orden' => 1,
         'duracion_estimada' => 45,
-        'escena_referencia' => 'nivel_soldadura_01',
+        'escena_referencia' => 'ensambla',
+        'config' => ['num_piezas' => 5, 'tiempo_limite_seg' => 180, 'reintentos' => true],
     ])->assertRedirect();
 
     $practica = Practica::where('titulo', 'Soldadura básica')->firstOrFail();
     expect($practica->id_materia)->toBe($materia->id_materia)
         ->and($practica->orden)->toBe(1)
-        ->and($practica->escena_referencia)->toBe('nivel_soldadura_01');
+        ->and($practica->escena_referencia)->toBe('ensambla');
 
     $this->actingAs($coord)->get('/admin/practicas')->assertInertia(
         fn (Assert $page) => $page->component('Admin/Recurso')
@@ -249,7 +251,8 @@ it('bloquea cambiar la materia de una práctica con eventos o sesiones', functio
         'id_materia' => $materia->id_materia,
         'titulo' => 'Práctica movida',
         'orden' => 1,
-        'escena_referencia' => 'nivel_demo',
+        'escena_referencia' => 'recolecta',
+        'config' => ['meta_objetos' => 10, 'tiempo_limite_seg' => 120, 'dificultad' => 'media'],
     ];
 
     $conEvento = adminmpPractica(adminmpMateria());
