@@ -5,7 +5,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('la pantalla de abrir juego muestra el tipo y la config de la practica', function () {
+it('la pantalla de abrir juego muestra la escena de la practica', function () {
     $p = LtiPlatform::create([
         'issuer' => 'http://localhost:8080', 'client_id' => 'CID',
         'auth_login_url' => 'http://localhost:8080/mod/lti/auth.php',
@@ -18,7 +18,6 @@ it('la pantalla de abrir juego muestra el tipo y la config de la practica', func
         'id_materia' => $mat->id_materia,
         'titulo' => 'Lab LTI',
         'escena_referencia' => 'recolecta',
-        'config' => ['meta_objetos' => 25],
     ]);
 
     $datos = new DatosLaunch(
@@ -35,5 +34,5 @@ it('la pantalla de abrir juego muestra el tipo y la config de la practica', func
 
     $respuesta = $this->post('/lti/launch');
 
-    $respuesta->assertOk()->assertSee('recolecta')->assertSee('meta_objetos');
+    $respuesta->assertOk()->assertSee('recolecta');
 });

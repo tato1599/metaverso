@@ -57,7 +57,6 @@ function adminmpPractica(Materia $materia, array $extra = []): Practica
         'titulo' => 'Práctica '.fake()->unique()->word(),
         'orden' => 1,
         'escena_referencia' => 'recolecta',
-        'config' => ['meta_objetos' => 10, 'tiempo_limite_seg' => 120, 'dificultad' => 'media'],
     ], $extra));
 }
 
@@ -193,10 +192,10 @@ it('elimina materia con solo pivote (detach) y bloquea si tiene grupos o prácti
 });
 
 it('crea una práctica y el index usa la página de prácticas', function () {
-    $coord = adminmpUsuario('Coordinador');
+    $admin = adminmpUsuario('Admin');
     $materia = adminmpMateria();
 
-    $this->actingAs($coord)->post('/admin/practicas', [
+    $this->actingAs($admin)->post('/admin/practicas', [
         'id_materia' => $materia->id_materia,
         'titulo' => 'Soldadura básica',
         'descripcion' => 'Práctica introductoria',
@@ -204,7 +203,6 @@ it('crea una práctica y el index usa la página de prácticas', function () {
         'orden' => 1,
         'duracion_estimada' => 45,
         'escena_referencia' => 'ensambla',
-        'config' => ['num_piezas' => 5, 'tiempo_limite_seg' => 180, 'reintentos' => true],
     ])->assertRedirect();
 
     $practica = Practica::where('titulo', 'Soldadura básica')->firstOrFail();
@@ -212,7 +210,7 @@ it('crea una práctica y el index usa la página de prácticas', function () {
         ->and($practica->orden)->toBe(1)
         ->and($practica->escena_referencia)->toBe('ensambla');
 
-    $this->actingAs($coord)->get('/admin/practicas')->assertInertia(
+    $this->actingAs($admin)->get('/admin/practicas')->assertInertia(
         fn (Assert $page) => $page->component('Admin/Practicas')
             ->where('titulo', 'Prácticas')
             ->has('filas', 1)
@@ -221,54 +219,53 @@ it('crea una práctica y el index usa la página de prácticas', function () {
 });
 
 it('bloquea eliminar práctica con eventos y permite eliminarla libre', function () {
-    $coord = adminmpUsuario('Coordinador');
+    $admin = adminmpUsuario('Admin');
 
     $conEvento = adminmpPractica(adminmpMateria());
     adminmpEvento($conEvento);
-    $this->actingAs($coord)->deleteJson("/admin/practicas/{$conEvento->id_practica}")
+    $this->actingAs($admin)->deleteJson("/admin/practicas/{$conEvento->id_practica}")
         ->assertUnprocessable()->assertJsonValidationErrors('eliminar');
 
     $libre = adminmpPractica(adminmpMateria());
-    $this->actingAs($coord)->delete("/admin/practicas/{$libre->id_practica}")->assertRedirect();
+    $this->actingAs($admin)->delete("/admin/practicas/{$libre->id_practica}")->assertRedirect();
     expect(Practica::find($libre->id_practica))->toBeNull();
 });
 
 it('bloquea eliminar práctica con sesiones registradas', function () {
-    $coord = adminmpUsuario('Coordinador');
+    $admin = adminmpUsuario('Admin');
 
     $conSesion = adminmpPractica(adminmpMateria());
     adminmpSesion($conSesion);
 
-    $this->actingAs($coord)->deleteJson("/admin/practicas/{$conSesion->id_practica}")
+    $this->actingAs($admin)->deleteJson("/admin/practicas/{$conSesion->id_practica}")
         ->assertUnprocessable()->assertJsonValidationErrors('eliminar');
     expect(Practica::find($conSesion->id_practica))->not->toBeNull();
 });
 
 it('bloquea cambiar la materia de una práctica con eventos o sesiones', function () {
-    $coord = adminmpUsuario('Coordinador');
+    $admin = adminmpUsuario('Admin');
     $otraMateria = adminmpMateria();
     $payload = fn (Materia $materia) => [
         'id_materia' => $materia->id_materia,
         'titulo' => 'Práctica movida',
         'orden' => 1,
         'escena_referencia' => 'recolecta',
-        'config' => ['meta_objetos' => 10, 'tiempo_limite_seg' => 120, 'dificultad' => 'media'],
     ];
 
     $conEvento = adminmpPractica(adminmpMateria());
     adminmpEvento($conEvento);
-    $this->actingAs($coord)->putJson("/admin/practicas/{$conEvento->id_practica}", $payload($otraMateria))
+    $this->actingAs($admin)->putJson("/admin/practicas/{$conEvento->id_practica}", $payload($otraMateria))
         ->assertUnprocessable()->assertJsonValidationErrors('id_materia');
     expect($conEvento->fresh()->id_materia)->not->toBe($otraMateria->id_materia);
 
     $conSesion = adminmpPractica(adminmpMateria());
     adminmpSesion($conSesion);
-    $this->actingAs($coord)->putJson("/admin/practicas/{$conSesion->id_practica}", $payload($otraMateria))
+    $this->actingAs($admin)->putJson("/admin/practicas/{$conSesion->id_practica}", $payload($otraMateria))
         ->assertUnprocessable()->assertJsonValidationErrors('id_materia');
     expect($conSesion->fresh()->id_materia)->not->toBe($otraMateria->id_materia);
 
     $libre = adminmpPractica(adminmpMateria());
-    $this->actingAs($coord)->put("/admin/practicas/{$libre->id_practica}", $payload($otraMateria))->assertRedirect();
+    $this->actingAs($admin)->put("/admin/practicas/{$libre->id_practica}", $payload($otraMateria))->assertRedirect();
     expect($libre->fresh()->id_materia)->toBe($otraMateria->id_materia);
 });
 

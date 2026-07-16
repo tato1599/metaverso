@@ -600,28 +600,27 @@ it('bloquea cambiar duracion_estimada con reservas activas en eventos vigentes (
     $practica = $evento->practica;
     [, $alumno] = slotsAlumno($g['grupo']);
     $reserva = Reserva::create(['id_evento' => $evento->id_evento, 'id_alumno' => $alumno->id_alumno, 'inicio_slot' => $evento->slots()[1]['inicio']]);
-    $coord = slotsUsuario('Coordinador');
+    $admin = slotsUsuario('Admin');
     $payload = fn (?int $duracion) => [
         'id_materia' => $practica->id_materia,
         'titulo' => $practica->titulo,
         'orden' => 1,
         'escena_referencia' => 'recolecta',
-        'config' => ['meta_objetos' => 10, 'tiempo_limite_seg' => 120, 'dificultad' => 'media'],
         'duracion_estimada' => $duracion,
     ];
 
     // Cambiarla dejaría inicio_slot fuera de la nueva partición: 422 con conteo.
-    $this->actingAs($coord)->putJson("/admin/practicas/{$practica->id_practica}", $payload(90))
+    $this->actingAs($admin)->putJson("/admin/practicas/{$practica->id_practica}", $payload(90))
         ->assertStatus(422)->assertJsonValidationErrors('duracion_estimada');
     expect($practica->fresh()->duracion_estimada)->toBe(60);
 
     // Sin cambiar la duración, el update pasa aunque haya reservas.
-    $this->actingAs($coord)->put("/admin/practicas/{$practica->id_practica}", $payload(60))
+    $this->actingAs($admin)->put("/admin/practicas/{$practica->id_practica}", $payload(60))
         ->assertRedirect();
 
     // Sin reservas activas vigentes, cambiarla pasa.
     $reserva->update(['estatus' => 'cancelada']);
-    $this->actingAs($coord)->put("/admin/practicas/{$practica->id_practica}", $payload(90))
+    $this->actingAs($admin)->put("/admin/practicas/{$practica->id_practica}", $payload(90))
         ->assertRedirect();
     expect($practica->fresh()->duracion_estimada)->toBe(90);
 });
@@ -632,15 +631,14 @@ it('omitir duracion_estimada en el update no cuenta como cambio a null (F6 must-
     $practica = $evento->practica;
     [, $alumno] = slotsAlumno($g['grupo']);
     Reserva::create(['id_evento' => $evento->id_evento, 'id_alumno' => $alumno->id_alumno, 'inicio_slot' => $evento->slots()[1]['inicio']]);
-    $coord = slotsUsuario('Coordinador');
+    $admin = slotsUsuario('Admin');
 
     // La llave ausente no es "cambiar a null": el update pasa y la duración queda intacta.
-    $this->actingAs($coord)->putJson("/admin/practicas/{$practica->id_practica}", [
+    $this->actingAs($admin)->putJson("/admin/practicas/{$practica->id_practica}", [
         'id_materia' => $practica->id_materia,
         'titulo' => $practica->titulo,
         'orden' => 1,
         'escena_referencia' => 'recolecta',
-        'config' => ['meta_objetos' => 10, 'tiempo_limite_seg' => 120, 'dificultad' => 'media'],
     ])->assertRedirect();
     expect($practica->fresh()->duracion_estimada)->toBe(60);
 });
