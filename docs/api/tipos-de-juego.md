@@ -1,140 +1,70 @@
-# Tipos de mini-juego — contrato para el cliente Godot
+# Catálogo de juegos de Godot — contrato para el cliente
 
-Este documento es el contrato entre el backend y el cliente Godot para los mini-juegos de
-prácticas. Es la referencia que el equipo de Godot debe seguir para cargar la escena
-correcta, configurarla con los parámetros que definió coordinación, y reportar el resultado.
+El cliente Godot recibe, al canjear el token, la escena que debe cargar. Su trabajo es
+identificarla, cargarla, y al terminar reportar la calificación (0–100) de vuelta al backend.
 
-La **fuente única de verdad** de los tipos y sus parámetros es
-[`config/juegos.php`](../../config/juegos.php). Este documento refleja sus valores; si
-divergen, `config/juegos.php` manda.
+La **fuente única de verdad** del catálogo de juegos/escenas es
+[`config/juegos.php`](../../config/juegos.php). El admin enlaza cada práctica a uno de sus ids
+desde el panel (Administración → Prácticas); ese id se guarda en `practicas.escena_referencia`.
 
-Para el flujo completo de endpoints (magic link → redeem → sesión → complete), ver
-[`docs/api/flujo-del-juego.md`](./flujo-del-juego.md). Aquí solo se documenta el contrato
-específico de cada tipo de mini-juego.
+Para el flujo completo de endpoints (redeem → sesión → complete) ver
+[`flujo-del-juego.md`](./flujo-del-juego.md). Este documento solo cubre **qué escena cargar**.
 
-## Qué es un "tipo de mini-juego"
+## Cómo se conecta una práctica con su juego
 
-Cada práctica tiene un `escena_referencia` (uno de `recolecta`, `ensambla`, `circuito`) y un
-`config` con los parámetros que coordinación definió para esa práctica en el panel.
-
-Conexión con Godot:
-
-1. Al canjear el magic link (`POST /api/game/redeem`), la respuesta incluye
-   `practica.escena_referencia` — el **id de la escena que Godot debe cargar** — y
-   `practica.config` — la **configuración resuelta** (defaults del tipo con lo guardado en
-   la práctica encima) para inicializar esa escena.
-2. Godot carga la escena identificada por `escena_referencia` y la configura con `config`.
-3. El alumno juega. Al terminar, Godot llama a
-   `POST /api/game/sessions/{id}/complete` con `calificacion` (0–100) y, opcionalmente,
-   `datos_resultado` (un objeto JSON libre con detalle del resultado: tiempos, aciertos,
-   errores, etc.).
+1. El admin, en el panel, elige de un catálogo a qué **juego/escena de Godot** apunta la práctica.
+   Se guarda en `practicas.escena_referencia` (un id del catálogo, no texto libre).
+2. El maestro genera los magic links por alumno para un evento de esa práctica. Cada link
+   (vía su token) queda ligado a la práctica, y por tanto a su escena.
+3. El alumno abre su link; Godot canjea el token con `POST /api/game/redeem` y recibe la
+   práctica. **`practica.escena_referencia` es el id de la escena que Godot debe cargar.**
+4. No hay parámetros de jugabilidad: la práctica solo dice *cuál* escena, no *cómo* jugarla.
+   Cualquier ajuste vive dentro de la escena de Godot.
 
 ## Ejemplo: respuesta de `POST /api/game/redeem`
 
-Ejemplo con una práctica de tipo `recolecta` (los valores de `config` combinan defaults del
-tipo con lo que coordinación haya guardado para esa práctica en particular):
-
 ```json
 {
-  "access_token": "1|abcdefghijklmnopqrstuvwxyz1234567890",
+  "access_token": "12|abcdef...",
   "token_type": "Bearer",
-  "alumno": {
-    "id_alumno": 15,
-    "numero_control": "21TI0001",
-    "nombre": "Juan Pérez López",
-    "semestre": 5,
-    "id_grupo": 3
-  },
+  "alumno": { "id_alumno": 15, "matricula": "20250001" },
   "practica": {
     "id_practica": 2,
-    "id_materia": 1,
-    "titulo": "Práctica 1 – Redes LAN virtuales",
-    "descripcion": "Configuración de switches y VLANs en entorno virtual",
-    "objetivos": "Identificar y segmentar dominios de colisión con VLANs",
-    "duracion_estimada": 45,
-    "orden": 1,
-    "escena_referencia": "recolecta",
-    "config": {
-      "meta_objetos": 25,
-      "tiempo_limite_seg": 120,
-      "dificultad": "media"
-    },
-    "created_at": "2026-06-23T09:00:00.000000Z",
-    "updated_at": "2026-07-15T10:00:00.000000Z"
+    "titulo": "Práctica 1: Variables",
+    "descripcion": "Introducción",
+    "escena_referencia": "recolecta"
   },
   "evento": {
     "id_evento": 7,
-    "fecha_hora_inicio": "2026-06-23T10:00:00+00:00",
-    "fecha_hora_fin": "2026-06-23T12:00:00+00:00",
-    "estatus": "activo"
+    "fecha_hora_inicio": "2026-08-01T10:00:00+00:00",
+    "fecha_hora_fin": "2026-08-01T12:00:00+00:00",
+    "estatus": "programado"
   }
 }
 ```
 
-Notas sobre `practica`:
+- `practica.escena_referencia` es siempre uno de los ids del catálogo (`config/juegos.php`).
+- El mismo objeto `practica` (con su `escena_referencia`) se recibe también vía el flujo LTI
+  en `POST /api/game/lti-redeem`.
 
-- `escena_referencia` es siempre uno de los ids de tipo registrados en `config/juegos.php`
-  (`recolecta`, `ensambla`, `circuito`).
-- `config` es el resultado de `Practica::configResuelta()`: toma los defaults del tipo
-  (`config/juegos.php.<tipo>.params[].default`) y sobrescribe cada clave con lo guardado en
-  `practicas.config`, ignorando cualquier clave ajena al esquema del tipo. Si la práctica no
-  tiene `config` guardado, `config` es exactamente los defaults del tipo.
-- El mismo objeto `practica` (con `config` resuelto) se recibe también vía el flujo LTI en
-  `POST /api/game/lti-redeem`.
+## Catálogo de juegos/escenas
 
-## Tipos de mini-juego
+Ids disponibles hoy (id de escena que Godot carga → etiqueta que ve el admin):
 
-### `recolecta` — junta objetos
+| `escena_referencia` | Etiqueta en el panel            |
+|---------------------|---------------------------------|
+| `recolecta`         | Recolecta — junta objetos       |
+| `ensambla`          | Ensambla — ordena la secuencia  |
+| `circuito`          | Circuito — recorre estaciones   |
 
-- **Id de escena** (`escena_referencia`): `recolecta`
-- **Descripción**: el alumno junta objetos correctos antes de que acabe el tiempo.
+Cada id corresponde a una escena que el equipo de Godot construye. Godot debe manejar con un
+error amable el caso de un `escena_referencia` que no reconozca.
 
-| Parámetro           | Tipo     | Rango / opciones                                  | Default |
-|----------------------|----------|----------------------------------------------------|---------|
-| `meta_objetos`        | number   | 1 – 200                                             | `10`    |
-| `tiempo_limite_seg`   | number   | 10 – 3600                                           | `120`   |
-| `dificultad`          | select   | `facil` \| `media` \| `dificil`                     | `media` |
+## Agregar un juego nuevo
 
-**Calificación esperada**: porcentaje de objetos correctos recolectados respecto a
-`meta_objetos`, con un bono por tiempo restante. Rango final 0–100.
+1. Una entrada nueva en [`config/juegos.php`](../../config/juegos.php): `'<id>' => '<Etiqueta>'`.
+   El id es lo que viajará en `escena_referencia`.
+2. La escena correspondiente en el proyecto de Godot, que carga cuando recibe ese id.
 
-### `ensambla` — ordena la secuencia
-
-- **Id de escena** (`escena_referencia`): `ensambla`
-- **Descripción**: el alumno ordena piezas/pasos en la secuencia correcta.
-
-| Parámetro           | Tipo     | Rango / opciones | Default |
-|-----------------------|----------|-------------------|---------|
-| `num_piezas`           | number   | 2 – 50            | `5`     |
-| `tiempo_limite_seg`    | number   | 10 – 3600         | `180`   |
-| `reintentos`           | checkbox | `true` / `false`  | `true`  |
-
-**Calificación esperada**: porcentaje de piezas en la posición correcta al finalizar. Rango
-final 0–100.
-
-### `circuito` — recorre estaciones
-
-- **Id de escena** (`escena_referencia`): `circuito`
-- **Descripción**: el alumno visita N estaciones del laboratorio, opcionalmente en orden.
-
-| Parámetro           | Tipo     | Rango / opciones | Default |
-|-----------------------|----------|-------------------|---------|
-| `num_estaciones`       | number   | 1 – 50            | `4`     |
-| `en_orden`             | checkbox | `true` / `false`  | `false` |
-| `tiempo_limite_seg`    | number   | 10 – 3600         | `300`   |
-
-**Calificación esperada**: porcentaje de estaciones completadas correctamente. Rango final
-0–100.
-
-## Agregar un tipo nuevo
-
-Agregar un tipo de mini-juego nuevo requiere:
-
-1. Una entrada nueva en [`config/juegos.php`](../../config/juegos.php) (id, `label` y
-   `params` con tipo, default y rango/opciones de cada parámetro). Esa entrada alimenta
-   automáticamente el formulario del panel, la validación del servidor y este contrato.
-2. La escena correspondiente en Godot, identificada por el mismo id usado como clave en el
-   registro (el valor que llegará en `escena_referencia`).
-
-No se requiere ningún otro cambio de código en el backend: el registro es la fuente única de
-verdad.
+Nada más: el panel muestra la nueva opción en el selector y la validación acepta el id nuevo
+automáticamente.
