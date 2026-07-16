@@ -17,8 +17,19 @@ use Inertia\Inertia;
 
 class PracticaController extends Controller
 {
+    /**
+     * Solo el rol Admin enlaza prácticas con su juego de Godot. Coordinador y
+     * maestros no administran esto (el resto de /admin sí es Coordinador+Admin).
+     */
+    private function soloAdmin(Request $request): void
+    {
+        abort_unless($request->user()?->esAdmin(), 403, 'Solo un administrador puede administrar prácticas.');
+    }
+
     public function index(Request $request)
     {
+        $this->soloAdmin($request);
+
         $opcionesMaterias = Materia::orderBy('clave')->get()
             ->map(fn (Materia $m) => ['value' => $m->id_materia, 'label' => "{$m->clave} — {$m->nombre}"])
             ->values();
@@ -27,13 +38,13 @@ class PracticaController extends Controller
             'titulo' => 'Prácticas',
             'rutaBase' => '/admin/practicas',
             'idKey' => 'id_practica',
-            'registro' => RegistroJuegos::tipos(),
+            'juegos' => RegistroJuegos::juegos(),
             'columnas' => [
                 ['key' => 'materia_nombre', 'label' => 'Materia'],
                 ['key' => 'titulo', 'label' => 'Título'],
                 ['key' => 'orden', 'label' => 'Orden', 'mono' => true],
                 ['key' => 'duracion_estimada', 'label' => 'Duración (min)', 'mono' => true],
-                ['key' => 'escena_referencia', 'label' => 'Escena', 'mono' => true],
+                ['key' => 'escena_referencia', 'label' => 'Juego', 'mono' => true],
             ],
             'filas' => Practica::with('materia')->orderBy('id_materia')->orderBy('orden')->get()->map(fn (Practica $p) => [
                 'id_practica' => $p->id_practica,
@@ -44,7 +55,6 @@ class PracticaController extends Controller
                 'orden' => $p->orden,
                 'duracion_estimada' => $p->duracion_estimada,
                 'escena_referencia' => $p->escena_referencia,
-                'config' => $p->config,
                 'materia_nombre' => $p->materia->nombre,
             ]),
             'materias' => $opcionesMaterias,
@@ -53,7 +63,8 @@ class PracticaController extends Controller
 
     public function store(Request $request)
     {
-        $datos = $this->validarConTipo($request);
+        $this->soloAdmin($request);
+        $datos = $request->validate($this->reglas());
         Practica::create($datos);
 
         return back()->with('success', 'Práctica creada.');
@@ -61,7 +72,8 @@ class PracticaController extends Controller
 
     public function update(Request $request, Practica $practica)
     {
-        $datos = $this->validarConTipo($request);
+        $this->soloAdmin($request);
+        $datos = $request->validate($this->reglas());
 
         $cambiaMateria = (int) $datos['id_materia'] !== $practica->id_materia;
         if ($cambiaMateria && (
@@ -102,8 +114,9 @@ class PracticaController extends Controller
         return back()->with('success', 'Práctica actualizada.');
     }
 
-    public function destroy(Practica $practica)
+    public function destroy(Request $request, Practica $practica)
     {
+        $this->soloAdmin($request);
         if (EventoAgenda::where('id_practica', $practica->id_practica)->exists()) {
             throw ValidationException::withMessages(['eliminar' => 'No se puede eliminar: la práctica tiene eventos agendados.']);
         }
@@ -127,23 +140,7 @@ class PracticaController extends Controller
             'objetivos' => ['nullable', 'string'],
             'orden' => ['required', 'integer', 'min:1'],
             'duracion_estimada' => ['nullable', 'integer', 'min:1'],
-            'escena_referencia' => ['required', 'string', Rule::in(collect(RegistroJuegos::tipos())->pluck('id'))],
+            'escena_referencia' => ['required', 'string', Rule::in(RegistroJuegos::ids())],
         ];
-    }
-
-    /**
-     * Valida la request incluyendo config.* según el tipo elegido.
-     *
-     * @return array<string, mixed>
-     */
-    private function validarConTipo(Request $request): array
-    {
-        $tipo = $request->input('escena_referencia');
-        $reglas = $this->reglas();
-        if (is_string($tipo) && RegistroJuegos::existe($tipo)) {
-            $reglas = array_merge($reglas, RegistroJuegos::reglasConfig($tipo));
-        }
-
-        return $request->validate($reglas);
     }
 }

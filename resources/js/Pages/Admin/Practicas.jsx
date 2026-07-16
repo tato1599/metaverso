@@ -1,5 +1,5 @@
 import { router, useForm } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import AdminNav from '../../Components/AdminNav';
 import Button from '../../Components/Button';
 import FormField, { Select, TextInput, Textarea } from '../../Components/FormField';
@@ -9,50 +9,7 @@ import AppLayout from '../../Layouts/AppLayout';
 
 const RUTA = '/admin/practicas';
 
-function ParamControl({ param, value, onChange, ...rest }) {
-    // rest lleva el id (y props aria) que FormField inyecta; hay que reenviarlo al
-    // control real para que el <label htmlFor> lo enfoque.
-    if (param.tipo === 'select') {
-        return (
-            <Select value={value ?? param.default} onChange={(e) => onChange(e.target.value)} {...rest}>
-                {param.opciones.map((o) => (
-                    <option key={o.value} value={o.value}>
-                        {o.label}
-                    </option>
-                ))}
-            </Select>
-        );
-    }
-    if (param.tipo === 'checkbox') {
-        return (
-            <input
-                type="checkbox"
-                checked={Boolean(value)}
-                onChange={(e) => onChange(e.target.checked)}
-                className="size-4 rounded-sm accent-(--color-portal)"
-                {...rest}
-            />
-        );
-    }
-    return (
-        <TextInput
-            type="number"
-            min={param.min}
-            max={param.max}
-            value={value ?? param.default}
-            onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))}
-            {...rest}
-        />
-    );
-}
-
-function configPorDefecto(tipoDef) {
-    const c = {};
-    for (const p of tipoDef?.params ?? []) c[p.name] = p.default;
-    return c;
-}
-
-export default function Practicas({ registro, filas, materias }) {
+export default function Practicas({ juegos, filas, materias }) {
     const [abierto, setAbierto] = useState(false);
     const [editando, setEditando] = useState(null);
 
@@ -63,28 +20,21 @@ export default function Practicas({ registro, filas, materias }) {
         objetivos: '',
         orden: 1,
         duracion_estimada: '',
-        escena_referencia: registro[0]?.id ?? '',
-        config: configPorDefecto(registro[0]),
+        escena_referencia: juegos[0]?.id ?? '',
     });
-
-    const tipoDef = useMemo(
-        () => registro.find((t) => t.id === form.data.escena_referencia),
-        [registro, form.data.escena_referencia],
-    );
 
     function abrirNuevo() {
         setEditando(null);
-        // reset() ya restaura los valores iniciales del useForm (tipo + config del primero).
         form.reset();
         setAbierto(true);
     }
 
     function abrirEditar(fila) {
         setEditando(fila.id_practica);
-        // Práctica heredada con un tipo fuera del registro: cae a un tipo válido con sus
-        // defaults (no mezcla la config vieja, cuyas claves no pertenecen al nuevo esquema).
-        const tipoConocido = registro.find((t) => t.id === fila.escena_referencia);
-        const def = tipoConocido ?? registro[0];
+        // Si la práctica apunta a un juego que ya no está en el catálogo, cae al primero.
+        const juegoValido = juegos.some((j) => j.id === fila.escena_referencia)
+            ? fila.escena_referencia
+            : (juegos[0]?.id ?? '');
         form.setData({
             id_materia: fila.id_materia,
             titulo: fila.titulo,
@@ -92,19 +42,9 @@ export default function Practicas({ registro, filas, materias }) {
             objetivos: fila.objetivos ?? '',
             orden: fila.orden,
             duracion_estimada: fila.duracion_estimada ?? '',
-            escena_referencia: def.id,
-            config: tipoConocido ? { ...configPorDefecto(def), ...(fila.config ?? {}) } : configPorDefecto(def),
+            escena_referencia: juegoValido,
         });
         setAbierto(true);
-    }
-
-    function cambiarTipo(id) {
-        const def = registro.find((t) => t.id === id);
-        form.setData((d) => ({ ...d, escena_referencia: id, config: configPorDefecto(def) }));
-    }
-
-    function setParam(name, value) {
-        form.setData((d) => ({ ...d, config: { ...d.config, [name]: value } }));
     }
 
     function enviar(e) {
@@ -128,7 +68,7 @@ export default function Practicas({ registro, filas, materias }) {
                 <Button onClick={abrirNuevo}>Nueva práctica</Button>
             </div>
 
-            <Table head={['Materia', 'Título', 'Tipo', 'Orden', '']}>
+            <Table head={['Materia', 'Título', 'Juego', 'Orden', '']}>
                 {filas.map((fila) => (
                     <tr key={fila.id_practica}>
                         <td className="px-4 py-2.5 text-tinta">{fila.materia_nombre}</td>
@@ -197,21 +137,15 @@ export default function Practicas({ registro, filas, materias }) {
                         />
                     </FormField>
 
-                    <FormField label="Tipo de práctica" name="escena_referencia" error={form.errors.escena_referencia}>
-                        <Select value={form.data.escena_referencia} onChange={(e) => cambiarTipo(e.target.value)} required>
-                            {registro.map((t) => (
-                                <option key={t.id} value={t.id}>
-                                    {t.label}
+                    <FormField label="Juego / escena de Godot" name="escena_referencia" error={form.errors.escena_referencia}>
+                        <Select value={form.data.escena_referencia} onChange={(e) => form.setData('escena_referencia', e.target.value)} required>
+                            {juegos.map((j) => (
+                                <option key={j.id} value={j.id}>
+                                    {j.label}
                                 </option>
                             ))}
                         </Select>
                     </FormField>
-
-                    {(tipoDef?.params ?? []).map((p) => (
-                        <FormField key={p.name} label={p.label} name={`config.${p.name}`} error={form.errors[`config.${p.name}`]}>
-                            <ParamControl param={p} value={form.data.config[p.name]} onChange={(v) => setParam(p.name, v)} />
-                        </FormField>
-                    ))}
 
                     <div className="flex justify-end gap-2 pt-1">
                         <Button type="button" variant="ghost" onClick={() => setAbierto(false)}>

@@ -55,7 +55,6 @@ class LtiLaunchController extends Controller
             'deeplink' => $deeplink,
             'practicaId' => $datos->idPractica,
             'escenaReferencia' => $practica?->escena_referencia,
-            'config' => $practica?->configResuelta() ?? [],
         ]);
     }
 

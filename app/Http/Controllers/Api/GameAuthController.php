@@ -95,10 +95,7 @@ class GameAuthController extends Controller {
             'access_token' => $accessToken,
             'token_type' => 'Bearer',
             'alumno' => $usuario->alumno,
-            'practica' => array_merge(
-                $evento->practica->toArray(),
-                ['config' => $evento->practica->configResuelta()],
-            ),
+            'practica' => $evento->practica,
             'evento' => $evento->only(['id_evento','fecha_hora_inicio','fecha_hora_fin','estatus']),
         ]);
     }
@@ -145,10 +142,7 @@ class GameAuthController extends Controller {
             'access_token' => $accessToken,
             'token_type' => 'Bearer',
             'alumno' => $sesion->alumno,
-            'practica' => array_merge(
-                $sesion->practica->toArray(),
-                ['config' => $sesion->practica->configResuelta()],
-            ),
+            'practica' => $sesion->practica,
             'id_sesion' => $sesion->id_sesion,
         ]);
     }

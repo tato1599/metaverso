@@ -59,4 +59,9 @@ class Usuario extends Authenticatable
     {
         return in_array(optional($this->rol)->nombre, ['Coordinador', 'Admin'], true);
     }
+
+    public function esAdmin(): bool
+    {
+        return optional($this->rol)->nombre === 'Admin';
+    }
 }

@@ -1,7 +1,10 @@
+import { usePage } from '@inertiajs/react';
+
 const SECCIONES = [
     { href: '/admin/carreras', label: 'Carreras' },
     { href: '/admin/materias', label: 'Materias' },
-    { href: '/admin/practicas', label: 'Prácticas' },
+    // Solo Admin enlaza prácticas con su juego de Godot.
+    { href: '/admin/practicas', label: 'Prácticas', soloAdmin: true },
     { href: '/admin/ciclos', label: 'Ciclos' },
     { href: '/admin/espacios', label: 'Espacios' },
     { href: '/admin/grupos', label: 'Grupos' },
@@ -10,10 +13,12 @@ const SECCIONES = [
 
 export default function AdminNav() {
     const path = typeof window !== 'undefined' ? window.location.pathname : '';
+    const rol = usePage().props.auth?.user?.rol;
+    const secciones = SECCIONES.filter((s) => !s.soloAdmin || rol === 'Admin');
 
     return (
         <nav className="mb-6 flex flex-wrap gap-1 border-b border-borde pb-3">
-            {SECCIONES.map((s) => (
+            {secciones.map((s) => (
                 <a
                     key={s.href}
                     href={s.href}
