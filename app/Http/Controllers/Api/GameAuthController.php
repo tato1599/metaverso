@@ -34,8 +34,10 @@ class GameAuthController extends Controller {
      *   },
      *   "practica": {
      *     "id_practica": 2,
-     *     "nombre": "Práctica 1 – Redes LAN virtuales",
-     *     "descripcion": "Configuración de switches y VLANs en entorno virtual"
+     *     "titulo": "Práctica 1 – Redes LAN virtuales",
+     *     "descripcion": "Configuración de switches y VLANs en entorno virtual",
+     *     "escena_referencia": "recolecta",
+     *     "config": {"meta_objetos": 10, "tiempo_limite_seg": 120, "dificultad": "media"}
      *   },
      *   "evento": {
      *     "id_evento": 7,

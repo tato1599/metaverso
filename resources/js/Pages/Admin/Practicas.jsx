@@ -74,14 +74,17 @@ export default function Practicas({ registro, filas, materias }) {
 
     function abrirNuevo() {
         setEditando(null);
+        // reset() ya restaura los valores iniciales del useForm (tipo + config del primero).
         form.reset();
-        form.setData('config', configPorDefecto(registro[0]));
         setAbierto(true);
     }
 
     function abrirEditar(fila) {
         setEditando(fila.id_practica);
-        const def = registro.find((t) => t.id === fila.escena_referencia) ?? registro[0];
+        // Práctica heredada con un tipo fuera del registro: cae a un tipo válido con sus
+        // defaults (no mezcla la config vieja, cuyas claves no pertenecen al nuevo esquema).
+        const tipoConocido = registro.find((t) => t.id === fila.escena_referencia);
+        const def = tipoConocido ?? registro[0];
         form.setData({
             id_materia: fila.id_materia,
             titulo: fila.titulo,
@@ -89,8 +92,8 @@ export default function Practicas({ registro, filas, materias }) {
             objetivos: fila.objetivos ?? '',
             orden: fila.orden,
             duracion_estimada: fila.duracion_estimada ?? '',
-            escena_referencia: fila.escena_referencia,
-            config: { ...configPorDefecto(def), ...(fila.config ?? {}) },
+            escena_referencia: def.id,
+            config: tipoConocido ? { ...configPorDefecto(def), ...(fila.config ?? {}) } : configPorDefecto(def),
         });
         setAbierto(true);
     }
