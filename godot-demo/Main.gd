@@ -1,39 +1,212 @@
 extends Node3D
 #
-# Demo "Recolecta" — Metaverso Escolar TecNM
+# Demo "Recolecta" — Metaverso Escolar TecNM (Godot 4)
 #
-# Un mini-juego 3D minimísimo: te mueves con WASD sobre un piso y recoges monedas.
-# Al juntarlas todas se muestra el puntaje. Todo el mundo 3D se construye por código
-# en _ready(), así el proyecto es solo este script + una escena vacía que lo carga.
+# Mini-juego 3D: WASD para moverte, recoge las monedas. Puede correr conectado al
+# backend (canjea el token del magic link, inicia la sesión y al terminar envía la
+# calificación de vuelta a Moodle) o en modo "sin conexión" para enseñarlo sin servidor.
 #
-# GANCHO para conectar al backend después: cuando termines (_completar), en vez de
-# solo mostrar el puntaje, harías las llamadas HTTP con un nodo HTTPRequest:
-#   1) POST /api/game/redeem      (canjea el token del magic link -> Bearer)
-#   2) POST /api/game/sessions    (inicia la sesión con id_evento)
-#   3) POST /api/game/sessions/{id}/complete  (envía calificacion 0-100)
-# Ver docs/api/flujo-del-juego.md en el repo. Aquí lo dejamos en modo demo.
+# Flujo backend (ver docs/api/flujo-del-juego.md):
+#   POST /api/game/redeem            {token}                  -> {access_token, evento:{id_evento}, ...}
+#   POST /api/game/sessions          {id_evento}   (Bearer)   -> {id_sesion}
+#   POST /api/game/sessions/{id}/complete {calificacion,...} (Bearer) -> ok
+#
+# Variables de entorno (opcionales, para prellenar/automatizar):
+#   DEMO_URL    URL base del servidor (default http://127.0.0.1:8000)
+#   DEMO_TOKEN  token del magic link, para prellenar el campo
+#   DEMO_AUTO=1 conecta y completa solo (modo kiosco/prueba, sin jugar)
 
 const VELOCIDAD := 7.0
 const TOTAL_MONEDAS := 6
 
+# --- estado de juego ---
 var player: CharacterBody3D
 var camara: Camera3D
 var hud: Label
 var mensaje_fin: Label
 var monedas: Array[Area3D] = []
 var recogidas := 0
+var jugando := false
 var termino := false
+
+# --- estado de conexión ---
+var base_url := ""
+var bearer := ""
+var id_evento := 0
+var id_sesion := 0
+var sin_backend := false
+
+# --- UI de inicio ---
+var panel_inicio: Control
+var campo_url: LineEdit
+var campo_token: LineEdit
+var boton_conectar: Button
+var etiqueta_estado: Label
 
 
 func _ready() -> void:
 	_crear_entorno()
 	_crear_piso()
-	player = _crear_player()
 	_crear_camara()
-	_crear_monedas()
 	_crear_hud()
+	_crear_inicio()
+
+	if OS.get_environment("DEMO_AUTO") == "1":
+		await get_tree().process_frame
+		_conectar()
+
+
+# ============================ CONEXIÓN ============================
+
+func _crear_inicio() -> void:
+	var capa := CanvasLayer.new()
+	capa.layer = 10
+	add_child(capa)
+
+	panel_inicio = PanelContainer.new()
+	panel_inicio.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	panel_inicio.custom_minimum_size = Vector2(460, 0)
+	capa.add_child(panel_inicio)
+
+	var caja := VBoxContainer.new()
+	caja.add_theme_constant_override("separation", 12)
+	panel_inicio.add_child(caja)
+
+	var titulo := Label.new()
+	titulo.text = "Metaverso — Demo Recolecta"
+	titulo.add_theme_font_size_override("font_size", 26)
+	caja.add_child(titulo)
+
+	caja.add_child(_etiqueta("Servidor"))
+	campo_url = LineEdit.new()
+	var url_env := OS.get_environment("DEMO_URL")
+	campo_url.text = url_env if url_env != "" else "http://127.0.0.1:8000"
+	caja.add_child(campo_url)
+
+	caja.add_child(_etiqueta("Token del enlace de acceso"))
+	campo_token = LineEdit.new()
+	campo_token.placeholder_text = "pega aquí el token del magic link"
+	campo_token.text = OS.get_environment("DEMO_TOKEN")
+	caja.add_child(campo_token)
+
+	boton_conectar = Button.new()
+	boton_conectar.text = "Conectar y jugar"
+	boton_conectar.pressed.connect(_conectar)
+	caja.add_child(boton_conectar)
+
+	var boton_offline := Button.new()
+	boton_offline.text = "Jugar sin conexión"
+	boton_offline.pressed.connect(_jugar_offline)
+	caja.add_child(boton_offline)
+
+	etiqueta_estado = Label.new()
+	etiqueta_estado.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	etiqueta_estado.modulate = Color(1, 0.8, 0.4)
+	caja.add_child(etiqueta_estado)
+
+
+func _etiqueta(texto: String) -> Label:
+	var l := Label.new()
+	l.text = texto
+	l.add_theme_font_size_override("font_size", 14)
+	l.modulate = Color(1, 1, 1, 0.75)
+	return l
+
+
+func _estado(texto: String) -> void:
+	if etiqueta_estado:
+		etiqueta_estado.text = texto
+
+
+func _headers_json() -> PackedStringArray:
+	return PackedStringArray(["Content-Type: application/json", "Accept: application/json"])
+
+
+func _headers_auth() -> PackedStringArray:
+	var h := _headers_json()
+	h.append("Authorization: Bearer " + bearer)
+	return h
+
+
+# Hace una petición HTTP y espera la respuesta. Devuelve {ok, code, body(Dictionary), error}.
+func _api(metodo: int, url: String, headers: PackedStringArray, cuerpo) -> Dictionary:
+	var http := HTTPRequest.new()
+	add_child(http)
+	var body_str := "" if cuerpo == null else JSON.stringify(cuerpo)
+	var err := http.request(url, headers, metodo, body_str)
+	if err != OK:
+		http.queue_free()
+		return {"ok": false, "code": 0, "body": {}, "error": "no se pudo iniciar la petición (%d)" % err}
+	var res: Array = await http.request_completed
+	http.queue_free()
+	var resultado: int = res[0]
+	var code: int = res[1]
+	var raw: String = (res[3] as PackedByteArray).get_string_from_utf8()
+	var body := {}
+	if raw != "":
+		var parsed = JSON.parse_string(raw)
+		if typeof(parsed) == TYPE_DICTIONARY:
+			body = parsed
+	if resultado != HTTPRequest.RESULT_SUCCESS:
+		return {"ok": false, "code": code, "body": body, "error": "fallo de red (%d)" % resultado}
+	return {"ok": code >= 200 and code < 300, "code": code, "body": body, "error": ""}
+
+
+func _mensaje_api(r: Dictionary) -> String:
+	if r.get("error", "") != "":
+		return r["error"]
+	var body: Dictionary = r.get("body", {})
+	return str(body.get("message", "sin detalle"))
+
+
+func _conectar() -> void:
+	base_url = campo_url.text.strip_edges().trim_suffix("/")
+	var token := campo_token.text.strip_edges()
+	if token == "":
+		_estado("Pega el token del enlace de acceso.")
+		return
+	boton_conectar.disabled = true
+	_estado("Canjeando token…")
+
+	var r := await _api(HTTPClient.METHOD_POST, base_url + "/api/game/redeem", _headers_json(), {"token": token})
+	if not r.ok:
+		_estado("Redeem falló (%d): %s" % [r.code, _mensaje_api(r)])
+		boton_conectar.disabled = false
+		return
+	bearer = str(r.body.get("access_token", ""))
+	var evento: Dictionary = r.body.get("evento", {})
+	id_evento = int(evento.get("id_evento", 0))
+
+	_estado("Iniciando sesión…")
+	var s := await _api(HTTPClient.METHOD_POST, base_url + "/api/game/sessions", _headers_auth(), {"id_evento": id_evento})
+	if not s.ok:
+		_estado("No se pudo iniciar la sesión (%d): %s" % [s.code, _mensaje_api(s)])
+		boton_conectar.disabled = false
+		return
+	id_sesion = int(s.body.get("id_sesion", 0))
+
+	print("[demo] conectado. id_evento=%d id_sesion=%d" % [id_evento, id_sesion])
+	_iniciar_juego()
+
+	if OS.get_environment("DEMO_AUTO") == "1":
+		await get_tree().create_timer(0.3).timeout
+		_completar()
+
+
+func _jugar_offline() -> void:
+	sin_backend = true
+	_iniciar_juego()
+
+
+func _iniciar_juego() -> void:
+	panel_inicio.get_parent().queue_free()  # quita la CanvasLayer de inicio
+	player = _crear_player()
+	_crear_monedas()
+	jugando = true
 	_actualizar_hud()
 
+
+# ============================ MUNDO 3D ============================
 
 func _crear_entorno() -> void:
 	var mundo := WorldEnvironment.new()
@@ -137,7 +310,6 @@ func _crear_monedas() -> void:
 		col.shape = forma
 		area.add_child(col)
 
-		# Reparto en el piso, sin caer justo encima del jugador.
 		var x := rng.randf_range(-9.0, 9.0)
 		var z := rng.randf_range(-9.0, 9.0)
 		if abs(x) < 2.0 and abs(z) < 2.0:
@@ -165,7 +337,7 @@ func _crear_hud() -> void:
 	capa.add_child(ayuda)
 
 	mensaje_fin = Label.new()
-	mensaje_fin.add_theme_font_size_override("font_size", 44)
+	mensaje_fin.add_theme_font_size_override("font_size", 40)
 	mensaje_fin.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	mensaje_fin.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	mensaje_fin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -174,11 +346,14 @@ func _crear_hud() -> void:
 
 
 func _actualizar_hud() -> void:
-	hud.text = "Monedas: %d / %d" % [recogidas, TOTAL_MONEDAS]
+	if hud:
+		hud.text = "Monedas: %d / %d" % [recogidas, TOTAL_MONEDAS]
 
+
+# ============================ JUEGO ============================
 
 func _physics_process(delta: float) -> void:
-	if player == null:
+	if not jugando or player == null:
 		return
 
 	var dir := Vector3.ZERO
@@ -194,22 +369,20 @@ func _physics_process(delta: float) -> void:
 
 	player.velocity.x = dir.x * VELOCIDAD
 	player.velocity.z = dir.z * VELOCIDAD
-	player.velocity.y -= 24.0 * delta  # gravedad, para que se quede pegado al piso
+	player.velocity.y -= 24.0 * delta
 	player.move_and_slide()
 
-	# La cámara sigue al jugador desde arriba y atrás.
 	camara.position = player.position + Vector3(0, 13, 10)
 
 
 func _process(delta: float) -> void:
-	# Giro suave de las monedas para que se vean vivas.
 	for m in monedas:
 		if is_instance_valid(m):
 			m.rotate_y(delta * 2.0)
 
 
 func _on_moneda_tocada(cuerpo: Node, area: Area3D) -> void:
-	if termino or cuerpo != player or not is_instance_valid(area):
+	if termino or not jugando or cuerpo != player or not is_instance_valid(area):
 		return
 	monedas.erase(area)
 	area.queue_free()
@@ -220,9 +393,34 @@ func _on_moneda_tocada(cuerpo: Node, area: Area3D) -> void:
 
 
 func _completar() -> void:
+	if termino:
+		return
 	termino = true
-	var puntaje := 100  # todas recogidas = 100
-	mensaje_fin.text = "¡Completado!\nCalificación: %d" % puntaje
+	jugando = false
+	var puntaje := 100
+
+	if sin_backend:
+		mensaje_fin.text = "¡Completado!\nCalificación: %d" % puntaje
+		mensaje_fin.visible = true
+		print("[demo] completado sin backend. Calificación: %d" % puntaje)
+		return
+
+	mensaje_fin.text = "¡Completado!\nEnviando calificación…"
 	mensaje_fin.visible = true
-	# GANCHO backend: aquí enviarías 'puntaje' a POST /api/game/sessions/{id}/complete.
-	print("[demo] Práctica completada. Calificación a enviar: %d" % puntaje)
+
+	var c := await _api(
+		HTTPClient.METHOD_POST,
+		base_url + "/api/game/sessions/%d/complete" % id_sesion,
+		_headers_auth(),
+		{"calificacion": puntaje, "datos_resultado": {"fuente": "godot-demo", "monedas": TOTAL_MONEDAS}},
+	)
+	if c.ok:
+		mensaje_fin.text = "¡Completado!\nCalificación %d enviada ✔" % puntaje
+		print("[demo] complete OK: ", c.body)
+	else:
+		mensaje_fin.text = "Juego completado (%d)\nError al enviar: %s" % [puntaje, _mensaje_api(c)]
+		print("[demo] complete FALLÓ code=%d: %s" % [c.code, str(c.body)])
+
+	if OS.get_environment("DEMO_AUTO") == "1":
+		await get_tree().create_timer(0.5).timeout
+		get_tree().quit()
