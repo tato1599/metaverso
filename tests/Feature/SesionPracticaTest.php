@@ -90,3 +90,34 @@ it('rechaza start si el alumno no está inscrito en el grupo del evento con 403'
     $this->postJson('/api/game/sessions', ['id_evento' => $this->evento->id_evento])
         ->assertStatus(403);
 });
+
+it('bloquea jugar una practica que aun no abre (ventana tipo examen)', function () {
+    Sanctum::actingAs($this->usuario, ['game']);
+    $futuro = App\Models\EventoAgenda::create([
+        'id_practica' => $this->evento->id_practica,
+        'id_grupo' => $this->evento->id_grupo,
+        'fecha_hora_inicio' => now()->addDay(),
+        'fecha_hora_fin' => now()->addDay()->addHour(),
+        'estatus' => 'programado',
+    ]);
+
+    $r = $this->postJson('/api/game/sessions', ['id_evento' => $futuro->id_evento]);
+    $r->assertStatus(403);
+    expect($r->json('message'))->toContain('todavía no está disponible');
+    expect(SesionPractica::count())->toBe(0);
+});
+
+it('bloquea jugar una practica que ya cerro', function () {
+    Sanctum::actingAs($this->usuario, ['game']);
+    $pasado = App\Models\EventoAgenda::create([
+        'id_practica' => $this->evento->id_practica,
+        'id_grupo' => $this->evento->id_grupo,
+        'fecha_hora_inicio' => now()->subDays(2),
+        'fecha_hora_fin' => now()->subDay(),
+        'estatus' => 'finalizado',
+    ]);
+
+    $r = $this->postJson('/api/game/sessions', ['id_evento' => $pasado->id_evento]);
+    $r->assertStatus(403);
+    expect($r->json('message'))->toContain('ya cerró');
+});

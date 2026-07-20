@@ -51,6 +51,13 @@ class DemoSeeder extends Seeder
 
         $this->command?->warn("Contraseña de los usuarios demo: {$clave}");
 
+        // Abierto ahora: se puede jugar (demo del flujo completo).
+        EventoAgenda::create([
+            'id_practica' => $practica->id_practica, 'id_grupo' => $grupo->id_grupo, 'id_espacio' => $espacio->id_espacio,
+            'fecha_hora_inicio' => now()->subMinutes(30), 'fecha_hora_fin' => now()->addHours(3), 'estatus' => 'en_curso',
+        ]);
+
+        // Programado para mañana: bloqueado hasta su horario (demo de la ventana tipo examen).
         EventoAgenda::create([
             'id_practica' => $practica->id_practica, 'id_grupo' => $grupo->id_grupo, 'id_espacio' => $espacio->id_espacio,
             'fecha_hora_inicio' => now()->addDay(), 'fecha_hora_fin' => now()->addDay()->addHour(), 'estatus' => 'programado',

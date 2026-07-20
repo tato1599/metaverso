@@ -84,6 +84,21 @@ class GameSessionController extends Controller {
             ->exists();
         abort_unless($inscrito, 403, 'El alumno no está inscrito en el grupo de este evento');
 
+        // Ventana de la práctica (como un examen): solo se puede jugar entre el
+        // inicio y el fin programados. Antes o después, o cancelada, se rechaza.
+        abort_if($evento->estatus === 'cancelado', 403, 'Esta práctica fue cancelada.');
+        $ahora = now();
+        abort_if(
+            $ahora->lt($evento->fecha_hora_inicio),
+            403,
+            'Esta práctica todavía no está disponible. Se abre el '.$evento->fecha_hora_inicio->format('d/m/Y H:i').'.',
+        );
+        abort_if(
+            $ahora->gt($evento->fecha_hora_fin),
+            403,
+            'Esta práctica ya cerró (terminó el '.$evento->fecha_hora_fin->format('d/m/Y H:i').').',
+        );
+
         // Enlace sesión↔reserva (aditivo): el evento confiable viene de la ability del
         // bearer emitida en el redeem, nunca del body. Sin ability o sin coincidencia → null.
         $token = $request->user()->currentAccessToken();

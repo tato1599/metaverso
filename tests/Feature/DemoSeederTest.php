@@ -9,7 +9,7 @@ it('siembra datos demo coherentes', function () {
     $this->seed(DemoSeeder::class);
     expect(Rol::count())->toBe(4);
     expect(Alumno::count())->toBe(3);
-    expect(EventoAgenda::count())->toBe(1);
+    expect(EventoAgenda::count())->toBe(2);
 
     expect(Inscripcion::count())->toBe(3);
     $evento = EventoAgenda::first();
