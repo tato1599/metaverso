@@ -1,11 +1,7 @@
 import { useForm } from '@inertiajs/react';
 import Button from './Button';
-import FormField, { TextInput } from './FormField';
+import FormField, { Select, TextInput } from './FormField';
 import Modal from './Modal';
-
-function selectClases() {
-    return 'h-9 w-full rounded-ctl bg-hueco px-3 text-sm text-tinta ring-1 ring-borde ring-inset focus:bg-superficie focus:ring-2 focus:ring-portal focus:outline-none';
-}
 
 /**
  * Crear (sin `evento`) o reprogramar (`evento` presente: solo fechas/espacio/cupo,
@@ -56,8 +52,7 @@ export default function EventoFormModal({ open, onClose, grupos, espacios, cupoD
                 {!editando && (
                     <>
                         <FormField label="Grupo" name="id_grupo" error={errors.id_grupo}>
-                            <select
-                                className={selectClases()}
+                            <Select
                                 value={data.id_grupo}
                                 onChange={(e) => setData((prev) => ({ ...prev, id_grupo: e.target.value, id_practica: '' }))}
                                 required
@@ -68,11 +63,10 @@ export default function EventoFormModal({ open, onClose, grupos, espacios, cupoD
                                         {g.clave} — {g.materia}
                                     </option>
                                 ))}
-                            </select>
+                            </Select>
                         </FormField>
                         <FormField label="Práctica" name="id_practica" error={errors.id_practica}>
-                            <select
-                                className={selectClases()}
+                            <Select
                                 value={data.id_practica}
                                 onChange={(e) => setData('id_practica', e.target.value)}
                                 disabled={!grupoActivo}
@@ -84,7 +78,7 @@ export default function EventoFormModal({ open, onClose, grupos, espacios, cupoD
                                         {p.titulo}
                                     </option>
                                 ))}
-                            </select>
+                            </Select>
                         </FormField>
                     </>
                 )}
@@ -110,8 +104,7 @@ export default function EventoFormModal({ open, onClose, grupos, espacios, cupoD
 
                 <div className="grid grid-cols-2 gap-3">
                     <FormField label="Espacio (opcional)" name="id_espacio" error={errors.id_espacio}>
-                        <select
-                            className={selectClases()}
+                        <Select
                             value={data.id_espacio ?? ''}
                             onChange={(e) => alCambiarEspacio(e.target.value)}
                         >
@@ -122,14 +115,14 @@ export default function EventoFormModal({ open, onClose, grupos, espacios, cupoD
                                     {e.capacidad ? ` (cap. ${e.capacidad})` : ''}
                                 </option>
                             ))}
-                        </select>
+                        </Select>
                     </FormField>
                     <FormField label="Cupo del slot" name="cupo_maximo" error={errors.cupo_maximo}>
                         <TextInput
                             type="number"
                             min="1"
                             max={espacioActivo?.capacidad ?? 32767}
-                            className="font-mono tabular-nums"
+                            className="dato"
                             value={data.cupo_maximo}
                             onChange={(e) => setData('cupo_maximo', e.target.value)}
                             required
@@ -141,8 +134,8 @@ export default function EventoFormModal({ open, onClose, grupos, espacios, cupoD
                     <Button type="button" variant="ghost" onClick={cerrar}>
                         Cancelar
                     </Button>
-                    <Button type="submit" disabled={processing}>
-                        {editando ? 'Guardar cambios' : 'Agendar'}
+                    <Button type="submit" disabled={processing} aria-busy={processing}>
+                        {processing ? 'Guardando…' : editando ? 'Guardar cambios' : 'Agendar'}
                     </Button>
                 </div>
             </form>

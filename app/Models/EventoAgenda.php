@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
@@ -53,6 +54,34 @@ class EventoAgenda extends Model
     public function getRouteKeyName()
     {
         return 'id_evento';
+    }
+
+    /**
+     * Hasta dónde tiene sentido navegar el calendario, en lunes.
+     *
+     * El límite sale de los eventos que esa persona puede ver, no del ciclo
+     * escolar: un evento agendado fuera de las fechas del ciclo quedaría
+     * inalcanzable, y el calendario mentiría. Siempre incluye la semana actual,
+     * para que el botón "Hoy" nunca apunte fuera del rango.
+     *
+     * @param  Builder<EventoAgenda>  $visibles
+     * @return array{min: string, max: string}
+     */
+    public static function limitesSemana($visibles): array
+    {
+        $rango = (clone $visibles)
+            ->reorder()
+            ->selectRaw('min(fecha_hora_inicio) as primero, max(fecha_hora_inicio) as ultimo')
+            ->first();
+
+        $hoy = Carbon::now();
+        $primero = $rango?->primero ? Carbon::parse($rango->primero) : $hoy;
+        $ultimo = $rango?->ultimo ? Carbon::parse($rango->ultimo) : $hoy;
+
+        return [
+            'min' => $primero->min($hoy)->startOfWeek()->toDateString(),
+            'max' => $ultimo->max($hoy)->startOfWeek()->toDateString(),
+        ];
     }
 
     /**

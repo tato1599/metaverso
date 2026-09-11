@@ -1,10 +1,13 @@
-import { router, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import AdminNav from '../../Components/AdminNav';
+import { claseAccion } from '../../Components/CabeceraAdmin';
+import Encabezado from '../../Components/Encabezado';
 import Button from '../../Components/Button';
 import FormField, { Select, TextInput, Textarea } from '../../Components/FormField';
 import Modal from '../../Components/Modal';
 import Table from '../../Components/Table';
+import Lamina from '../../Components/Lamina';
 import AppLayout from '../../Layouts/AppLayout';
 
 const RUTA = '/admin/practicas';
@@ -62,29 +65,44 @@ export default function Practicas({ juegos, filas, materias }) {
 
     return (
         <AppLayout>
+            <Head title="Prácticas" />
             <AdminNav />
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <h1 className="font-display text-xl font-bold text-tinta">Prácticas</h1>
-                <Button onClick={abrirNuevo}>Nueva práctica</Button>
-            </div>
+            <Encabezado
+                rotulo="Administración"
+                titulo="Prácticas"
+                meta={
+                    <>
+                        <span className="dato">{filas.length}</span>{' '}
+                        {filas.length === 1 ? 'práctica' : 'prácticas'} · cada una enlaza con una escena del
+                        juego
+                    </>
+                }
+                acciones={<Button onClick={abrirNuevo}>Nueva práctica</Button>}
+            />
+
+            <Lamina depth={0.2} retardo={120}>
 
             <Table head={['Materia', 'Título', 'Juego', 'Orden', '']}>
                 {filas.map((fila) => (
                     <tr key={fila.id_practica}>
-                        <td className="px-4 py-2.5 text-tinta">{fila.materia_nombre}</td>
-                        <td className="px-4 py-2.5 text-tinta">{fila.titulo}</td>
-                        <td className="px-4 py-2.5 font-mono text-xs tabular-nums text-tinta-2">{fila.escena_referencia}</td>
-                        <td className="px-4 py-2.5 font-mono text-xs tabular-nums text-tinta-2">{fila.orden}</td>
-                        <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                        <td className="px-4 py-3 text-tinta">{fila.materia_nombre}</td>
+                        <td className="px-4 py-3 text-tinta">{fila.titulo}</td>
+                        <td className="dato px-4 py-3 text-xs text-tinta-2">{fila.escena_referencia}</td>
+                        <td className="dato px-4 py-3 text-xs text-tinta-2">{fila.orden}</td>
+                        <td className="px-4 py-3 text-right whitespace-nowrap">
                             <button
+                                type="button"
                                 onClick={() => abrirEditar(fila)}
-                                className="rounded-ctl px-2 py-1 text-xs font-medium text-tinta-2 hover:bg-hueco hover:text-tinta"
+                                className={`${claseAccion} text-portal hover:text-portal-fuerte`}
+                                aria-label={`Editar ${fila.titulo}`}
                             >
                                 Editar
                             </button>
                             <button
+                                type="button"
                                 onClick={() => eliminar(fila)}
-                                className="rounded-ctl px-2 py-1 text-xs font-medium text-alerta hover:bg-alerta-tinte"
+                                className={`${claseAccion} ml-4 text-tinta-3 hover:text-alerta`}
+                                aria-label={`Eliminar ${fila.titulo}`}
                             >
                                 Eliminar
                             </button>
@@ -92,6 +110,7 @@ export default function Practicas({ juegos, filas, materias }) {
                     </tr>
                 ))}
             </Table>
+            </Lamina>
 
             <Modal open={abierto} onClose={() => setAbierto(false)} title={editando ? 'Editar práctica' : 'Nueva práctica'}>
                 <form onSubmit={enviar} className="space-y-4">

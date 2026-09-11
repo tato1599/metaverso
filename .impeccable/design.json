@@ -1,0 +1,284 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-10T00:00:00Z",
+  "title": "Design System: Metaverso · Campus de Prácticas",
+  "extensions": {
+    "colorMeta": {
+      "signal": {
+        "role": "primary",
+        "displayName": "Azul TecNM",
+        "canonical": "#1A3A8F",
+        "tonalRamp": [
+          "#DCE6F7",
+          "#A9C0E9",
+          "#5C7FC7",
+          "#1A3A8F",
+          "#132B6B"
+        ]
+      },
+      "live": {
+        "role": "secondary",
+        "displayName": "Azul de Señal Viva",
+        "canonical": "#6BA6E8",
+        "tonalRamp": [
+          "#E4EFFB",
+          "#A9CCF2",
+          "#6BA6E8",
+          "#3F7CBE",
+          "#255A93"
+        ]
+      },
+      "alerta": {
+        "role": "tertiary",
+        "displayName": "Rojo TecNM",
+        "canonical": "#B3123B",
+        "tonalRamp": [
+          "#FBE4EA",
+          "#EFA8BA",
+          "#B3123B",
+          "#8B0E2E"
+        ]
+      },
+      "confirmado": {
+        "role": "tertiary",
+        "displayName": "Verde Confirmado",
+        "canonical": "#0E6B4F",
+        "tonalRamp": [
+          "#DFF1EA",
+          "#96CDB9",
+          "#0E6B4F",
+          "#0A5240"
+        ]
+      },
+      "espera": {
+        "role": "tertiary",
+        "displayName": "Ámbar de Espera",
+        "canonical": "#8A5A00",
+        "tonalRamp": [
+          "#F6EBD6",
+          "#DCBC7A",
+          "#8A5A00",
+          "#6B4600"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Papel de Placa",
+        "canonical": "#EEF2F9",
+        "tonalRamp": [
+          "#F7FAFD",
+          "#EEF2F9",
+          "#DDE6F3",
+          "#C7D6EA"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Tinta",
+        "canonical": "#0E1F3A",
+        "tonalRamp": [
+          "#0E1F3A",
+          "#2B4470",
+          "#45608F"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "La placa de identificación del aparato. Un solo titular por pantalla, Libre Franklin 800 con tracking -0.035em."
+      },
+      "label": {
+        "displayName": "Rótulo",
+        "purpose": "Mono en mayúsculas con tracking 0.16em. Nombra un campo, una columna o un estado. Nunca un eyebrow decorativo."
+      },
+      "dato": {
+        "displayName": "Dato",
+        "purpose": "Mono tabular para hora, cupo, matrícula, clave y calificación. Alineado a la derecha en tabla."
+      }
+    },
+    "shadows": [
+      {
+        "name": "lamina-reposo",
+        "value": "0 26px 52px -30px rgba(14,31,58,.34), 0 6px 14px -8px rgba(14,31,58,.16), inset 0 1px 0 rgba(255,255,255,.96), inset 1px 0 0 rgba(255,255,255,.62), inset -1px 0 0 rgba(140,176,228,.34), inset 0 3px 9px -7px rgb(255,255,255)",
+        "purpose": "La lámina de vidrio sobre la placa. Las seis capas van juntas: sin los inset es una tarjeta, no una lámina."
+      },
+      {
+        "name": "campo-error",
+        "value": "0 0 0 1.5px #B3123B inset",
+        "purpose": "Campo con aria-invalid."
+      },
+      {
+        "name": "campo-foco",
+        "value": "0 0 0 2px #1A3A8F inset",
+        "purpose": "Campo enfocado, con el fondo subido a blanco .78."
+      },
+      {
+        "name": "control-hundido",
+        "value": "none",
+        "purpose": "Un control presionado no gana sombra: baja 1px."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-instrumento",
+        "value": "cubic-bezier(.16,.84,.44,1)",
+        "purpose": "Salida exponencial. La curva de todo lo que entra en la composición."
+      },
+      {
+        "name": "ease-respuesta",
+        "value": "cubic-bezier(.34,1.32,.64,1)",
+        "purpose": "Muelle amortiguado y corto. Solo para lo que responde al usuario."
+      },
+      {
+        "name": "dur-encendido",
+        "value": "760ms",
+        "purpose": "El encendido de la placa y la entrada escalonada de las láminas."
+      },
+      {
+        "name": "dur-control",
+        "value": "140ms",
+        "purpose": "Cambio de estado de un control."
+      },
+      {
+        "name": "dur-barrido",
+        "value": "3600ms",
+        "purpose": "El barrido especular cruza el titular una sola vez al cargar, con 450ms de retardo."
+      },
+      {
+        "name": "deriva-causticas",
+        "value": "74s / 103s",
+        "purpose": "Las dos capas de turbulencia sobre la placa, en alternate infinito."
+      },
+      {
+        "name": "entra-viaje",
+        "value": "14px",
+        "purpose": "Recorrido vertical de la entrada escalonada. Un transform genera área de scroll: el cascarón de alto fijo descuenta este valor de su min-height para que el recorrido caiga en pista reservada."
+      },
+      {
+        "name": "semana-cambia",
+        "value": "260ms",
+        "purpose": "Traslación de 10px de la rejilla al cambiar de semana, en la dirección del viaje. Solo se anima la rejilla: la página no se remonta."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      },
+      {
+        "name": "shell",
+        "value": "1288px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Lámina",
+      "kind": "card",
+      "refersTo": "lamina",
+      "description": "Tres piezas apiladas: derrame (la luz que cae sobre la placa), canto (el grosor real del vidrio asomando abajo) y cara (el vidrio). Sustituye a la tarjeta blanca con sombra suave.",
+      "html": "<div class=\"ds-lamina\" data-pane data-depth=\"0.35\"><span class=\"ds-derrame\"></span><section class=\"ds-cara\">Contenido</section><span class=\"ds-canto\"></span></div>",
+      "css": ".ds-lamina{position:relative;--ig:.55;--sx:.5;--py:0px;--canto-h:6px;margin-bottom:var(--canto-h);transform:translate3d(0,var(--py),0)}.ds-cara{position:relative;z-index:2;border-radius:6px;overflow:hidden;background:linear-gradient(172deg,rgba(255,255,255,.78) 0%,rgba(255,255,255,.62) 44%,rgba(228,240,251,.5) 100%);backdrop-filter:blur(15px) saturate(1.32) brightness(1.035);box-shadow:0 26px 52px -30px rgba(14,31,58,.34),0 6px 14px -8px rgba(14,31,58,.16),inset 0 1px 0 rgba(255,255,255,.96),inset 1px 0 0 rgba(255,255,255,.62),inset -1px 0 0 rgba(140,176,228,.34),inset 0 3px 9px -7px #fff}.ds-canto{position:absolute;z-index:1;left:3px;right:3px;bottom:calc(var(--canto-h)*-1 + 1px);height:var(--canto-h);border-radius:0 0 5px 5px;overflow:hidden;background:linear-gradient(180deg,#fff 0%,#eaf1fa 26%,#bcd3ec 52%,#6f9bcd 76%,#3f6ba8 92%,#1A3A8F 100%);opacity:calc(.62 + var(--ig)*.38);filter:brightness(calc(1 + var(--ig)*.22)) saturate(calc(1 + var(--ig)*.3))}.ds-derrame{position:absolute;z-index:0;left:6%;right:6%;bottom:-30px;height:34px;border-radius:50%;filter:blur(15px);background:radial-gradient(60% 100% at 50% 0%,rgba(140,180,232,calc(.5 + var(--ig)*.42)),rgba(140,180,232,0) 72%)}"
+    },
+    {
+      "name": "Botón primario",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "La acción de la pantalla. Azul institucional, esquina casi recta. Ocupado (aria-busy) no es deshabilitado: conserva su color pleno y sólo cambia la etiqueta.",
+      "html": "<button class=\"ds-btn\">Entrar</button>",
+      "css": ".ds-btn{height:42px;padding:0 20px;border:0;border-radius:4px;background:#1A3A8F;color:#fff;font:600 15px/1 'Public Sans Variable',system-ui,sans-serif;letter-spacing:-.006em;cursor:pointer;transition:background-color 140ms cubic-bezier(.16,.84,.44,1),transform 140ms}.ds-btn:hover{background:#132B6B}.ds-btn:active{transform:translateY(1px)}.ds-btn:focus-visible{outline:2px solid #1A3A8F;outline-offset:3px}.ds-btn:disabled{opacity:.45;pointer-events:none}.ds-btn[aria-busy=\"true\"]{opacity:1;cursor:progress}"
+    },
+    {
+      "name": "Campo",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Campo de vidrio tenue. Al enfocarlo sube el fondo a blanco y la regla pasa a azul de señal.",
+      "html": "<input class=\"ds-campo\" placeholder=\"tu.cuenta@tecnm.mx\">",
+      "css": ".ds-campo{height:42px;width:100%;padding:0 12px;border-radius:4px;background:rgba(255,255,255,.4);color:#0E1F3A;font:400 15px/1 'Public Sans Variable',system-ui,sans-serif;box-shadow:0 0 0 1px rgba(14,31,58,.14) inset;border:0;transition:background-color 140ms,box-shadow 140ms}.ds-campo::placeholder{color:#45608F}.ds-campo:focus{outline:0;background:rgba(255,255,255,.78);box-shadow:0 0 0 2px #1A3A8F inset}.ds-campo[aria-invalid=\"true\"]{box-shadow:0 0 0 1px #B3123B inset}"
+    },
+    {
+      "name": "Chip de estado",
+      "kind": "chip",
+      "refersTo": "chip-estado",
+      "description": "Punto de color + rótulo mono. Cuatro estados: sin cupo (alerta), en curso (emisivo, con pulso), casi lleno (ámbar, a partir del 80% del cupo) y abierta (tinta-3). Sin fondo tintado.",
+      "html": "<span class=\"ds-estado\"><i></i>SIN CUPO</span>",
+      "css": ".ds-estado{display:inline-flex;align-items:center;gap:6px;font:500 11px/1 'JetBrains Mono Variable',ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:#2B4470}.ds-estado i{width:6px;height:6px;border-radius:999px;background:#B3123B}"
+    }
+  ],
+  "narrative": {
+    "northStar": "El Instrumento",
+    "overview": "La página no es un documento con controles encima: es el panel de un instrumento de laboratorio. Láminas de vidrio a distinta profundidad sobre una placa de luz fría, con una sola lámpara rasante. Todo lo que el producto administra —horas, cupos, matrículas, calificaciones— es una lectura, y se presenta con la precisión de un aparato de medición. El registro es claro y frío porque la escena real es un laboratorio de cómputo de una escuela pública mexicana, de día, bajo fluorescente y luz de ventana: un panel oscuro ahí se convierte en un espejo. La tinta es el navy institucional del TecNM y el azul de acción es su azul corporativo; la institución no aparece como un logo pegado en una esquina, aparece porque es el color con el que está escrito todo.",
+    "keyCharacteristics": [
+      "Dos tonos de papel frío + tinta navy + un azul de acción. Nada más compite.",
+      "Retícula grabada de 96px, casi invisible, como faceplate de aparato.",
+      "Reglas capilares en lugar de bordes de tarjeta: la estructura la da la línea, no la caja.",
+      "Todo dato duro en mono tabular con tnum.",
+      "Una sola lámpara. Una sola entrada orquestada."
+    ],
+    "rules": [
+      {
+        "name": "La Regla del Emisivo",
+        "body": "#6BA6E8 no toca texto sobre fondo claro jamás: mide 2.27:1. Trazos, rellenos, halos y puntos de estado.",
+        "section": "colors"
+      },
+      {
+        "name": "La Regla de la Institución",
+        "body": "El azul y el rojo del TecNM no son decoración de marca: el azul es acción, el rojo es escasez. Si un rojo no significa 'algo se salió del rango', no es este rojo.",
+        "section": "colors"
+      },
+      {
+        "name": "La Regla de la Medición",
+        "body": "La mono se usa para código, datos y medición. Un texto en mono que no sea ninguna de las tres es un disfraz.",
+        "section": "typography"
+      },
+      {
+        "name": "La Regla de la Lámpara Única",
+        "body": "Una sola fuente de luz por composición, rasante y fija en el encuadre. Dos gradientes de luz compitiendo es un error, no una capa extra.",
+        "section": "elevation"
+      },
+      {
+        "name": "La Regla del Halo Prohibido",
+        "body": "Una sombra sin desplazamiento y de color es decoración. Toda sombra lleva offset y blur.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do presentar toda hora, cupo, matrícula, clave y calificación en JetBrains Mono con tabular-nums, alineada a la derecha en tabla.",
+      "Do medir el contraste antes de comprometer un color.",
+      "Do separar con reglas capilares de 1px: la estructura es la línea.",
+      "Do dar a cada lámina su canto especular.",
+      "Do orquestar la entrada: primero la placa, luego la lámina, luego el dato, luego el rótulo.",
+      "Do respetar prefers-reduced-motion desactivando la deriva de la luz y los escalonamientos.",
+      "Do marcar lo sintético con borde punteado y llevarlo también a la capa accesible (aria-labelledby que incluya el rótulo).",
+      "Do distinguir control de dato con tres señales a la vez: azul de acción, contorno capilar y cursor pointer. Una sola no basta."
+    ],
+    "donts": [
+      "Don't usar #6BA6E8 como color de texto sobre fondo claro.",
+      "Don't construir la estructura con tarjetas blancas de sombra suave y del mismo tamaño.",
+      "Don't poner un rótulo mono en mayúsculas encima de cada sección como eyebrow.",
+      "Don't usar texto con degradado, numeración 01/02/03, anillos de progreso ni sparklines como sustituto de contenido.",
+      "Don't encender dos fuentes de luz en la misma composición.",
+      "Don't ofrecer en la interfaz una puerta que el backend no abre: no hay recordarme, ni recuperación de contraseña, ni registro, ni SSO.",
+      "Don't nombrar el motor del juego en la interfaz.",
+      "Don't atenuar el botón primario mientras envía: ocupado no es deshabilitado, y ahí muere la única respuesta de la pantalla.",
+      "Don't animar una entrada con translateY en una pantalla de alto exacto sin reservarle la pista: saca una barra de scroll de 14px durante la animación.",
+      "Don't construir nombres de clase Tailwind en tiempo de ejecución: solo se generan las que aparecen literalmente en el código.",
+      "Don't sustituir un calendario por un EmptyState cuando la semana viene vacía: los días existen igual.",
+      "Don't dar depth distinto a láminas de la misma fila: el paralaje solo diferencia en el eje del scroll y lado a lado se lee como desalineación.",
+      "Don't confiar en el Preflight de Tailwind v4 para el cursor de los botones: dejó de poner pointer y hay que reponerlo en la capa base."
+    ]
+  }
+}

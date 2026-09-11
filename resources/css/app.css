@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 @import '@fontsource-variable/public-sans';
-@import '@fontsource-variable/bricolage-grotesque';
+@import '@fontsource-variable/libre-franklin';
 @import '@fontsource-variable/jetbrains-mono';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -10,56 +10,81 @@
 @source '../**/*.jsx';
 
 /*
- * Metaverso — tokens del sistema de diseño.
- * Dirección: "bitácora de laboratorio" — papel frío índigo, tinta académica,
- * un solo acento (portal) y verde reservado a telemetría/estados vivos.
- * Todo dato duro (horas, matrículas, claves, cupo) se presenta en mono tabular.
+ * Metaverso — tokens del sistema de diseño. Norte creativo: "El Instrumento".
+ * La página es el panel de un aparato de laboratorio: láminas de vidrio a
+ * distinta profundidad sobre una placa de luz fría, una sola lámpara rasante.
+ * Tinta = navy institucional TecNM; acción = su azul corporativo; el rojo del
+ * Tec es escasez, no adorno. Todo dato duro va en mono tabular.
+ * Contrato completo en DESIGN.md. Los ratios de contraste están medidos.
  */
 @theme {
     --font-sans: 'Public Sans Variable', ui-sans-serif, system-ui, sans-serif;
-    --font-display: 'Bricolage Grotesque Variable', 'Public Sans Variable', ui-sans-serif, sans-serif;
+    --font-display: 'Libre Franklin Variable', 'Libre Franklin', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SFMono-Regular', monospace;
 
-    --color-lienzo: oklch(0.975 0.005 260);
-    --color-superficie: oklch(0.995 0.002 260);
-    --color-hueco: oklch(0.955 0.007 260);
+    /* Placa */
+    --color-lienzo: #eef2f9; /* papel de placa */
+    --color-hueco: #dde6f3; /* papel profundo: pozo de campo, cabecera de tabla */
+    --color-superficie: rgba(255, 255, 255, 0.62); /* vidrio de lámina */
+    --color-vidrio-2: rgba(255, 255, 255, 0.4); /* vidrio tenue: campo en reposo */
 
-    --color-tinta: oklch(0.24 0.03 275);
-    --color-tinta-2: oklch(0.45 0.025 275);
-    --color-tinta-3: oklch(0.5 0.02 275); /* L bajado de 0.58: AA 4.5:1 sobre lienzo/superficie */
+    /* Tinta — ratios sobre #eef2f9 */
+    --color-tinta: #0e1f3a; /* 14.66:1 */
+    --color-tinta-2: #2b4470; /* 8.65:1 */
+    --color-tinta-3: #45608f; /* 5.63:1 — el piso AA, medido */
 
-    --color-borde: oklch(0.89 0.008 260);
-    --color-borde-fuerte: oklch(0.8 0.012 265);
+    /* Reglas capilares: la estructura es la línea, no la caja */
+    --color-borde: rgba(14, 31, 58, 0.14);
+    --color-borde-fuerte: rgba(14, 31, 58, 0.26);
+    --color-regla-suave: rgba(14, 31, 58, 0.075);
+    --color-regla-capilar: rgba(14, 31, 58, 0.045);
 
-    --color-portal: oklch(0.51 0.19 272);
-    --color-portal-fuerte: oklch(0.44 0.19 272);
-    --color-portal-tinte: oklch(0.955 0.025 272);
+    /* Acción: azul institucional TecNM */
+    --color-portal: #1a3a8f; /* 9.14:1 sobre placa; blanco encima 10.27:1 */
+    --color-portal-fuerte: #132b6b;
+    --color-portal-tinte: #dce6f7;
 
-    --color-telemetria: oklch(0.52 0.13 155);
-    --color-telemetria-tinte: oklch(0.95 0.04 155);
+    /* Emisivo. NUNCA texto sobre claro: 2.27:1. Trazo, relleno, halo, punto. */
+    --color-live: #6ba6e8;
 
-    --color-senal: oklch(0.5 0.11 70);
-    --color-senal-tinte: oklch(0.96 0.05 85);
+    /* Estados de instrumento */
+    --color-telemetria: #0e6b4f; /* confirmado — 5.78:1 */
+    --color-telemetria-tinte: #dff1ea;
+    --color-senal: #8a5a00; /* espera — 5.28:1 */
+    --color-senal-tinte: #f6ebd6;
+    --color-alerta: #b3123b; /* escasez / error — 6.10:1 */
+    --color-alerta-tinte: #fbe4ea;
 
-    --color-alerta: oklch(0.53 0.19 25);
-    --color-alerta-tinte: oklch(0.96 0.03 25);
+    /* Esquinas casi rectas. La píldora se reserva a navegación y CTA. */
+    --radius-canto: 2px;
+    --radius-ctl: 4px;
+    --radius-carta: 6px;
 
-    --radius-ctl: 0.375rem;
-    --radius-carta: 0.625rem;
-    --radius-panel: 0.875rem;
+    --ease-instrumento: cubic-bezier(0.16, 0.84, 0.44, 1);
+
+    /*
+     * Cuánto sube cada pieza al entrar. Un transform NO ocupa sitio en el layout
+     * pero SÍ genera área de scroll, así que el último elemento en flujo asomaba
+     * por debajo del borde y sacaba una barra de scroll durante la animación.
+     * Este valor es la única fuente de verdad: lo usa el keyframe y lo descuenta
+     * el alto del cascarón, para que el recorrido caiga en pista reservada.
+     */
+    --entra-viaje: 14px;
 }
 
 @layer base {
     html {
         -webkit-font-smoothing: antialiased;
+        background-color: var(--color-lienzo);
     }
 
     body {
-        background-color: var(--color-lienzo);
+        background-color: transparent;
         color: var(--color-tinta);
         font-family: var(--font-sans);
-        font-size: 0.875rem;
-        line-height: 1.5;
+        font-size: 0.9375rem;
+        line-height: 1.6;
+        letter-spacing: -0.004em;
     }
 
     h1,
@@ -71,6 +96,229 @@
     p {
         text-wrap: pretty;
     }
+
+    ::selection {
+        background: rgba(26, 58, 143, 0.2);
+    }
+
+    /*
+     * El Preflight de Tailwind v4 dejó de poner `cursor: pointer` en los botones
+     * (sigue al agente de usuario). Resultado: en toda la aplicación un <button>
+     * no avisaba al pasar por encima, mientras un <a> sí — dos afordancias
+     * distintas para la misma acción. Un control deshabilitado se queda fuera:
+     * ahí el cursor tiene que decir que no.
+     */
+    button:not(:disabled),
+    [role='button']:not([aria-disabled='true']) {
+        cursor: pointer;
+    }
+}
+
+@utility dato {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums slashed-zero;
+}
+
+@utility rotulo {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+/*
+ * La placa de luz. Una sola lámpara rasante, fija en el encuadre, más la
+ * retícula grabada de 96px enmascarada para que se apague en los bordes.
+ */
+@utility placa {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    background:
+        radial-gradient(118% 76% at 68% -10%, #ffffff 0%, rgba(255, 255, 255, 0) 56%),
+        radial-gradient(94% 60% at 6% 106%, #c7d6ea 0%, rgba(199, 214, 234, 0) 60%),
+        linear-gradient(176deg, #f6f9fc 0%, var(--color-lienzo) 46%, var(--color-hueco) 100%);
+}
+
+/*
+ * La lámina de vidrio: la firma del sistema. Tres piezas.
+ *   --ig : cuánto la enciende la lámpara rasante (0…1)
+ *   --sx : dónde cae el reflejo a lo largo del canto (0…1)
+ *   --py : paralaje según profundidad
+ * Las tres las escribe el observador de la lámpara en GuestLayout; sin JS o
+ * bajo reduced-motion se quedan en sus valores de reposo y la lámina se lee igual.
+ */
+@utility lamina {
+    position: relative;
+    --ig: 0.55;
+    --sx: 0.5;
+    --py: 0px;
+    --canto-h: 6px;
+    /* El filo asoma por debajo: hay que reservarle el hueco o pisa lo que sigue. */
+    margin-bottom: var(--canto-h);
+    transform: translate3d(0, var(--py), 0);
+}
+
+/* La cara: el vidrio. */
+@utility lamina-cara {
+    position: relative;
+    z-index: 2;
+    border-radius: var(--radius-carta);
+    overflow: hidden;
+    background: linear-gradient(
+        172deg,
+        rgba(255, 255, 255, 0.78) 0%,
+        var(--color-superficie) 44%,
+        rgba(228, 240, 251, 0.5) 100%
+    );
+    box-shadow:
+        0 26px 52px -30px rgba(14, 31, 58, 0.34),
+        0 6px 14px -8px rgba(14, 31, 58, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.96),
+        inset 1px 0 0 rgba(255, 255, 255, 0.62),
+        inset -1px 0 0 rgba(140, 176, 228, 0.34),
+        inset 0 3px 9px -7px rgb(255, 255, 255);
+}
+
+@supports (backdrop-filter: blur(2px)) {
+    .lamina-cara {
+        backdrop-filter: blur(15px) saturate(1.32) brightness(1.035);
+    }
+}
+
+@supports not (backdrop-filter: blur(2px)) {
+    .lamina-cara {
+        background: linear-gradient(172deg, rgba(255, 255, 255, 0.94), rgba(238, 245, 252, 0.9));
+    }
+}
+
+/*
+ * EL CANTO — el grosor real del vidrio, visto de frente. Va DEBAJO de la cara,
+ * con degradado vertical: es un filo, no un borde de color.
+ */
+@utility canto {
+    position: absolute;
+    z-index: 1;
+    left: 3px;
+    right: 3px;
+    bottom: calc(var(--canto-h) * -1 + 1px);
+    height: var(--canto-h);
+    border-radius: 0 0 calc(var(--radius-carta) - 1px) calc(var(--radius-carta) - 1px);
+    overflow: hidden;
+    /* Bevel, no barra: la mitad de arriba es casi papel y sólo el filo se satura. */
+    background: linear-gradient(
+        180deg,
+        #ffffff 0%,
+        #eaf1fa 26%,
+        #bcd3ec 52%,
+        #6f9bcd 76%,
+        #3f6ba8 92%,
+        var(--color-portal) 100%
+    );
+    opacity: calc(0.62 + var(--ig) * 0.38);
+    filter: brightness(calc(1 + var(--ig) * 0.22)) saturate(calc(1 + var(--ig) * 0.3));
+}
+
+/* La luz que recorre el canto, posicionada por --sx. */
+.canto::before {
+    content: '';
+    position: absolute;
+    inset: -1px -46%;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 41%,
+        rgba(255, 255, 255, 0.55) 47%,
+        #ffffff 50%,
+        rgba(255, 255, 255, 0.55) 53%,
+        rgba(255, 255, 255, 0) 59%
+    );
+    transform: translate3d(calc((var(--sx) - 0.5) * 108%), 0, 0);
+    opacity: calc(var(--ig) * 0.95);
+}
+
+/* Refracción en la base del filo. */
+.canto::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        rgba(107, 166, 232, 0),
+        rgba(107, 166, 232, calc(0.55 * var(--ig))) 50%,
+        rgba(107, 166, 232, 0)
+    );
+}
+
+/* La luz que la lámina deja caer sobre la placa. */
+@utility derrame {
+    position: absolute;
+    z-index: 0;
+    left: 6%;
+    right: 6%;
+    bottom: -30px;
+    height: 34px;
+    border-radius: 50%;
+    filter: blur(15px);
+    pointer-events: none;
+    background: radial-gradient(
+        60% 100% at 50% 0%,
+        rgba(140, 180, 232, calc(0.5 + var(--ig) * 0.42)),
+        rgba(140, 180, 232, 0) 72%
+    );
+    opacity: calc(0.42 + var(--ig) * 0.58);
+}
+
+/* Lo que se apoya en la placa va grabado: un filo de luz en el canto de la letra. */
+@utility grabado {
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+/*
+ * El barrido especular: cruza el titular UNA sola vez al cargar. Es el momento
+ * de entrada de la página, no un brillo que se repite.
+ */
+@utility barrido {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    color: transparent;
+    text-shadow: none;
+    background: linear-gradient(
+        104deg,
+        rgba(255, 255, 255, 0) 43%,
+        rgba(255, 255, 255, 0.95) 50%,
+        rgba(255, 255, 255, 0) 57%
+    );
+    background-size: 260% 100%;
+    background-position: 190% 0;
+    background-repeat: no-repeat;
+    background-clip: text;
+    -webkit-background-clip: text;
+}
+
+/* La regla del pie, con ticks menores y uno mayor cada cuatro. */
+@utility filete {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 11px;
+    border-top: 1px solid var(--color-borde);
+}
+
+.filete i {
+    width: 1px;
+    height: 5px;
+    background: rgba(14, 31, 58, 0.24);
+}
+
+.filete i:nth-child(4n + 1) {
+    height: 9px;
+    background: rgba(14, 31, 58, 0.34);
 }
 
 @keyframes modal-in {
@@ -81,5 +329,138 @@
     to {
         opacity: 1;
         transform: scale(1);
+    }
+}
+
+/*
+ * Entrada orquestada: las piezas llegan escalonadas, nunca en bloque.
+ * Por defecto TODO es visible; la animación solo desplaza y atenúa, así que
+ * sin JS y sin animaciones la página se lee igual.
+ */
+@keyframes entra {
+    from {
+        opacity: 0;
+        transform: translateY(var(--entra-viaje));
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes canto-enciende {
+    from {
+        opacity: 0;
+        transform: scaleX(0.4);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    [data-entra] {
+        animation: entra 760ms var(--ease-instrumento) both;
+        animation-delay: var(--retardo, 0ms);
+    }
+
+    [data-entra='canto'] {
+        animation-name: canto-enciende;
+        transform-origin: 50% 0;
+    }
+}
+
+/*
+ * Deriva de las cáusticas y barrido del titular. Sólo corren cuando el
+ * observador de la lámpara marcó html.motion, es decir, nunca bajo
+ * prefers-reduced-motion ni sin JS.
+ */
+@keyframes deriva-a {
+    from {
+        transform: translate3d(-2.4%, -1.4%, 0);
+    }
+    to {
+        transform: translate3d(2.6%, 1.8%, 0);
+    }
+}
+
+@keyframes deriva-b {
+    from {
+        transform: translate3d(3%, 1.6%, 0);
+    }
+    to {
+        transform: translate3d(-2.2%, -1.2%, 0);
+    }
+}
+
+@keyframes barrido {
+    from {
+        background-position: 190% 0;
+    }
+    to {
+        background-position: -90% 0;
+    }
+}
+
+html.motion .caustica--a {
+    animation: deriva-a 74s ease-in-out infinite alternate;
+}
+
+html.motion .caustica--b {
+    animation: deriva-b 103s ease-in-out infinite alternate;
+}
+
+html.motion .barrido {
+    animation: barrido 3.6s cubic-bezier(0.16, 0.86, 0.28, 1) 0.45s 1 both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .barrido {
+        display: none;
+    }
+
+    html.motion .caustica--a,
+    html.motion .caustica--b,
+    html.motion .barrido {
+        animation: none;
+    }
+}
+
+/*
+ * El cambio de semana. Al navegar solo se recargan `semana` y `eventos`
+ * (recarga parcial de Inertia), así que la página NO se remonta y la entrada
+ * escalonada no se vuelve a disparar: lo único que se mueve es la rejilla, y se
+ * mueve hacia donde va el tiempo.
+ */
+@keyframes semana-avanza {
+    from {
+        opacity: 0.45;
+        transform: translateX(14px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes semana-retrocede {
+    from {
+        opacity: 0.45;
+        transform: translateX(-14px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    [data-semana='1'] {
+        animation: semana-avanza 300ms var(--ease-instrumento) both;
+    }
+
+    [data-semana='-1'] {
+        animation: semana-retrocede 300ms var(--ease-instrumento) both;
     }
 }

@@ -14,6 +14,8 @@ use App\Http\Controllers\Lti\LtiDeepLinkController;
 use App\Http\Controllers\Lti\LtiLaunchController;
 use App\Http\Controllers\Lti\LtiLoginController;
 use App\Http\Controllers\Mi\CalendarioController;
+use App\Http\Controllers\Mi\CursoController;
+use App\Http\Controllers\Mi\EventoController;
 use App\Http\Controllers\Mi\JugarController;
 use App\Http\Controllers\Mi\ReservaController;
 use App\Http\Controllers\Panel\AgendaController;
@@ -34,6 +36,11 @@ Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')-
 
 Route::middleware(['auth', 'alumno'])->group(function () {
     Route::get('/mi/calendario', [CalendarioController::class, 'index'])->name('mi.calendario');
+    Route::get('/mi/cursos', [CursoController::class, 'index'])->name('mi.cursos');
+    Route::get('/mi/cursos/{grupo}', [CursoController::class, 'show'])
+        ->whereNumber('grupo')->name('mi.cursos.show');
+    Route::get('/mi/eventos/{evento}', [EventoController::class, 'show'])
+        ->whereNumber('evento')->name('mi.eventos.show');
     Route::post('/mi/reservas', [ReservaController::class, 'store'])
         ->middleware('throttle:10,1,reservas')->name('mi.reservas.store');
     Route::delete('/mi/reservas/{reserva}', [ReservaController::class, 'destroy'])
@@ -51,7 +58,9 @@ Route::post('/lti/deeplink', [LtiDeepLinkController::class, 'responder'])->name(
 Route::get('/jugar/{token}', function (string $token) {
     $scheme = config('metaverso.deeplink_scheme', 'tecnm-metaverso');
 
-    return view('jugar', ['deeplink' => "{$scheme}://play?token={$token}"]);
+    // El token viaja también en crudo: el modo demo lo necesita para canjear la
+    // sesión desde el navegador cuando no hay motor de juego instalado.
+    return view('jugar', ['deeplink' => "{$scheme}://play?token={$token}", 'token' => $token]);
 })->where('token', '[A-Za-z0-9_\-]+');
 
 Route::get('/demo', function () {

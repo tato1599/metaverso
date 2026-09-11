@@ -6,12 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Models\EventoAgenda;
 use App\Models\Inscripcion;
 use App\Models\Reserva;
+use App\Services\EstadoEventoAlumno;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 
 class CalendarioController extends Controller
 {
+    public function __construct(private EstadoEventoAlumno $estado) {}
+
     public function index(Request $request)
     {
         try {
@@ -29,9 +33,13 @@ class CalendarioController extends Controller
             ->where('estatus', 'activa')
             ->pluck('id_grupo');
 
-        $eventos = EventoAgenda::with(['practica', 'grupo.materia', 'espacio'])
+        // La misma restricción de visibilidad sirve para la semana y para los
+        // límites de navegación: así el calendario nunca deja fuera un evento real.
+        $visibles = EventoAgenda::whereIn('id_grupo', $gruposActivos);
+
+        $eventos = (clone $visibles)
+            ->with(['practica', 'grupo.materia', 'espacio'])
             ->withCount(['reservas as reservas_activas' => fn ($q) => $q->where('estatus', 'activa')])
-            ->whereIn('id_grupo', $gruposActivos)
             ->whereBetween('fecha_hora_inicio', [$inicio, $fin])
             ->orderBy('fecha_hora_inicio')
             ->get();
@@ -57,82 +65,116 @@ class CalendarioController extends Controller
 
         return Inertia::render('Mi/Calendario', [
             'semana' => $inicio->toDateString(),
-            'eventos' => $eventos->map(function (EventoAgenda $e) use ($miasActivas, $ocupadosPorEvento, $ahora) {
-                $mia = $miasActivas->get($e->id_evento);
-                $activas = (int) $e->reservas_activas;
-                $ocupados = $ocupadosPorEvento->get($e->id_evento, collect());
-                $slotsCrudos = $e->slots();
+            'limites' => EventoAgenda::limitesSemana($visibles),
+            // Las reglas viven en EstadoEventoAlumno, no aquí: esta pantalla y la
+            // vista de una práctica tienen que decir exactamente lo mismo.
+            'eventos' => $eventos->map(fn (EventoAgenda $e) => $this->estado->para(
+                $e,
+                $miasActivas->get($e->id_evento),
+                $ocupadosPorEvento->get($e->id_evento, collect()),
+                $ahora,
+            ))->values(),
+            // Un historial de reservas —canceladas incluidas— es contabilidad, no
+            // un panel. Lo que el alumno necesita saber es: qué tengo agendado,
+            // qué me falta reservar, y en qué grupos estoy. Van como closures:
+            // no dependen de la semana, así que un cambio de semana no las recalcula.
+            'proximas' => fn () => $this->proximasReservas($alumno->id_alumno, $ahora),
+            'pendientes' => fn () => $this->practicasPendientes($alumno->id_alumno, $gruposActivos, $ahora),
+            'grupos' => fn () => $this->gruposInscritos($alumno->id_alumno),
+        ]);
+    }
 
-                $slots = collect($slotsCrudos)->map(function (array $s) use ($e, $mia, $ocupados) {
-                    $clave = $s['inicio']->format('Y-m-d\TH:i');
-                    $enSlot = (int) $ocupados->get($clave, 0);
-                    $llenoSlot = $enSlot >= $e->cupo_maximo;
+    /**
+     * Lo que el alumno tiene apartado y todavía no ocurre.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    private function proximasReservas(int $idAlumno, Carbon $ahora): array
+    {
+        return Reserva::where('id_alumno', $idAlumno)
+            ->where('estatus', 'activa')
+            ->whereHas('evento', fn ($q) => $q->where('fecha_hora_fin', '>=', $ahora))
+            ->with(['evento.practica', 'evento.grupo.materia', 'evento.espacio'])
+            ->get()
+            ->sortBy('inicio_slot')
+            ->map(fn (Reserva $r) => [
+                'id_reserva' => $r->id_reserva,
+                'id_evento' => $r->id_evento,
+                'practica' => $r->evento->practica->titulo,
+                'grupo' => $r->evento->grupo->clave,
+                'materia' => $r->evento->grupo->materia->nombre,
+                'espacio' => optional($r->evento->espacio)->nombre,
+                'inicio_slot_local' => $r->inicio_slot->format('Y-m-d\TH:i'),
+                'cancelado' => $r->evento->estatus === 'cancelado',
+            ])->values()->all();
+    }
 
-                    return [
-                        'inicio_local' => $clave,
-                        'fin_local' => $s['fin']->format('Y-m-d\TH:i'),
-                        'ocupados' => $enSlot,
-                        'lleno' => $llenoSlot,
-                        'es_mio' => (bool) $mia && $mia->inicio_slot->format('Y-m-d\TH:i') === $clave,
-                        'puede_reservar' => ! $mia && $e->estatus === 'programado'
-                            && $s['inicio']->isFuture() && ! $llenoSlot,
-                    ];
-                })->values();
+    /**
+     * Prácticas de sus grupos que aún puede reservar y no ha reservado.
+     *
+     * Se agrupa POR PRÁCTICA, no por evento: cuando el maestro agenda la misma
+     * práctica varias veces esas fechas son alternativas, y el alumno solo puede
+     * tomar una. Listarlas todas diría "tienes 3 pendientes" cuando es una.
+     *
+     * @param  Collection<int,int>  $gruposActivos
+     * @return array<int,array<string,mixed>>
+     */
+    private function practicasPendientes(int $idAlumno, $gruposActivos, Carbon $ahora): array
+    {
+        $yaReservadas = Reserva::where('id_alumno', $idAlumno)
+            ->where('estatus', 'activa')
+            ->whereHas('evento', fn ($q) => $q->where('fecha_hora_fin', '>=', $ahora))
+            ->with('evento')
+            ->get()
+            ->pluck('evento.id_practica')
+            ->unique();
 
-                // 'lleno' solo mira horarios aún reservables: un slot pasado libre
-                // no debe ocultar que todo lo que queda por venir ya está lleno.
-                $slotsFuturos = $slots->filter(fn (array $s, int $i) => $slotsCrudos[$i]['inicio']->isFuture());
-
-                // Ventana de juego = slot reservado, capada al fin del evento (F6).
-                $finSlotMio = null;
-                if ($mia) {
-                    $duracion = $e->duracionSlotMinutos();
-                    $finSlotMio = $duracion === null
-                        ? $e->fecha_hora_fin
-                        : $mia->inicio_slot->copy()->addMinutes($duracion)->min($e->fecha_hora_fin);
-                }
+        return EventoAgenda::whereIn('id_grupo', $gruposActivos)
+            ->where('estatus', 'programado')
+            ->where('fecha_hora_inicio', '>=', $ahora)
+            ->whereNotIn('id_practica', $yaReservadas)
+            ->with(['practica', 'grupo.materia'])
+            ->orderBy('fecha_hora_inicio')
+            ->get()
+            ->groupBy('id_practica')
+            ->map(function ($eventos) {
+                $primero = $eventos->first();
 
                 return [
-                    'id_evento' => $e->id_evento,
-                    'practica' => $e->practica->titulo,
-                    'materia' => $e->grupo->materia->nombre,
-                    'grupo' => $e->grupo->clave,
-                    'espacio' => optional($e->espacio)->nombre,
-                    'inicio_local' => $e->fecha_hora_inicio->format('Y-m-d\TH:i'),
-                    'fin_local' => $e->fecha_hora_fin->format('Y-m-d\TH:i'),
-                    'estatus' => $e->estatus,
-                    'cupo_maximo' => $e->cupo_maximo,
-                    'reservas_activas' => $activas,
-                    'multi_slot' => count($slotsCrudos) > 1,
-                    'slots' => $slots,
-                    'mi_reserva' => $mia ? [
-                        'id_reserva' => $mia->id_reserva,
-                        'inicio_slot_local' => $mia->inicio_slot->format('Y-m-d\TH:i'),
-                    ] : null,
-                    // La UI no reimplementa reglas: los booleanos se deciden aquí.
-                    'puede_reservar' => $slots->contains(fn (array $s) => $s['puede_reservar']),
-                    'lleno' => ! $mia && $e->estatus === 'programado'
-                        && $slotsFuturos->isNotEmpty()
-                        && $slotsFuturos->every(fn (array $s) => $s['lleno']),
-                    'finalizado' => $e->estatus !== 'cancelado' && $e->fecha_hora_fin->lt($ahora),
-                    'puede_cancelar' => (bool) $mia && $mia->inicio_slot->isFuture(),
-                    'puede_jugar' => (bool) $mia && $e->estatus !== 'cancelado'
-                        && $ahora->between($mia->inicio_slot, $finSlotMio),
+                    'id_practica' => $primero->id_practica,
+                    'id_evento' => $primero->id_evento,
+                    'practica' => $primero->practica->titulo,
+                    'grupo' => $primero->grupo->clave,
+                    'materia' => $primero->grupo->materia->nombre,
+                    'proxima_local' => $primero->fecha_hora_inicio->format('Y-m-d\TH:i'),
+                    'fechas' => $eventos->count(),
                 ];
-            })->values(),
-            'misReservas' => Reserva::where('id_alumno', $alumno->id_alumno)
-                ->with(['evento.practica', 'evento.grupo'])
-                ->latest('created_at')
-                ->limit(20)
-                ->get()
-                ->map(fn ($r) => [
-                    'id_reserva' => $r->id_reserva,
-                    'practica' => $r->evento->practica->titulo,
-                    'grupo' => $r->evento->grupo->clave,
-                    'inicio_local' => $r->evento->fecha_hora_inicio->format('Y-m-d\TH:i'),
-                    'estatus' => $r->estatus,
-                    'estatus_evento' => $r->evento->estatus,
-                ])->values(),
-        ]);
+            })
+            ->sortBy('proxima_local')
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Los grupos en los que está inscrito ahora mismo.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    private function gruposInscritos(int $idAlumno): array
+    {
+        return Inscripcion::where('id_alumno', $idAlumno)
+            ->where('estatus', 'activa')
+            ->with(['grupo.materia', 'grupo.ciclo', 'grupo.maestro.usuario'])
+            ->get()
+            ->map(fn (Inscripcion $i) => [
+                'id_grupo' => $i->id_grupo,
+                'clave' => $i->grupo->clave,
+                'materia' => $i->grupo->materia->nombre,
+                'ciclo' => optional($i->grupo->ciclo)->nombre,
+                'maestro' => trim(
+                    optional(optional($i->grupo->maestro)->usuario)->nombre.' '.
+                    optional(optional($i->grupo->maestro)->usuario)->apellidos
+                ) ?: null,
+            ])->values()->all();
     }
 }

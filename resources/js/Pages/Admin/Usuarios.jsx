@@ -1,12 +1,14 @@
-import { useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import AdminNav from '../../Components/AdminNav';
+import CabeceraAdmin, { claseAccion } from '../../Components/CabeceraAdmin';
 import Badge from '../../Components/Badge';
 import Button from '../../Components/Button';
 import EmptyState from '../../Components/EmptyState';
 import FormField, { Select, TextInput } from '../../Components/FormField';
 import Modal from '../../Components/Modal';
 import Table from '../../Components/Table';
+import Lamina from '../../Components/Lamina';
 import AppLayout from '../../Layouts/AppLayout';
 
 function CampoPassword({ value, onChange, requerido, placeholder }) {
@@ -116,7 +118,7 @@ function ModalCrear({ cerrar, roles, carreras }) {
                     <Button type="button" variant="ghost" onClick={cerrar}>
                         Cancelar
                     </Button>
-                    <Button type="submit" disabled={processing}>
+                    <Button type="submit" disabled={processing} aria-busy={processing}>
                         Crear
                     </Button>
                 </div>
@@ -171,7 +173,7 @@ function ModalEditar({ cerrar, usuario }) {
                     <Button type="button" variant="ghost" onClick={cerrar}>
                         Cancelar
                     </Button>
-                    <Button type="submit" disabled={processing}>
+                    <Button type="submit" disabled={processing} aria-busy={processing}>
                         Guardar cambios
                     </Button>
                 </div>
@@ -192,22 +194,15 @@ export default function Usuarios({ titulo, filas, roles, carreras }) {
 
     return (
         <AppLayout>
+            <Head title="Usuarios" />
             <AdminNav />
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <h1 className="font-display text-xl font-bold text-tinta">{titulo}</h1>
-                <div className="flex items-center gap-2">
-                    <TextInput
-                        type="search"
-                        name="busqueda"
-                        aria-label="Buscar"
-                        placeholder="Buscar…"
-                        className="w-56"
-                        value={busqueda}
-                        onChange={(e) => setBusqueda(e.target.value)}
-                    />
-                    <Button onClick={() => setEditando('nuevo')}>Agregar</Button>
-                </div>
-            </div>
+            <CabeceraAdmin
+                titulo={titulo}
+                busqueda={busqueda}
+                setBusqueda={setBusqueda}
+                onAgregar={() => setEditando('nuevo')}
+                contador={`${filas.length} ${filas.length === 1 ? 'registro' : 'registros'}`}
+            />
 
             {visibles.length === 0 ? (
                 <EmptyState
@@ -215,23 +210,26 @@ export default function Usuarios({ titulo, filas, roles, carreras }) {
                     hint={busqueda ? 'Prueba con otra búsqueda.' : 'Crea el primer usuario con el botón Agregar.'}
                 />
             ) : (
+                <Lamina depth={0.2} retardo={120}>
                 <Table head={['Nombre', 'Correo', 'Rol', 'Activo', '']}>
                     {visibles.map((f) => (
                         <tr key={f.id_usuario}>
-                            <td className="px-4 py-2.5 text-tinta">
+                            <td className="px-4 py-3 text-tinta">
                                 {f.nombre} {f.apellidos}
                             </td>
-                            <td className="px-4 py-2.5 font-mono text-xs text-tinta-2">{f.correo}</td>
+                            <td className="dato px-4 py-3 text-xs text-tinta-2">{f.correo}</td>
                             <td className="px-4 py-2.5">
                                 <Badge tone="muted">{f.rol?.nombre ?? '—'}</Badge>
                             </td>
                             <td className="px-4 py-2.5">
                                 <Badge tone={f.activo ? 'ok' : 'danger'}>{f.activo ? 'activo' : 'inactivo'}</Badge>
                             </td>
-                            <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                            <td className="px-4 py-3 text-right whitespace-nowrap">
                                 <button
+                                    type="button"
                                     onClick={() => setEditando(f)}
-                                    className="rounded-ctl px-2 py-1 text-xs font-medium text-tinta-2 hover:bg-hueco hover:text-tinta"
+                                    className={`${claseAccion} text-portal hover:text-portal-fuerte`}
+                                    aria-label={`Editar ${f.nombre} ${f.apellidos}`}
                                 >
                                     Editar
                                 </button>
@@ -239,6 +237,7 @@ export default function Usuarios({ titulo, filas, roles, carreras }) {
                         </tr>
                     ))}
                 </Table>
+                </Lamina>
             )}
 
             {editando === 'nuevo' && <ModalCrear cerrar={() => setEditando(null)} roles={roles} carreras={carreras} />}

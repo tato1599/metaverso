@@ -16,5 +16,7 @@ class DatabaseSeeder extends Seeder
     {
         // La app usa el modelo Usuario, no el User del scaffold; sembramos solo datos del dominio.
         $this->call(DemoSeeder::class);
+        // Enriquece la agenda para que las pantallas se vean con varios registros.
+        $this->call(DemoAgendaSeeder::class);
     }
 }

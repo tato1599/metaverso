@@ -28,12 +28,16 @@ class AgendaController extends Controller
         $fin = $inicio->copy()->endOfWeek();
         $u = $request->user();
 
-        $eventos = EventoAgenda::with(['practica', 'grupo.materia', 'espacio'])
+        // La misma restricción de visibilidad sirve para la semana y para los
+        // límites de navegación: así la agenda nunca deja fuera un evento real.
+        $visibles = EventoAgenda::when(! $u->esCoordinadorOAdmin(), fn ($q) => $q->whereHas(
+            'grupo', fn ($g) => $g->where('id_maestro', optional($u->maestro)->id_maestro)
+        ));
+
+        $eventos = (clone $visibles)
+            ->with(['practica', 'grupo.materia', 'espacio'])
             ->withCount(['reservas as reservas_activas' => fn ($q) => $q->where('estatus', 'activa')])
             ->whereBetween('fecha_hora_inicio', [$inicio, $fin])
-            ->when(! $u->esCoordinadorOAdmin(), fn ($q) => $q->whereHas(
-                'grupo', fn ($g) => $g->where('id_maestro', optional($u->maestro)->id_maestro)
-            ))
             ->orderBy('fecha_hora_inicio')
             ->get();
 
@@ -41,6 +45,7 @@ class AgendaController extends Controller
 
         return Inertia::render('Panel/Agenda', [
             'semana' => $inicio->toDateString(),
+            'limites' => EventoAgenda::limitesSemana($visibles),
             'eventos' => $eventos->map(fn ($e) => $this->eventoProps($e)),
             'grupos' => $grupos->map(fn ($g) => [
                 'id_grupo' => $g->id_grupo,

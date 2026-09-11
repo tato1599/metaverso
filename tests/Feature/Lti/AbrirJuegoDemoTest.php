@@ -1,38 +1,47 @@
 <?php
-use App\Lti\{DatosLaunch, LaunchValidador};
-use App\Models\{LtiPlatform, Materia, Practica};
+
+use App\Models\Materia;
+use App\Models\TokenJuego;
+use App\Services\MagicLinkService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('la pantalla de abrir juego muestra la escena de la practica', function () {
-    $p = LtiPlatform::create([
-        'issuer' => 'http://localhost:8080', 'client_id' => 'CID',
-        'auth_login_url' => 'http://localhost:8080/mod/lti/auth.php',
-        'auth_token_url' => 'http://localhost:8080/mod/lti/token.php',
-        'jwks_url' => 'http://localhost:8080/mod/lti/certs.php',
-        'deployment_id' => 'DEP1', 'activo' => true,
-    ]);
-    $mat = Materia::create(['clave' => 'PRG', 'nombre' => 'Prog', 'creditos' => 5]);
-    $practica = Practica::create([
-        'id_materia' => $mat->id_materia,
-        'titulo' => 'Lab LTI',
-        'escena_referencia' => 'recolecta',
-    ]);
+/*
+ * El modo demo —simular la partida desde el navegador y devolver la
+ * calificación— vivía en el interstitial del launch LTI. Al hacerse obligatoria
+ * la reserva ese interstitial dejó de ser alcanzable, así que el modo demo se
+ * mudó a /jugar/{token}, que es la única entrada al juego que queda.
+ */
+it('la pantalla de jugar trae el deeplink y el modo demo con el token en crudo', function () {
+    Materia::create(['clave' => 'PRG', 'nombre' => 'Prog', 'creditos' => 5]);
 
-    $datos = new DatosLaunch(
-        esDeepLink: false, issuer: 'http://localhost:8080',
-        ltiUserId: 'mu-77', nombre: 'Ana', apellidos: 'Ruiz', correo: 'ana@c.com',
-        idPractica: $practica->id_practica,
-        agsLineitemUrl: 'http://localhost:8080/mod/lti/services.php/.../lineitems/1/lineitem',
-        agsEndpoint: 'http://localhost:8080/mod/lti/services.php', ltiPlatformId: $p->id,
-    );
-    $this->app->bind(LaunchValidador::class, fn () => new class($datos) implements LaunchValidador {
-        public function __construct(private $d) {}
-        public function validar($request): DatosLaunch { return $this->d; }
-    });
+    $respuesta = $this->get('/jugar/token-de-prueba');
 
-    $respuesta = $this->post('/lti/launch');
+    $respuesta->assertOk()
+        ->assertSee('Modo demo')
+        ->assertSee('/api/game/redeem', false)
+        // El token en crudo es lo que el demo necesita para canjear sin el motor.
+        ->assertSee('token-de-prueba', false);
+});
 
-    $respuesta->assertOk()->assertSee('recolecta');
+it('el enlace de juego dispara el esquema propio configurado', function () {
+    $esquema = config('metaverso.deeplink_scheme', 'tecnm-metaverso');
+
+    $this->get('/jugar/abc123')
+        ->assertOk()
+        ->assertSee("{$esquema}://play?token=abc123", false);
+});
+
+it('no acepta tokens con caracteres fuera del alfabeto del magic link', function () {
+    $this->get('/jugar/no%20valido')->assertNotFound();
+});
+
+it('el magic link real llega a la pantalla de jugar', function () {
+    $e = reservarEscenario();
+    $res = app(MagicLinkService::class)->generar($e['usuario']->id_usuario, $e['evento']->id_evento);
+
+    expect(TokenJuego::count())->toBe(1);
+
+    $this->get($res['url'])->assertOk()->assertSee('Modo demo');
 });

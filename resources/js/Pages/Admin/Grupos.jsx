@@ -1,12 +1,14 @@
-import { router, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import AdminNav from '../../Components/AdminNav';
+import CabeceraAdmin, { claseAccion } from '../../Components/CabeceraAdmin';
 import Badge from '../../Components/Badge';
 import Button from '../../Components/Button';
 import EmptyState from '../../Components/EmptyState';
 import FormField, { Select, TextInput } from '../../Components/FormField';
 import Modal from '../../Components/Modal';
 import Table from '../../Components/Table';
+import Lamina from '../../Components/Lamina';
 import AppLayout from '../../Layouts/AppLayout';
 
 function GrupoFormModal({ fila, materias, maestros, ciclos, contextos, cerrar }) {
@@ -88,7 +90,7 @@ function GrupoFormModal({ fila, materias, maestros, ciclos, contextos, cerrar })
                     <Button type="button" variant="ghost" onClick={cerrar}>
                         Cancelar
                     </Button>
-                    <Button type="submit" disabled={processing}>
+                    <Button type="submit" disabled={processing} aria-busy={processing}>
                         {fila ? 'Guardar cambios' : 'Crear'}
                     </Button>
                 </div>
@@ -177,6 +179,7 @@ function InscripcionesModal({ grupo, alumnos, cerrar }) {
                                     <p className="font-mono text-xs tabular-nums text-tinta-2">{i.matricula}</p>
                                 </div>
                                 <button
+                                    type="button"
                                     onClick={() => quitar(i)}
                                     className="shrink-0 rounded-ctl px-2 py-1 text-xs font-medium text-alerta hover:bg-alerta-tinte"
                                 >
@@ -241,22 +244,15 @@ export default function Grupos({ filas, materias, maestros, ciclos, alumnos, con
 
     return (
         <AppLayout>
+            <Head title="Grupos" />
             <AdminNav />
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <h1 className="font-display text-xl font-bold text-tinta">Grupos</h1>
-                <div className="flex items-center gap-2">
-                    <TextInput
-                        type="search"
-                        name="busqueda"
-                        aria-label="Buscar"
-                        placeholder="Buscar…"
-                        className="w-56"
-                        value={busqueda}
-                        onChange={(e) => setBusqueda(e.target.value)}
-                    />
-                    <Button onClick={() => setEditando('nuevo')}>Agregar</Button>
-                </div>
-            </div>
+            <CabeceraAdmin
+                titulo="Grupos"
+                busqueda={busqueda}
+                setBusqueda={setBusqueda}
+                onAgregar={() => setEditando('nuevo')}
+                contador={`${filas.length} ${filas.length === 1 ? 'registro' : 'registros'}`}
+            />
 
             {errors?.eliminar && (
                 <p className="mb-4 rounded-ctl bg-alerta-tinte px-4 py-2.5 text-[13px] font-medium text-alerta">
@@ -270,35 +266,42 @@ export default function Grupos({ filas, materias, maestros, ciclos, alumnos, con
                     hint={busqueda ? 'Prueba con otra búsqueda.' : 'Crea el primer grupo con el botón Agregar.'}
                 />
             ) : (
+                <Lamina depth={0.2} retardo={120}>
                 <Table head={['Clave', 'Materia', 'Maestro', 'Ciclo', 'Cupo', 'Inscritos', '']}>
                     {visibles.map((f) => (
                         <tr key={f.id_grupo}>
-                            <td className="px-4 py-2.5 font-mono text-xs tabular-nums text-tinta-2">{f.clave}</td>
-                            <td className="px-4 py-2.5 text-tinta">{f.materia}</td>
-                            <td className="px-4 py-2.5 text-tinta">{f.maestro}</td>
-                            <td className="px-4 py-2.5 text-tinta">{f.ciclo}</td>
-                            <td className="px-4 py-2.5 font-mono text-xs tabular-nums text-tinta-2">{f.cupo_maximo}</td>
+                            <td className="dato px-4 py-3 text-xs text-tinta-2">{f.clave}</td>
+                            <td className="px-4 py-3 text-tinta">{f.materia}</td>
+                            <td className="px-4 py-3 text-tinta">{f.maestro}</td>
+                            <td className="px-4 py-3 text-tinta">{f.ciclo}</td>
+                            <td className="dato px-4 py-3 text-xs text-tinta-2">{f.cupo_maximo}</td>
                             <td className="px-4 py-2.5">
                                 <Badge tone={f.inscritos >= f.cupo_maximo ? 'warn' : 'muted'}>
                                     {f.inscritos}
                                 </Badge>
                             </td>
-                            <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                            <td className="px-4 py-3 text-right whitespace-nowrap">
                                 <button
+                                    type="button"
                                     onClick={() => setIdInscripciones(f.id_grupo)}
-                                    className="rounded-ctl px-2 py-1 text-xs font-medium text-portal hover:bg-portal-tinte"
+                                    className={`${claseAccion} text-portal hover:text-portal-fuerte`}
+                                    aria-label={`Alumnos ${f.clave}`}
                                 >
                                     Alumnos
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={() => setEditando(f)}
-                                    className="rounded-ctl px-2 py-1 text-xs font-medium text-tinta-2 hover:bg-hueco hover:text-tinta"
+                                    className={`${claseAccion} ml-4 text-portal hover:text-portal-fuerte`}
+                                    aria-label={`Editar ${f.clave}`}
                                 >
                                     Editar
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={() => eliminar(f)}
-                                    className="rounded-ctl px-2 py-1 text-xs font-medium text-alerta hover:bg-alerta-tinte"
+                                    className={`${claseAccion} ml-4 text-tinta-3 hover:text-alerta`}
+                                    aria-label={`Eliminar ${f.clave}`}
                                 >
                                     Eliminar
                                 </button>
@@ -306,6 +309,7 @@ export default function Grupos({ filas, materias, maestros, ciclos, alumnos, con
                         </tr>
                     ))}
                 </Table>
+                </Lamina>
             )}
 
             {editando !== null && (

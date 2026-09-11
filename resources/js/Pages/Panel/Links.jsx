@@ -1,9 +1,12 @@
-import { Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { useState } from 'react';
 import Button from '../../Components/Button';
 import EmptyState from '../../Components/EmptyState';
+import Encabezado from '../../Components/Encabezado';
+import Lamina from '../../Components/Lamina';
 import Table from '../../Components/Table';
 import AppLayout from '../../Layouts/AppLayout';
+import { plural } from '../../fechas';
 
 function descargarCsv(grupo, filas) {
     const esc = (v) => `"${String(v).replace(/"/g, '""')}"`;
@@ -22,19 +25,25 @@ function FilaLink({ f }) {
 
     return (
         <tr>
-            <td className="px-4 py-2.5 text-tinta">{f.nombre}</td>
-            <td className="px-4 py-2.5 font-mono text-xs tabular-nums text-tinta-2">{f.matricula}</td>
-            <td className="max-w-xs truncate px-4 py-2.5 font-mono text-[11px] text-tinta-3">{f.url}</td>
-            <td className="px-4 py-2.5 text-right">
+            <td className="px-4 py-3 text-tinta">{f.nombre}</td>
+            <td className="dato px-4 py-3 text-xs text-tinta-2">{f.matricula}</td>
+            <td className="max-w-[22rem] truncate px-4 py-3 font-mono text-[11px] text-tinta-3" title={f.url}>
+                {f.url}
+            </td>
+            <td className="px-4 py-3 text-right">
                 <button
+                    type="button"
                     onClick={() => {
                         navigator.clipboard.writeText(f.url);
                         setCopiado(true);
                         setTimeout(() => setCopiado(false), 1500);
                     }}
-                    className="rounded-ctl px-2 py-1 text-xs font-medium text-tinta-2 hover:bg-hueco hover:text-tinta"
+                    aria-label={`Copiar el enlace de ${f.nombre}`}
+                    className={`rotulo rounded-ctl px-1 outline-offset-2 transition-colors focus-visible:outline-2 focus-visible:outline-portal ${
+                        copiado ? 'text-telemetria' : 'text-portal hover:text-portal-fuerte'
+                    }`}
                 >
-                    {copiado ? 'Copiado ✓' : 'Copiar'}
+                    {copiado ? 'Copiado' : 'Copiar'}
                 </button>
             </td>
         </tr>
@@ -44,31 +53,40 @@ function FilaLink({ f }) {
 export default function Links({ grupo, filas }) {
     return (
         <AppLayout>
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <Link href={`/panel/grupos/${grupo.id_grupo}`} className="text-[13px] text-tinta-3 hover:text-tinta">
-                        ‹ Grupo {grupo.clave}
-                    </Link>
-                    <h1 className="mt-1 font-display text-xl font-bold text-tinta">Enlaces de juego</h1>
-                    <p className="text-[13px] text-tinta-2">
-                        Un enlace de un solo uso por alumno. Compártelos por el canal que uses con el grupo.
-                    </p>
-                </div>
-                {filas.length > 0 && (
-                    <Button variant="secondary" onClick={() => descargarCsv(grupo, filas)}>
-                        Descargar CSV
-                    </Button>
-                )}
-            </div>
+            <Head title={`Enlaces · ${grupo.clave}`} />
+
+            <Encabezado
+                volver={{ href: `/panel/grupos/${grupo.id_grupo}`, label: `Grupo ${grupo.clave}` }}
+                titulo="Enlaces de juego"
+                meta="Un enlace de un solo uso por alumno. Compártelos por el canal que uses con el grupo."
+                acciones={
+                    filas.length > 0 && (
+                        <Button variant="secondary" onClick={() => descargarCsv(grupo, filas)}>
+                            Descargar CSV
+                        </Button>
+                    )
+                }
+            />
 
             {filas.length === 0 ? (
-                <EmptyState title="Sin alumnos inscritos" hint="Inscribe alumnos al grupo para generar sus enlaces." />
+                <EmptyState
+                    title="Sin alumnos inscritos"
+                    hint="Inscribe alumnos al grupo para poder generar sus enlaces de juego."
+                />
             ) : (
-                <Table head={['Alumno', 'Matrícula', 'Enlace', '']}>
-                    {filas.map((f) => (
-                        <FilaLink key={f.matricula} f={f} />
-                    ))}
-                </Table>
+                <Lamina depth={0.25} retardo={120}>
+                    <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-regla-suave px-5 py-3.5">
+                        <p className="rotulo text-tinta-2">Enlaces generados</p>
+                        <p className="rotulo text-tinta-3">
+                            <span className="dato">{filas.length}</span> {plural(filas.length, 'enlace')}
+                        </p>
+                    </header>
+                    <Table head={['Alumno', 'Matrícula', 'Enlace', '']}>
+                        {filas.map((f) => (
+                            <FilaLink key={f.matricula} f={f} />
+                        ))}
+                    </Table>
+                </Lamina>
             )}
         </AppLayout>
     );

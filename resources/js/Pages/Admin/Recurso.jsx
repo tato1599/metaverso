@@ -1,9 +1,11 @@
-import { router, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import AdminNav from '../../Components/AdminNav';
 import Button from '../../Components/Button';
+import CabeceraAdmin, { claseAccion } from '../../Components/CabeceraAdmin';
 import EmptyState from '../../Components/EmptyState';
 import FormField, { Select, TextInput, Textarea } from '../../Components/FormField';
+import Lamina from '../../Components/Lamina';
 import Modal from '../../Components/Modal';
 import Table from '../../Components/Table';
 import AppLayout from '../../Layouts/AppLayout';
@@ -81,7 +83,7 @@ function FormularioModal({ abierto, cerrar, titulo, campos, rutaBase, idKey, fil
                     <Button type="button" variant="ghost" onClick={cerrar}>
                         Cancelar
                     </Button>
-                    <Button type="submit" disabled={processing}>
+                    <Button type="submit" disabled={processing} aria-busy={processing}>
                         {fila ? 'Guardar cambios' : 'Crear'}
                     </Button>
                 </div>
@@ -109,28 +111,24 @@ export default function Recurso({ titulo, rutaBase, idKey, columnas, filas, camp
 
     return (
         <AppLayout>
+            <Head title={titulo} />
             <AdminNav />
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <h1 className="font-display text-xl font-bold text-tinta">{titulo}</h1>
-                <div className="flex items-center gap-2">
-                    <TextInput
-                        type="search"
-                        name="busqueda"
-                        aria-label="Buscar"
-                        placeholder="Buscar…"
-                        className="w-56"
-                        value={busqueda}
-                        onChange={(e) => setBusqueda(e.target.value)}
-                    />
-                    <Button onClick={() => setEditando('nuevo')}>Agregar</Button>
-                </div>
-            </div>
+            <CabeceraAdmin
+                titulo={titulo}
+                busqueda={busqueda}
+                setBusqueda={setBusqueda}
+                onAgregar={() => setEditando('nuevo')}
+                contador={`${filas.length} ${filas.length === 1 ? 'registro' : 'registros'}`}
+            />
 
+            <div aria-live="polite">
             {errors?.eliminar && (
-                <p className="mb-4 rounded-ctl bg-alerta-tinte px-4 py-2.5 text-[13px] font-medium text-alerta">
+                <p className="mb-5 flex items-start gap-2.5 rounded-ctl bg-alerta-tinte px-4 py-3 text-[13px] font-medium text-alerta">
+                    <span className="mt-[6px] size-1.5 shrink-0 rounded-full bg-alerta" aria-hidden="true" />
                     {errors.eliminar}
                 </p>
             )}
+            </div>
 
             {visibles.length === 0 ? (
                 <EmptyState
@@ -138,27 +136,32 @@ export default function Recurso({ titulo, rutaBase, idKey, columnas, filas, camp
                     hint={busqueda ? 'Prueba con otra búsqueda.' : 'Crea el primer registro con el botón Agregar.'}
                 />
             ) : (
+                <Lamina depth={0.2} retardo={120}>
                 <Table head={[...columnas.map((c) => c.label), '']}>
                     {visibles.map((f) => (
                         <tr key={f[idKey]}>
                             {columnas.map((c) => (
                                 <td
                                     key={c.key}
-                                    className={`px-4 py-2.5 ${c.mono ? 'font-mono text-xs tabular-nums text-tinta-2' : 'text-tinta'}`}
+                                    className={`px-4 py-3 ${c.mono ? 'text-xs text-tinta-2' : 'text-tinta'}`}
                                 >
                                     {typeof f[c.key] === 'boolean' ? (f[c.key] ? 'sí' : 'no') : f[c.key]}
                                 </td>
                             ))}
-                            <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                            <td className="px-4 py-3 text-right whitespace-nowrap">
                                 <button
+                                    type="button"
                                     onClick={() => setEditando(f)}
-                                    className="rounded-ctl px-2 py-1 text-xs font-medium text-tinta-2 hover:bg-hueco hover:text-tinta"
+                                    aria-label={`Editar ${f[columnas[0].key]}`}
+                                    className={`${claseAccion} text-portal hover:text-portal-fuerte`}
                                 >
                                     Editar
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={() => eliminar(f)}
-                                    className="rounded-ctl px-2 py-1 text-xs font-medium text-alerta hover:bg-alerta-tinte"
+                                    aria-label={`Eliminar ${f[columnas[0].key]}`}
+                                    className={`${claseAccion} ml-4 text-tinta-3 hover:text-alerta`}
                                 >
                                     Eliminar
                                 </button>
@@ -166,6 +169,7 @@ export default function Recurso({ titulo, rutaBase, idKey, columnas, filas, camp
                         </tr>
                     ))}
                 </Table>
+                </Lamina>
             )}
 
             {editando !== null && (

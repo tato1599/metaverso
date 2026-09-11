@@ -133,15 +133,46 @@ it('expone lleno y finalizado calculados en servidor', function () {
     );
 });
 
-it('lista mis reservas con el estatus del evento', function () {
+/*
+ * El panel del alumno dejó de ser un historial de reservas —canceladas
+ * incluidas— para volverse un resumen de estado: lo que tiene apartado, lo que
+ * le falta apartar, y en qué grupos está. La intención del test es la misma;
+ * cambió la forma.
+ */
+it('resume lo que el alumno tiene reservado y en qué grupo está', function () {
     $grupo = calendarioGrupo();
     $evento = calendarioEvento($grupo);
     [$u, $alumno] = calendarioAlumno($grupo);
     Reserva::create(['id_evento' => $evento->id_evento, 'id_alumno' => $alumno->id_alumno]);
 
     $this->actingAs($u)->get('/mi/calendario')->assertInertia(
-        fn (Assert $page) => $page->has('misReservas', 1)
-            ->where('misReservas.0.estatus', 'activa')
-            ->where('misReservas.0.estatus_evento', 'programado')
+        fn (Assert $page) => $page->has('proximas', 1)
+            ->where('proximas.0.id_evento', $evento->id_evento)
+            ->where('proximas.0.cancelado', false)
+            // Ya la reservó: no puede quedar como pendiente.
+            ->has('pendientes', 0)
+            ->has('grupos', 1)
+            ->where('grupos.0.clave', $grupo->clave)
+    );
+});
+
+it('lista como pendiente una práctica agendada que aún no reserva, una vez por práctica', function () {
+    $grupo = calendarioGrupo();
+    $primera = calendarioEvento($grupo);
+    // Misma práctica, otra fecha: son alternativas, no dos pendientes.
+    EventoAgenda::create([
+        'id_practica' => $primera->id_practica,
+        'id_grupo' => $grupo->id_grupo,
+        'fecha_hora_inicio' => now()->addDays(5),
+        'fecha_hora_fin' => now()->addDays(5)->addHour(),
+        'estatus' => 'programado',
+        'cupo_maximo' => 5,
+    ]);
+    [$u] = calendarioAlumno($grupo);
+
+    $this->actingAs($u)->get('/mi/calendario')->assertInertia(
+        fn (Assert $page) => $page->has('pendientes', 1)
+            ->where('pendientes.0.fechas', 2)
+            ->has('proximas', 0)
     );
 });

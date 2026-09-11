@@ -1,13 +1,19 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Lti\AgsCliente;
 use App\Models\EventoAgenda;
+use App\Models\Inscripcion;
+use App\Models\LtiVinculoActividad;
+use App\Models\Reserva;
 use App\Models\SesionPractica;
 use Illuminate\Http\Request;
+use Laravel\Sanctum\PersonalAccessToken;
 
-class GameSessionController extends Controller {
-
+class GameSessionController extends Controller
+{
     /**
      * Obtener datos del alumno autenticado
      *
@@ -15,6 +21,7 @@ class GameSessionController extends Controller {
      * Útil para que Unreal Engine confirme la identidad del jugador al iniciar la sesión.
      *
      * @group Flujo de juego (Unreal)
+     *
      * @authenticated
      *
      * @response 200 scenario="Datos del alumno autenticado" {
@@ -31,13 +38,14 @@ class GameSessionController extends Controller {
      *     "id_grupo": 3
      *   }
      * }
-     *
      * @response 401 scenario="Token inválido o expirado" {
      *   "message": "Unauthenticated."
      * }
      */
-    public function me(Request $request) {
+    public function me(Request $request)
+    {
         $usuario = $request->user()->load('alumno');
+
         return response()->json(['usuario' => $usuario, 'alumno' => $usuario->alumno]);
     }
 
@@ -48,6 +56,7 @@ class GameSessionController extends Controller {
      * en el evento especificado. Verifica que el alumno esté inscrito en el grupo del evento.
      *
      * @group Flujo de juego (Unreal)
+     *
      * @authenticated
      *
      * @bodyParam id_evento int required El ID del evento de agenda en el que se inicia la sesión. Example: 7
@@ -56,15 +65,12 @@ class GameSessionController extends Controller {
      *   "id_sesion": 88,
      *   "estatus": "en_progreso"
      * }
-     *
      * @response 401 scenario="Token inválido o expirado" {
      *   "message": "Unauthenticated."
      * }
-     *
      * @response 403 scenario="Alumno no inscrito en el grupo del evento" {
      *   "message": "El alumno no está inscrito en el grupo de este evento"
      * }
-     *
      * @response 422 scenario="Falta el campo id_evento" {
      *   "message": "The id_evento field is required.",
      *   "errors": {
@@ -72,14 +78,15 @@ class GameSessionController extends Controller {
      *   }
      * }
      */
-    public function start(Request $request) {
+    public function start(Request $request)
+    {
         $data = $request->validate(['id_evento' => 'required|integer']);
         $alumno = $request->user()->alumno;
         abort_unless($alumno, 403, 'El usuario no es alumno');
 
         $evento = EventoAgenda::findOrFail($data['id_evento']);
 
-        $inscrito = \App\Models\Inscripcion::where('id_alumno', $alumno->id_alumno)
+        $inscrito = Inscripcion::where('id_alumno', $alumno->id_alumno)
             ->where('id_grupo', $evento->id_grupo)
             ->exists();
         abort_unless($inscrito, 403, 'El alumno no está inscrito en el grupo de este evento');
@@ -102,25 +109,31 @@ class GameSessionController extends Controller {
         // Enlace sesión↔reserva (aditivo): el evento confiable viene de la ability del
         // bearer emitida en el redeem, nunca del body. Sin ability o sin coincidencia → null.
         $token = $request->user()->currentAccessToken();
-        $abilities = $token instanceof \Laravel\Sanctum\PersonalAccessToken ? $token->abilities : [];
+        $abilities = $token instanceof PersonalAccessToken ? $token->abilities : [];
         $ligado = collect($abilities)->first(fn ($a) => str_starts_with($a, 'evento:'));
         $idEventoLigado = $ligado ? (int) substr($ligado, 7) : null;
         $idReserva = null;
         if ($idEventoLigado && $idEventoLigado === (int) $data['id_evento']) {
-            $idReserva = \App\Models\Reserva::where('id_evento', $idEventoLigado)
+            $idReserva = Reserva::where('id_evento', $idEventoLigado)
                 ->where('id_alumno', $alumno->id_alumno)
                 ->where('estatus', 'activa')
                 ->value('id_reserva');
         }
 
-        $sesion = SesionPractica::create([
+        // El contexto AGS lo dejó el launch de Moodle en el vínculo de la actividad.
+        // Sin esto, una sesión que nace desde la agenda —o desde un launch cuya
+        // reserva se hizo días antes— no sabría a qué línea del libro de
+        // calificaciones escribir, y la nota no volvería a Moodle.
+        $ags = LtiVinculoActividad::paraSesion($alumno->id_alumno, $evento->id_practica) ?? [];
+
+        $sesion = SesionPractica::create(array_merge([
             'id_evento' => $evento->id_evento,
             'id_alumno' => $alumno->id_alumno,
             'id_practica' => $evento->id_practica,
             'id_reserva' => $idReserva,
             'fecha_inicio' => now(),
             'estatus' => 'en_progreso',
-        ]);
+        ], $ags));
 
         return response()->json(['id_sesion' => $sesion->id_sesion, 'estatus' => $sesion->estatus], 201);
     }
@@ -133,6 +146,7 @@ class GameSessionController extends Controller {
      * sesión puede completarla, y únicamente si está en estado `en_progreso`.
      *
      * @group Flujo de juego (Unreal)
+     *
      * @authenticated
      *
      * @urlParam id int required El ID de la sesión de práctica a completar. Example: 88
@@ -145,23 +159,18 @@ class GameSessionController extends Controller {
      *   "estatus": "completada",
      *   "calificacion": 85.5
      * }
-     *
      * @response 401 scenario="Token inválido o expirado" {
      *   "message": "Unauthenticated."
      * }
-     *
      * @response 403 scenario="Sesión pertenece a otro alumno" {
      *   "message": "Sesión de otro alumno"
      * }
-     *
      * @response 404 scenario="Sesión no encontrada" {
      *   "message": "No query results for model [App\\Models\\SesionPractica] 88"
      * }
-     *
      * @response 409 scenario="La sesión no está en progreso" {
      *   "message": "La sesión no está en progreso"
      * }
-     *
      * @response 422 scenario="Calificación fuera de rango o faltante" {
      *   "message": "The calificacion field must not be greater than 100.",
      *   "errors": {
@@ -169,7 +178,8 @@ class GameSessionController extends Controller {
      *   }
      * }
      */
-    public function complete(Request $request, int $id) {
+    public function complete(Request $request, int $id)
+    {
         $sesion = SesionPractica::findOrFail($id);
         $alumno = $request->user()->alumno;
         abort_unless($alumno && $sesion->id_alumno === $alumno->id_alumno, 403, 'Sesión de otro alumno');
@@ -193,7 +203,7 @@ class GameSessionController extends Controller {
         ]);
 
         if ($sesion->ags_lineitem_url) {
-            app(\App\Lti\AgsCliente::class)->enviar($sesion->fresh());
+            app(AgsCliente::class)->enviar($sesion->fresh());
         }
 
         return response()->json(['id_sesion' => $sesion->id_sesion, 'estatus' => $sesion->estatus, 'calificacion' => $sesion->calificacion]);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Mi;
 
 use App\Http\Controllers\Controller;
+use App\Models\Alumno;
 use App\Models\EventoAgenda;
 use App\Models\Inscripcion;
 use App\Models\Reserva;
@@ -20,6 +21,10 @@ class ReservaController extends Controller
      *
      * inicio_slot es opcional en eventos de un solo slot (el horario es implícito);
      * en eventos multi-slot su ausencia o un valor fuera de la partición dan 422 (F1).
+     *
+     * Con `cambiar_de` mueve una reserva existente de la misma práctica a este
+     * horario: cancela y crea dentro de la MISMA transacción, para que un horario
+     * que se llena a mitad no deje al alumno sin ninguna reserva.
      */
     public function store(Request $request)
     {
@@ -28,11 +33,21 @@ class ReservaController extends Controller
             // Solo formato aquí (F3): la pertenencia a la partición se decide
             // contra los slots del servidor, dentro de la transacción.
             'inicio_slot' => 'nullable|date_format:Y-m-d\TH:i',
+            // Mover la reserva de una fecha a otra de la MISMA práctica, en una
+            // sola transacción: cancelar y volver a reservar por separado deja al
+            // alumno sin nada si el horario nuevo se llena entre las dos peticiones.
+            'cambiar_de' => 'nullable|integer',
         ]);
         $alumno = $request->user()->alumno;
         abort_unless($alumno, 403);
 
         DB::transaction(function () use ($alumno, $datos) {
+            // Serializa TODOS los intentos de este alumno antes de tocar el evento.
+            // Sin esto, dos peticiones simultáneas a fechas distintas de la misma
+            // práctica bloquean eventos distintos y ambas pasan el guard de abajo.
+            // El orden alumno→evento es el único en la aplicación: sin ciclos.
+            Alumno::whereKey($alumno->id_alumno)->lockForUpdate()->firstOrFail();
+
             $evento = EventoAgenda::whereKey($datos['id_evento'])->lockForUpdate()->firstOrFail();
 
             $slot = $this->resolverSlot($evento, $datos['inicio_slot'] ?? null);
@@ -49,10 +64,28 @@ class ReservaController extends Controller
                 ->exists();
             abort_unless($inscrito, 403, 'No estás inscrito en este grupo.');
 
-            // Una sola reserva activa por evento aunque haya slots libres:
-            // cambiar de horario = cancelar + re-reservar.
-            if ($evento->reservasActivas()->where('id_alumno', $alumno->id_alumno)->exists()) {
-                throw ValidationException::withMessages(['evento' => 'Ya tienes una reserva en esta práctica.']);
+            // Una práctica se cursa UNA vez: el guard es por práctica, no por
+            // evento. Cuando el maestro agenda la misma práctica varias veces esas
+            // fechas son alternativas, no sesiones acumulables — y cada una ocupa
+            // un lugar de un cupo escaso. Solo cuentan los eventos que no han
+            // terminado: una reposición de una práctica ya pasada sí se reserva.
+            $previa = Reserva::where('id_alumno', $alumno->id_alumno)
+                ->where('estatus', 'activa')
+                ->whereHas('evento', fn ($q) => $q
+                    ->where('id_practica', $evento->id_practica)
+                    ->where('fecha_hora_fin', '>=', now())
+                )
+                ->first();
+
+            if ($previa) {
+                // Cambiar de fecha es mover la reserva, no crear una segunda.
+                if ((int) ($datos['cambiar_de'] ?? 0) !== (int) $previa->id_reserva) {
+                    throw ValidationException::withMessages([
+                        'evento' => 'Ya tienes esta práctica reservada en otra fecha. Cancela esa reserva o cámbiate a este horario.',
+                    ]);
+                }
+
+                $previa->update(['estatus' => 'cancelada']);
             }
 
             if ($evento->reservasActivas()->where('inicio_slot', $slot['inicio'])->count() >= $evento->cupo_maximo) {

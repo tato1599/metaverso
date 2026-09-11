@@ -93,3 +93,33 @@ it('logout redirige a login para cualquier rol', function () {
     $this->actingAs($u)->post('/logout')->assertRedirect('/login');
     $this->assertGuest();
 });
+
+/*
+ * Guardas del rediseño del acceso. El copy de la pantalla vive en React y no se
+ * renderiza en el servidor (sin SSR), así que aquí solo se cubre lo que este
+ * nivel puede verificar de verdad: el componente que se monta y el texto de los
+ * errores, que sí es del backend.
+ */
+it('el acceso monta el componente Auth/Login sin filtrar datos del campus', function () {
+    $this->get('/login')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('Auth/Login')->missing('eventos'));
+});
+
+it('el error de credenciales nombra la recuperación, no solo el fallo', function () {
+    $u = crearUsuarioConRol('Alumno');
+
+    $this->from('/login')
+        ->post('/login', ['correo' => $u->correo, 'password' => 'mala'])
+        ->assertSessionHasErrors(['correo' => 'Correo o contraseña incorrectos. Revisa tu correo institucional, o pide una contraseña nueva a tu coordinación.']);
+});
+
+it('el rate limit explica la espera', function () {
+    $u = crearUsuarioConRol('Alumno');
+    foreach (range(1, 5) as $i) {
+        $this->post('/login', ['correo' => $u->correo, 'password' => 'mala']);
+    }
+
+    $this->post('/login', ['correo' => $u->correo, 'password' => 'secreto123'])
+        ->assertSessionHasErrors(['correo' => 'Demasiados intentos fallidos. Espera un minuto antes de volver a intentar.']);
+});

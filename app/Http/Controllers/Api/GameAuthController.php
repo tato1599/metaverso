@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -8,7 +9,8 @@ use App\Services\MagicLinkService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
-class GameAuthController extends Controller {
+class GameAuthController extends Controller
+{
     public function __construct(private MagicLinkService $magicLink) {}
 
     /**
@@ -46,15 +48,12 @@ class GameAuthController extends Controller {
      *     "estatus": "activo"
      *   }
      * }
-     *
      * @response 401 scenario="Token inválido (no encontrado)" {
      *   "message": "Token inválido"
      * }
-     *
      * @response 410 scenario="Token expirado o ya utilizado" {
      *   "message": "Token expirado o ya utilizado"
      * }
-     *
      * @response 422 scenario="Falta el campo token" {
      *   "message": "The token field is required.",
      *   "errors": {
@@ -62,7 +61,8 @@ class GameAuthController extends Controller {
      *   }
      * }
      */
-    public function redeem(Request $request) {
+    public function redeem(Request $request)
+    {
         $data = $request->validate(['token' => 'required|string']);
 
         $tokenJuego = TokenJuego::where('token_hash', $this->magicLink->hash($data['token']))->first();
@@ -96,7 +96,7 @@ class GameAuthController extends Controller {
             'token_type' => 'Bearer',
             'alumno' => $usuario->alumno,
             'practica' => $evento->practica,
-            'evento' => $evento->only(['id_evento','fecha_hora_inicio','fecha_hora_fin','estatus']),
+            'evento' => $evento->only(['id_evento', 'fecha_hora_inicio', 'fecha_hora_fin', 'estatus']),
         ]);
     }
 
@@ -117,12 +117,19 @@ class GameAuthController extends Controller {
      *   "practica": {"id_practica": 2, "titulo": "Lab LTI"},
      *   "id_sesion": 42
      * }
-     *
      * @response 410 scenario="Token inválido, expirado o ya usado" {
      *   "message": "Token inválido o expirado"
      * }
      */
-    public function ltiRedeem(Request $request) {
+    /*
+     * OJO: desde que la reserva es obligatoria también por LTI, el launch ya no
+     * escribe la clave `lti_play_*` en cache, así que nadie produce estos tokens
+     * y este endpoint quedó inalcanzable. Se conserva —con sus pruebas— porque
+     * retirar una superficie pública de API es una decisión aparte; el camino
+     * vivo es POST /api/game/redeem con el token del magic link.
+     */
+    public function ltiRedeem(Request $request)
+    {
         $data = $request->validate(['lti_session_token' => 'required|string']);
 
         $idSesion = Cache::pull('lti_play_'.hash('sha256', $data['lti_session_token']));

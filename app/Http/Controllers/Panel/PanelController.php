@@ -48,7 +48,7 @@ class PanelController extends Controller
         $this->autorizarGrupo($request->user(), $grupo);
         $grupo->load(['materia', 'ciclo']);
         $alumnos = $grupo->inscripciones()->with('alumno.usuario')->get();
-        $eventos = $grupo->eventos()->with('practica')->get();
+        $eventos = $grupo->eventos()->with('practica')->orderBy('id_practica')->orderBy('fecha_hora_inicio')->get();
 
         return Inertia::render('Panel/Grupo', [
             'grupo' => [
@@ -64,6 +64,9 @@ class PanelController extends Controller
             ])->values(),
             'eventos' => $eventos->map(fn ($e) => [
                 'id_evento' => $e->id_evento,
+                // La vista agrupa por práctica: 8 fechas de la misma práctica no
+                // son 8 prácticas, y listadas en plano se leen como duplicados.
+                'id_practica' => $e->id_practica,
                 'practica' => optional($e->practica)->titulo,
                 'inicio_local' => $e->fecha_hora_inicio->format('Y-m-d\TH:i'),
                 'estatus' => $e->estatus,

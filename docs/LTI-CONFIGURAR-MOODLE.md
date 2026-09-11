@@ -229,3 +229,30 @@ docker exec moodle-moodle-1 php /bitnami/moodle/admin/cli/purge_caches.php
 
 En producción NO se vacían estas listas: se agrega el host/puerto real de la
 herramienta a las listas permitidas.
+
+
+## Cookie de sesión cuando Moodle abre la actividad en un iframe
+
+Desde que el launch deja al alumno **navegando la aplicación** (la reserva es
+obligatoria también por LTI), el launch inicia una sesión web y esa sesión viaja
+en cookie. Si en Moodle la actividad está configurada con *Launch container:
+Embed* —es decir, dentro de un iframe—, la petición es cross-site y el navegador
+descarta una cookie `SameSite=Lax`: el alumno aterrizaría sin sesión.
+
+Dos salidas, y hay que elegir una:
+
+1. **En Moodle**, poner la actividad como *New window*. Es la más simple y no
+   toca la configuración del servidor.
+2. **En el `.env` del campus**, si se quiere el iframe:
+
+   ```
+   SESSION_SAME_SITE=none
+   SESSION_SECURE_COOKIE=true
+   ```
+
+   `SameSite=None` **exige HTTPS**: sin `Secure` el navegador la rechaza igual,
+   así que esta opción solo sirve en un despliegue con certificado, nunca en el
+   `localhost:8000` de desarrollo.
+
+En local, con Moodle en Docker y el campus en `http://localhost:8000`, usa la
+opción 1.

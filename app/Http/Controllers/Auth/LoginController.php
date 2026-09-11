@@ -26,7 +26,7 @@ class LoginController extends Controller
         $llave = mb_strtolower($datos['correo']).'|'.$request->ip();
         if (RateLimiter::tooManyAttempts($llave, 5)) {
             throw ValidationException::withMessages([
-                'correo' => 'Demasiados intentos. Espera un minuto.',
+                'correo' => 'Demasiados intentos fallidos. Espera un minuto antes de volver a intentar.',
             ]);
         }
 
@@ -34,7 +34,7 @@ class LoginController extends Controller
         if (! Auth::attempt($credenciales)) {
             RateLimiter::hit($llave, 60);
             throw ValidationException::withMessages([
-                'correo' => 'Credenciales incorrectas.',
+                'correo' => 'Correo o contraseña incorrectos. Revisa tu correo institucional, o pide una contraseña nueva a tu coordinación.',
             ]);
         }
 

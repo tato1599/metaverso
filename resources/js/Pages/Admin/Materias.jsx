@@ -1,12 +1,14 @@
-import { router, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import AdminNav from '../../Components/AdminNav';
+import CabeceraAdmin, { claseAccion } from '../../Components/CabeceraAdmin';
 import Badge from '../../Components/Badge';
 import Button from '../../Components/Button';
 import EmptyState from '../../Components/EmptyState';
 import FormField, { Select, TextInput } from '../../Components/FormField';
 import Modal from '../../Components/Modal';
 import Table from '../../Components/Table';
+import Lamina from '../../Components/Lamina';
 import AppLayout from '../../Layouts/AppLayout';
 
 const RUTA_BASE = '/admin/materias';
@@ -126,7 +128,7 @@ function FormularioMateria({ cerrar, carreras, fila }) {
                     <Button type="button" variant="ghost" onClick={cerrar}>
                         Cancelar
                     </Button>
-                    <Button type="submit" disabled={processing}>
+                    <Button type="submit" disabled={processing} aria-busy={processing}>
                         {fila ? 'Guardar cambios' : 'Crear'}
                     </Button>
                 </div>
@@ -154,22 +156,15 @@ export default function Materias({ filas, carreras }) {
 
     return (
         <AppLayout>
+            <Head title="Materias" />
             <AdminNav />
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <h1 className="font-display text-xl font-bold text-tinta">Materias</h1>
-                <div className="flex items-center gap-2">
-                    <TextInput
-                        type="search"
-                        name="busqueda"
-                        aria-label="Buscar"
-                        placeholder="Buscar…"
-                        className="w-56"
-                        value={busqueda}
-                        onChange={(e) => setBusqueda(e.target.value)}
-                    />
-                    <Button onClick={() => setEditando('nuevo')}>Agregar</Button>
-                </div>
-            </div>
+            <CabeceraAdmin
+                titulo="Materias"
+                busqueda={busqueda}
+                setBusqueda={setBusqueda}
+                onAgregar={() => setEditando('nuevo')}
+                contador={`${filas.length} ${filas.length === 1 ? 'registro' : 'registros'}`}
+            />
 
             {errors?.eliminar && (
                 <p className="mb-4 rounded-ctl bg-alerta-tinte px-4 py-2.5 text-[13px] font-medium text-alerta">
@@ -183,12 +178,13 @@ export default function Materias({ filas, carreras }) {
                     hint={busqueda ? 'Prueba con otra búsqueda.' : 'Crea el primer registro con el botón Agregar.'}
                 />
             ) : (
+                <Lamina depth={0.2} retardo={120}>
                 <Table head={['Clave', 'Nombre', 'Créditos', 'Carreras', '']}>
                     {visibles.map((f) => (
                         <tr key={f.id_materia}>
-                            <td className="px-4 py-2.5 font-mono text-xs tabular-nums text-tinta-2">{f.clave}</td>
-                            <td className="px-4 py-2.5 text-tinta">{f.nombre}</td>
-                            <td className="px-4 py-2.5 font-mono text-xs tabular-nums text-tinta-2">{f.creditos}</td>
+                            <td className="dato px-4 py-3 text-xs text-tinta-2">{f.clave}</td>
+                            <td className="px-4 py-3 text-tinta">{f.nombre}</td>
+                            <td className="dato px-4 py-3 text-xs text-tinta-2">{f.creditos}</td>
                             <td className="px-4 py-2.5">
                                 {f.carreras.length === 0 ? (
                                     <span className="text-xs text-tinta-3">—</span>
@@ -202,16 +198,20 @@ export default function Materias({ filas, carreras }) {
                                     </div>
                                 )}
                             </td>
-                            <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                            <td className="px-4 py-3 text-right whitespace-nowrap">
                                 <button
+                                    type="button"
                                     onClick={() => setEditando(f)}
-                                    className="rounded-ctl px-2 py-1 text-xs font-medium text-tinta-2 hover:bg-hueco hover:text-tinta"
+                                    className={`${claseAccion} text-portal hover:text-portal-fuerte`}
+                                    aria-label={`Editar ${f.nombre}`}
                                 >
                                     Editar
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={() => eliminar(f)}
-                                    className="rounded-ctl px-2 py-1 text-xs font-medium text-alerta hover:bg-alerta-tinte"
+                                    className={`${claseAccion} ml-4 text-tinta-3 hover:text-alerta`}
+                                    aria-label={`Eliminar ${f.nombre}`}
                                 >
                                     Eliminar
                                 </button>
@@ -219,6 +219,7 @@ export default function Materias({ filas, carreras }) {
                         </tr>
                     ))}
                 </Table>
+                </Lamina>
             )}
 
             {editando !== null && (

@@ -1,14 +1,8 @@
 <?php
 
 use App\Models\Alumno;
-use App\Models\Carrera;
-use App\Models\CicloEscolar;
 use App\Models\EventoAgenda;
-use App\Models\Grupo;
-use App\Models\Inscripcion;
 use App\Models\Maestro;
-use App\Models\Materia;
-use App\Models\Practica;
 use App\Models\Reserva;
 use App\Models\Rol;
 use App\Models\Usuario;
@@ -16,45 +10,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 
 uses(RefreshDatabase::class);
-
-/**
- * @return array{usuario: Usuario, alumno: Alumno, grupo: Grupo, evento: EventoAgenda}
- */
-function reservarEscenario(array $eventoAttrs = [], ?string $estatusInscripcion = 'activa'): array
-{
-    $rolM = Rol::firstOrCreate(['nombre' => 'Maestro']);
-    $uM = Usuario::create(['id_rol' => $rolM->id_rol, 'correo' => fake()->unique()->safeEmail(), 'contrasena_hash' => Hash::make('x'), 'nombre' => 'M', 'apellidos' => 'X']);
-    $maestro = Maestro::create(['id_usuario' => $uM->id_usuario, 'numero_empleado' => fake()->unique()->numerify('EMP####')]);
-    $materia = Materia::create(['clave' => fake()->unique()->bothify('MAT-###'), 'nombre' => 'Prog', 'creditos' => 5]);
-    $ciclo = CicloEscolar::firstOrCreate(['nombre' => '2026-1'], ['fecha_inicio' => '2026-01-15', 'fecha_fin' => '2026-06-15', 'activo' => true]);
-    $grupo = Grupo::create(['id_materia' => $materia->id_materia, 'id_maestro' => $maestro->id_maestro, 'id_ciclo' => $ciclo->id_ciclo, 'clave' => '3A', 'cupo_maximo' => 30]);
-    $practica = Practica::create(['id_materia' => $materia->id_materia, 'titulo' => 'P1', 'orden' => 1, 'escena_referencia' => 'Lab_1']);
-    $evento = EventoAgenda::create(array_merge([
-        'id_practica' => $practica->id_practica, 'id_grupo' => $grupo->id_grupo,
-        'fecha_hora_inicio' => now()->addDay(), 'fecha_hora_fin' => now()->addDay()->addHour(),
-        'estatus' => 'programado', 'cupo_maximo' => 5,
-    ], $eventoAttrs));
-
-    [$usuario, $alumno] = reservarNuevoAlumno($grupo, $estatusInscripcion);
-
-    return ['usuario' => $usuario, 'alumno' => $alumno, 'grupo' => $grupo, 'evento' => $evento];
-}
-
-/**
- * @return array{0: Usuario, 1: Alumno}
- */
-function reservarNuevoAlumno(Grupo $grupo, ?string $estatusInscripcion = 'activa'): array
-{
-    $rolA = Rol::firstOrCreate(['nombre' => 'Alumno']);
-    $u = Usuario::create(['id_rol' => $rolA->id_rol, 'correo' => fake()->unique()->safeEmail(), 'contrasena_hash' => Hash::make('x'), 'nombre' => 'A', 'apellidos' => 'L', 'activo' => true]);
-    $carrera = Carrera::firstOrCreate(['clave' => 'ISC'], ['nombre' => 'ISC', 'duracion_semestres' => 9]);
-    $alumno = Alumno::create(['id_usuario' => $u->id_usuario, 'id_carrera' => $carrera->id_carrera, 'matricula' => fake()->unique()->numerify('2025####'), 'semestre_actual' => 3, 'generacion' => '2025']);
-    if ($estatusInscripcion !== null) {
-        Inscripcion::create(['id_alumno' => $alumno->id_alumno, 'id_grupo' => $grupo->id_grupo, 'fecha_inscripcion' => now(), 'estatus' => $estatusInscripcion]);
-    }
-
-    return [$u, $alumno];
-}
 
 it('reserva el slot y regresa con éxito', function () {
     $e = reservarEscenario();
@@ -177,4 +132,90 @@ it('bloquea a un maestro en las rutas de reservas', function () {
     $uM = Usuario::create(['id_rol' => $rolM->id_rol, 'correo' => fake()->unique()->safeEmail(), 'contrasena_hash' => Hash::make('x'), 'nombre' => 'M', 'apellidos' => 'X']);
 
     $this->actingAs($uM)->post('/mi/reservas', ['id_evento' => 1])->assertForbidden();
+});
+
+/*
+ * Una práctica se cursa UNA vez. Cuando el maestro la agenda varias veces, esas
+ * fechas son alternativas y no sesiones acumulables: cada una ocupa un lugar de
+ * un cupo escaso. El guard es por práctica, no por evento.
+ */
+function otraFechaDeLaMismaPractica(EventoAgenda $evento, array $attrs = []): EventoAgenda
+{
+    return EventoAgenda::create(array_merge([
+        'id_practica' => $evento->id_practica,
+        'id_grupo' => $evento->id_grupo,
+        'fecha_hora_inicio' => now()->addDays(4),
+        'fecha_hora_fin' => now()->addDays(4)->addHour(),
+        'estatus' => 'programado',
+        'cupo_maximo' => 5,
+    ], $attrs));
+}
+
+it('rechaza reservar dos fechas de la misma práctica', function () {
+    $e = reservarEscenario();
+    $otro = otraFechaDeLaMismaPractica($e['evento']);
+
+    $this->actingAs($e['usuario'])->post('/mi/reservas', ['id_evento' => $e['evento']->id_evento]);
+
+    $this->from('/mi/calendario')
+        ->post('/mi/reservas', ['id_evento' => $otro->id_evento])
+        ->assertSessionHasErrors('evento');
+
+    expect(Reserva::where('id_alumno', $e['alumno']->id_alumno)->where('estatus', 'activa')->count())->toBe(1);
+});
+
+it('permite reservar una reposición si la fecha anterior ya terminó', function () {
+    $e = reservarEscenario([
+        'fecha_hora_inicio' => now()->subDays(3),
+        'fecha_hora_fin' => now()->subDays(3)->addHour(),
+    ]);
+    Reserva::create([
+        'id_evento' => $e['evento']->id_evento,
+        'id_alumno' => $e['alumno']->id_alumno,
+        'inicio_slot' => $e['evento']->fecha_hora_inicio,
+    ]);
+    $reposicion = otraFechaDeLaMismaPractica($e['evento']);
+
+    $this->actingAs($e['usuario'])
+        ->post('/mi/reservas', ['id_evento' => $reposicion->id_evento])
+        ->assertSessionHasNoErrors();
+
+    expect($reposicion->reservasActivas()->count())->toBe(1);
+});
+
+it('cambia la reserva de fecha en una sola operación con cambiar_de', function () {
+    $e = reservarEscenario();
+    $otro = otraFechaDeLaMismaPractica($e['evento']);
+    $this->actingAs($e['usuario'])->post('/mi/reservas', ['id_evento' => $e['evento']->id_evento]);
+    $previa = Reserva::where('id_alumno', $e['alumno']->id_alumno)->where('estatus', 'activa')->firstOrFail();
+
+    $this->post('/mi/reservas', ['id_evento' => $otro->id_evento, 'cambiar_de' => $previa->id_reserva])
+        ->assertSessionHasNoErrors();
+
+    expect($previa->fresh()->estatus)->toBe('cancelada')
+        ->and($otro->reservasActivas()->count())->toBe(1)
+        ->and($e['evento']->reservasActivas()->count())->toBe(0);
+});
+
+it('no deja al alumno sin reserva si el horario nuevo está lleno', function () {
+    $e = reservarEscenario();
+    $otro = otraFechaDeLaMismaPractica($e['evento'], ['cupo_maximo' => 1]);
+    $this->actingAs($e['usuario'])->post('/mi/reservas', ['id_evento' => $e['evento']->id_evento]);
+    $previa = Reserva::where('id_alumno', $e['alumno']->id_alumno)->where('estatus', 'activa')->firstOrFail();
+
+    // Otro alumno toma el único lugar de la fecha nueva.
+    [$otroUsuario, $otroAlumno] = reservarNuevoAlumno($e['grupo']);
+    Reserva::create([
+        'id_evento' => $otro->id_evento,
+        'id_alumno' => $otroAlumno->id_alumno,
+        'inicio_slot' => $otro->fecha_hora_inicio,
+    ]);
+
+    $this->actingAs($e['usuario'])
+        ->from('/mi/calendario')
+        ->post('/mi/reservas', ['id_evento' => $otro->id_evento, 'cambiar_de' => $previa->id_reserva])
+        ->assertSessionHasErrors('evento');
+
+    // La transacción se revierte entera: conserva su lugar original.
+    expect($previa->fresh()->estatus)->toBe('activa');
 });
